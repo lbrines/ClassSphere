@@ -1645,6 +1645,14 @@ lsof -Pi :8000
 - `src/utils/` - Todas las utilidades
 
 #### 7. Scripts TDD Automatizados
+**Script de Diagnóstico de Errores de Tests:**
+```bash
+#!/bin/bash
+# Script de diagnóstico incluido en Protocolos de Resolución de Errores
+echo "🔍 Diagnóstico de Errores de Tests..."
+# Ver implementación completa en sección "Protocolos de Resolución de Errores de Tests"
+```
+
 **Script de Verificación de Cobertura:**
 ```bash
 #!/bin/bash
@@ -1926,6 +1934,7 @@ print(f'📋 TDD: Response: {response.json()}')
 ### Fixtures y Mocks Consolidados
 ```python
 # tests/conftest.py - Backend fixtures centralizados
+# Incluye templates de resolución de errores de tests (ver Protocolos de Resolución)
 @pytest.fixture
 def mock_service():
     """MockService con datos completos"""
@@ -1974,6 +1983,329 @@ vi.mock('react-apexcharts', () => ({
   default: MockApexChart,
 }))
 ```
+
+### Protocolos de Resolución de Errores de Tests
+
+#### 1. Categorización de Errores de Testing
+**Errores de Mock (Prioridad Alta):**
+- Database connection mocks incorrectos
+- Redis client mocks mal configurados
+- AsyncMock no awaited correctamente
+- Context manager mocks fallando
+
+**Errores de Lifespan (Prioridad Media):**
+- Cleanup functions no interceptadas
+- Shutdown mocks no llamados
+- Startup/shutdown sequence incorrecta
+
+**Errores de CORS/HTTP (Prioridad Baja):**
+- OPTIONS method no soportado
+- Headers CORS incorrectos
+- Status codes inesperados
+
+#### 2. Templates de Resolución por Categoría
+
+**Template para Database Mock Errors:**
+```python
+@pytest.fixture
+def mock_mongodb_fixed():
+    """Mock MongoDB con configuración correcta"""
+    mock_client = AsyncMock()
+    mock_client.admin.command = AsyncMock(return_value={"ok": 1})
+    mock_client.server_info = AsyncMock(return_value={"version": "6.0.0"})
+    
+    # Mock database y collections
+    mock_db = AsyncMock()
+    mock_collection = AsyncMock()
+    mock_collection.find_one = AsyncMock(return_value=None)
+    mock_collection.insert_one = AsyncMock(return_value=AsyncMock(inserted_id="test_id"))
+    mock_db.users = mock_collection
+    mock_db.courses = mock_collection
+    mock_db.metrics = mock_collection
+    mock_client.dashboard_educativo = mock_db
+    
+    return mock_client
+
+@pytest.fixture
+def mock_redis_fixed():
+    """Mock Redis con configuración correcta"""
+    mock_redis = AsyncMock()
+    mock_redis.ping = AsyncMock(return_value=True)
+    mock_redis.get = AsyncMock(return_value=None)
+    mock_redis.set = AsyncMock(return_value=True)
+    mock_redis.delete = AsyncMock(return_value=1)
+    mock_redis.exists = AsyncMock(return_value=False)
+    mock_redis.close = AsyncMock()
+    mock_redis.aclose = AsyncMock()  # Para Redis moderno
+    return mock_redis
+```
+
+**Template para Lifespan Errors:**
+```python
+@pytest.mark.asyncio
+async def test_lifespan_shutdown_fixed(mock_mongodb_fixed, mock_redis_fixed):
+    """Test lifespan shutdown con mocks correctos"""
+    with patch('src.app.core.database.get_database') as mock_get_db, \
+         patch('src.app.core.database.get_redis_client') as mock_get_redis, \
+         patch('src.app.core.database.cleanup_database') as mock_cleanup_db, \
+         patch('src.app.core.database.cleanup_redis') as mock_cleanup_redis:
+        
+        mock_get_db.return_value = mock_mongodb_fixed
+        mock_get_redis.return_value = mock_redis_fixed
+        
+        # Test lifespan shutdown
+        async with lifespan(app):
+            pass
+        
+        mock_cleanup_db.assert_called_once()
+        mock_cleanup_redis.assert_called_once()
+```
+
+**Template para CORS Errors:**
+```python
+def test_cors_headers_fixed(test_client):
+    """Test CORS headers con método correcto"""
+    # Usar GET en lugar de OPTIONS para health endpoint
+    response = test_client.get("/health")
+    
+    assert response.status_code == 200
+    # Verificar headers CORS en respuesta
+    headers_lower = {k.lower(): v for k, v in response.headers.items()}
+    assert "access-control-allow-origin" in headers_lower
+    assert "access-control-allow-credentials" in headers_lower
+```
+
+**Template para Connection Error Tests:**
+```python
+@pytest.mark.asyncio
+async def test_get_database_connection_error_fixed():
+    """Test database connection error con mock correcto"""
+    with patch('src.app.core.database.AsyncIOMotorClient') as mock_client_class:
+        mock_client_class.side_effect = Exception("Connection failed")
+        
+        with pytest.raises(Exception, match="Database connection failed"):
+            await get_database()
+
+@pytest.mark.asyncio
+async def test_get_redis_client_connection_error_fixed():
+    """Test Redis connection error con mock correcto"""
+    with patch('src.app.core.database.AsyncRedis') as mock_redis_class:
+        mock_redis_class.from_url.side_effect = Exception("Redis connection failed")
+        
+        with pytest.raises(Exception, match="Redis connection failed"):
+            await get_redis_client()
+```
+
+**Template para Health Check Error Tests:**
+```python
+@pytest.mark.asyncio
+async def test_database_health_check_failure_fixed():
+    """Test database health check failure con mock correcto"""
+    with patch('src.app.core.database.get_database') as mock_get_db:
+        mock_db = AsyncMock()
+        mock_db.client.admin.command.side_effect = Exception("Health check failed")
+        mock_get_db.return_value = mock_db
+        
+        from src.app.core.database import check_database_health
+        
+        result = await check_database_health()
+        
+        assert result is False
+```
+
+**Template para Cleanup Error Tests:**
+```python
+@pytest.mark.asyncio
+async def test_database_cleanup_error_fixed():
+    """Test database cleanup error con mock correcto"""
+    mock_db = AsyncMock()
+    mock_db.close.side_effect = Exception("Cleanup failed")
+    
+    with patch('src.app.core.database._mongodb_client', mock_db):
+        from src.app.core.database import cleanup_database
+        
+        # Should not raise exception, just log error
+        await cleanup_database()
+        
+        mock_db.close.assert_called_once()
+
+@pytest.mark.asyncio
+async def test_redis_cleanup_error_fixed():
+    """Test Redis cleanup error con mock correcto"""
+    mock_redis = AsyncMock()
+    mock_redis.aclose.side_effect = Exception("Redis cleanup failed")
+    
+    with patch('src.app.core.database._redis_client', mock_redis):
+        from src.app.core.database import cleanup_redis
+        
+        # Should not raise exception, just log error
+        await cleanup_redis()
+        
+        mock_redis.aclose.assert_called_once()
+```
+
+**Template para Context Manager Tests:**
+```python
+@pytest.mark.asyncio
+async def test_database_context_manager_success_fixed(mock_mongodb_fixed, mock_redis_fixed):
+    """Test database context manager success con mocks correctos"""
+    with patch('src.app.core.database.get_database') as mock_get_db, \
+         patch('src.app.core.database.get_redis_client') as mock_get_redis:
+        
+        mock_get_db.return_value = mock_mongodb_fixed
+        mock_get_redis.return_value = mock_redis_fixed
+        
+        from src.app.core.database import DatabaseContextManager
+        
+        async with DatabaseContextManager() as (db, redis):
+            assert db is not None
+            assert redis is not None
+        
+        mock_mongodb_fixed.close.assert_called_once()
+        mock_redis_fixed.aclose.assert_called_once()
+```
+
+#### 3. Checklist de Resolución de Errores
+
+**Database Tests:**
+- [ ] Mock MongoDB configurado con AsyncMock correcto
+- [ ] Mock Redis configurado con AsyncMock correcto
+- [ ] Health check mocks retornan valores correctos
+- [ ] Cleanup mocks son llamados correctamente
+- [ ] Context manager usa mocks en lugar de conexiones reales
+- [ ] Connection error tests usan side_effect correctamente
+- [ ] Redis moderno usa aclose() en lugar de close()
+
+**Main App Tests:**
+- [ ] Lifespan startup mocks configurados
+- [ ] Lifespan shutdown mocks interceptados
+- [ ] CORS headers verificados con método correcto
+- [ ] Error handling tests cubren casos edge
+- [ ] Cleanup functions mockeadas correctamente
+
+**Warnings Resolution:**
+- [ ] AsyncMock methods properly awaited
+- [ ] Redis close() replaced with aclose()
+- [ ] Deprecation warnings eliminated
+- [ ] Runtime warnings de coroutines resueltos
+
+#### 4. Scripts de Verificación de Errores
+
+**Script de Diagnóstico de Tests:**
+```bash
+#!/bin/bash
+echo "🔍 Diagnóstico de Errores de Tests..."
+
+# Verificar errores específicos
+echo "📊 Database Tests:"
+pytest tests/unit/test_database.py -v --tb=short | grep -E "(FAILED|ERROR)"
+
+echo "📊 Main App Tests:"
+pytest tests/unit/test_main.py -v --tb=short | grep -E "(FAILED|ERROR)"
+
+echo "📊 Config Tests:"
+pytest tests/unit/test_config.py -v --tb=short | grep -E "(FAILED|ERROR)"
+
+echo "📊 Warnings:"
+pytest tests/ -v | grep -E "(Warning|Deprecation)"
+
+# Verificar cobertura específica
+echo "📊 Cobertura por módulo:"
+pytest tests/unit/test_config.py --cov=src/app/core/config --cov-report=term-missing
+pytest tests/unit/test_database.py --cov=src/app/core/database --cov-report=term-missing
+pytest tests/unit/test_main.py --cov=src/app/main --cov-report=term-missing
+
+# Verificar servidor
+echo "📊 Health Check:"
+curl -f http://127.0.0.1:8000/health || echo "⚠️ Servidor no disponible"
+```
+
+**Script de Resolución Automática:**
+```bash
+#!/bin/bash
+echo "🔧 Resolución Automática de Errores de Tests..."
+
+# Aplicar fixes automáticos
+echo "📝 Aplicando fixes de AsyncMock..."
+# Reemplazar close() por aclose() en Redis
+find backend/src -name "*.py" -exec sed -i 's/_redis_client\.close()/_redis_client.aclose()/g' {} \;
+
+echo "📝 Verificando mocks de database..."
+# Verificar que los mocks estén configurados correctamente
+python3 -c "
+import sys
+sys.path.append('backend/src')
+from tests.conftest import mock_mongodb, mock_redis
+print('✅ Mocks configurados correctamente')
+"
+
+echo "📝 Ejecutando tests corregidos..."
+cd backend && python3 -m pytest tests/unit/test_config.py -v
+cd backend && python3 -m pytest tests/unit/test_database.py -v
+cd backend && python3 -m pytest tests/unit/test_main.py -v
+
+echo "✅ Resolución automática completada"
+```
+
+#### 5. Integración con Quality Gates
+
+**Quality Gate Actualizado para Day 1:**
+- [ ] **Database Tests**: 100% pasando con mocks correctos
+- [ ] **Main App Tests**: 100% pasando con lifespan correcto
+- [ ] **CORS Tests**: 100% pasando con headers correctos
+- [ ] **Warnings**: 0 warnings críticos de AsyncMock/Redis
+- [ ] **Coverage**: 100% en módulos críticos con tests corregidos
+- [ ] **Connection Errors**: Todos los casos de error mockeados correctamente
+- [ ] **Cleanup Errors**: Todos los casos de cleanup testeados
+- [ ] **Context Managers**: Todos los context managers funcionando
+
+**Quality Gate por Fase:**
+- **Fase 1**: Todos los errores de Day 1 resueltos
+- **Fase 2**: Errores de Google API mocks resueltos
+- **Fase 3**: Errores de WebSocket mocks resueltos
+- **Fase 4**: Errores de sync/backup mocks resueltos
+
+#### 6. Metodología de Resolución
+
+**Enfoque TDD para Resolución:**
+1. **Identificar**: Categorizar error específico (Mock/Lifespan/CORS)
+2. **Analizar**: Determinar causa raíz del mock/test
+3. **Corregir**: Aplicar template de resolución correspondiente
+4. **Verificar**: Confirmar que test pasa
+5. **Documentar**: Actualizar templates si es necesario
+6. **Prevenir**: Agregar a checklist para futuros desarrollos
+
+**Priorización:**
+1. **Alta**: Database/Redis mock errors (afectan funcionalidad core)
+2. **Media**: Lifespan errors (afectan startup/shutdown)
+3. **Baja**: CORS/HTTP errors (afectan headers específicos)
+
+**Herramientas de Resolución:**
+- Templates específicos por tipo de error
+- Scripts de diagnóstico automático
+- Checklists de verificación
+- Integración con Quality Gates existentes
+
+#### 7. Prevención de Errores Futuros
+
+**Protocolos de Prevención:**
+- Usar siempre AsyncMock para métodos async
+- Configurar mocks completos desde el inicio
+- Verificar que cleanup functions sean mockeadas
+- Usar aclose() para Redis moderno
+- Verificar headers CORS con métodos correctos
+
+**Templates de Prevención:**
+- Mock setup estándar en conftest.py
+- Lifespan test templates
+- CORS test templates
+- Error handling test templates
+
+**Monitoreo Continuo:**
+- Scripts de diagnóstico en CI/CD
+- Quality gates automáticos
+- Reportes de errores de tests
+- Métricas de cobertura por módulo
 
 </llm:section>
 
@@ -3606,25 +3938,25 @@ Todo el sistema sigue **Test-Driven Development** estricto:
 - [ ] Frontend: Next.js + Auth + Layout responsivo
 - [ ] Testing: ≥80% cobertura + CI básico
 - [ ] Integration: Frontend-Backend comunicación
-- [ ] Error Prevention: AsyncMock + CORS tests + Server health
+- [ ] Error Prevention: AsyncMock + CORS tests + Server health + Test Error Resolution Protocols
 
 #### Fase 2 - Google Integration ✅
 - [ ] Backend: Google API + Modo dual + Dashboards
 - [ ] Frontend: Google UI + ApexCharts + Dashboards rol
 - [ ] Testing: Google mocks + Integration tests
-- [ ] Error Prevention: Rate limiting + Fallback + API mocks
+- [ ] Error Prevention: Rate limiting + Fallback + API mocks + Google API Test Resolution
 - [ ] Performance: <2s dashboard load
 
 #### Fase 3 - Visualización Avanzada ✅
 - [ ] Backend: Búsqueda + Notificaciones + WebSocket
 - [ ] Frontend: UI avanzada + Gráficos interactivos
-- [ ] Error Prevention: WebSocket + Gráficos + Real-time
+- [ ] Error Prevention: WebSocket + Gráficos + Real-time + WebSocket Test Resolution
 - [ ] Testing: E2E scenarios + Performance
 - [ ] Accessibility: Keyboard + Screen reader básico
 
 #### Fase 4 - Production Ready ✅
 - [ ] Google: Sync bidireccional + Backup + Webhooks
-- [ ] Error Prevention: Todos los sistemas estables + Monitoring
+- [ ] Error Prevention: Todos los sistemas estables + Monitoring + Complete Test Error Resolution
 - [ ] Accessibility: WCAG 2.2 AA completo
 - [ ] Testing: ≥90% críticos + Security + Load
 - [ ] CI/CD: Pipeline completo + Docker + Monitoring
