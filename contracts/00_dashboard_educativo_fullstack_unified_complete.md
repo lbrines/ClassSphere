@@ -1,7 +1,7 @@
 ---
 llm:metadata:
   title: "Contrato Unificado Completo: Dashboard Educativo Full-Stack"
-  version: "2.2"
+  version: "2.3"
   type: "unified_implementation_contract"
   stage: "unified"
   execution_priority: "complete_system"
@@ -14,6 +14,7 @@ llm:metadata:
     - accessibility_wcag_2_2
     - comprehensive_testing
     - error_prevention_protocols
+    - coverage_100_protocols
     - ci_cd_pipeline
     - production_deployment
 ---
@@ -24,7 +25,7 @@ llm:metadata:
 - **Proyecto**: Dashboard Educativo - Sistema Completo
 - **Fase**: Implementación Unificada - Todas las Funcionalidades
 - **Autor**: Sistema de Contratos LLM
-- **Fecha**: 2025-10-03 (Actualizado con Prevención de Errores + Corrección de Warnings)
+- **Fecha**: 2025-10-03 (Actualizado con Prevención de Errores + Corrección de Warnings + Cobertura 100%)
 - **Propósito**: Implementar sistema completo de dashboard educativo con todas las funcionalidades consolidadas
 
 ## =====
@@ -1118,8 +1119,10 @@ def create_app() -> FastAPI:
 - [ ] **Setup**: Estructura de directorios creada
 - [ ] **Dependencies**: Todas las dependencias instaladas
 - [ ] **Config**: Variables de entorno configuradas
-- [ ] **Tests**: Tests básicos pasando (27 tests)
-- [ ] **Coverage**: Cobertura > 80% alcanzada
+- [ ] **Tests**: Tests básicos pasando (34 tests)
+- [ ] **Coverage**: 100% cobertura en módulos críticos (config, database, main)
+- [ ] **Context Managers**: Tests completos para lifespan
+- [ ] **Error Paths**: Tests para todos los try/except
 - [ ] **Server**: Health check endpoint funcional
 - [ ] **Async**: Tests async usan AsyncMock
 - [ ] **CORS**: Tests de CORS simplificados
@@ -1131,6 +1134,9 @@ def create_app() -> FastAPI:
 - [ ] **Validation**: Validadores funcionan correctamente
 - [ ] **Exceptions**: Jerarquía de excepciones completa
 - [ ] **Tests**: Tests de modelos pasando
+- [ ] **Coverage**: 100% cobertura en modelos y excepciones
+- [ ] **Edge Cases**: Tests para valores límite
+- [ ] **Serialization**: Tests para model_dump() y model_validate()
 - [ ] **Migration**: Sin warnings de Pydantic v1
 
 #### Días 3-12 - Fundaciones Completas
@@ -1143,44 +1149,55 @@ def create_app() -> FastAPI:
 ### Quality Gates Mejorados
 
 #### Gate 1: Fundaciones (Día 12)
-- [ ] **Cobertura**: ≥80% global, ≥90% críticos
+- [ ] **Cobertura**: ≥100% módulos críticos (config, database, main)
 - [ ] **Performance**: <3s load time
 - [ ] **Security**: 0 vulnerabilidades CRITICAL
 - [ ] **Tests**: Backend + Frontend + E2E básicos
 - [ ] **Integration**: Frontend-Backend comunicación
 - [ ] **CI/CD**: Pipeline básico funcionando
 - [ ] **Error Prevention**: Todos los checks de prevención pasando
+- [ ] **Context Managers**: Tests completos para lifespan
 - [ ] **Async Tests**: AsyncMock usado correctamente
+- [ ] **Error Paths**: Todos los try/except cubiertos
 - [ ] **CORS Tests**: Headers básicos verificados
 - [ ] **Server Health**: Health check funcional
 - [ ] **Warnings**: 0 warnings de deprecación críticos
 - [ ] **Modern APIs**: Pydantic v2 + FastAPI lifespan implementados
 
 #### Gate 2: Google Integration (Día 22)
-- [ ] **Cobertura**: ≥85% global, ≥90% críticos
+- [ ] **Cobertura**: ≥100% servicios críticos (auth, google, models)
 - [ ] **Performance**: <2s dashboard load
 - [ ] **Security**: 0 vulnerabilidades CRITICAL
 - [ ] **Tests**: Google mocks + Integration tests
 - [ ] **Google**: OAuth + Classroom API estable
 - [ ] **Modo Dual**: Switching Google/Mock funcional
 - [ ] **Error Prevention**: Rate limiting + fallback funcionando
+- [ ] **API Integration**: Tests para todos los endpoints
+- [ ] **Error Recovery**: Tests para fallos de conexión
+- [ ] **Data Validation**: Tests para datos de Google
 - [ ] **API Mocks**: Google API mocks estables
 
 #### Gate 3: Visualización Avanzada (Día 32)
-- [ ] **Cobertura**: ≥88% global, ≥90% críticos
+- [ ] **Cobertura**: ≥100% componentes de visualización
 - [ ] **Performance**: <1.5s load time
 - [ ] **Security**: 0 vulnerabilidades CRITICAL
 - [ ] **Tests**: E2E + Performance + Visual
 - [ ] **Accessibility**: Keyboard + Screen reader básico
 - [ ] **Visualization**: D3.js + ApexCharts avanzado
+- [ ] **WebSocket**: Tests para conexiones real-time
+- [ ] **Charts**: Tests para renderizado de gráficos
+- [ ] **Interactions**: Tests para interacciones de usuario
 - [ ] **Error Prevention**: WebSocket + gráficos estables
 - [ ] **Real-time**: Notificaciones funcionando
 
 #### Gate 4: Production Ready (Día 45)
-- [ ] **Cobertura**: ≥90% global, ≥95% críticos
+- [ ] **Cobertura**: ≥100% global
 - [ ] **Performance**: <1s load time
 - [ ] **Security**: 0 vulnerabilidades CRITICAL/HIGH
 - [ ] **Tests**: Exhaustivos + Security + Load
+- [ ] **E2E**: Tests end-to-end completos
+- [ ] **Performance**: Tests de carga
+- [ ] **Security**: Tests de seguridad exhaustivos
 - [ ] **Accessibility**: WCAG 2.2 AA completo
 - [ ] **Production**: CI/CD + Docker + Monitoring
 - [ ] **Error Prevention**: Todos los sistemas estables
@@ -1289,6 +1306,216 @@ app = FastAPI(lifespan=lifespan)
 - [ ] Funcionalidad preservada
 - [ ] Performance mantenida
 - [ ] Documentación actualizada
+
+### Protocolo de Cobertura 100%
+
+#### 1. Identificación de Líneas Sin Cubrir
+```bash
+# Comando para identificar líneas específicas sin cubrir
+pytest tests/ --cov=src --cov-report=term-missing --cov-report=html
+
+# Verificar cobertura por archivo
+pytest tests/unit/ --cov=src --cov-report=term-missing
+
+# Generar reporte HTML detallado
+pytest tests/ --cov=src --cov-report=html
+open htmlcov/index.html
+```
+
+#### 2. Análisis de Código Complejo
+**Archivos que requieren atención especial:**
+- **Context Managers**: `lifespan`, `async with`, `try/except`
+- **Async Functions**: Métodos con `async/await`
+- **Error Handling**: Bloques `try/except/finally`
+- **Conditional Logic**: `if/elif/else` complejos
+- **Loop Constructs**: `for/while` con break/continue
+
+#### 3. Técnicas de Testing para 100%
+**Para Context Managers:**
+```python
+@pytest.mark.asyncio
+async def test_context_manager_success():
+    """Test caso exitoso del context manager"""
+    with patch('module.dependency') as mock_dep:
+        mock_dep.method = AsyncMock()
+        async with context_manager():
+            mock_dep.method.assert_called_once()
+
+@pytest.mark.asyncio
+async def test_context_manager_error():
+    """Test caso de error del context manager"""
+    with patch('module.dependency') as mock_dep:
+        mock_dep.method = AsyncMock(side_effect=Exception("Error"))
+        async with context_manager():
+            # Verificar manejo de error
+            mock_dep.method.assert_called_once()
+```
+
+**Para Async Functions:**
+```python
+@pytest.mark.asyncio
+async def test_async_function():
+    """Test función async con AsyncMock"""
+    with patch('module.async_service') as mock_service:
+        mock_service.async_method = AsyncMock(return_value="result")
+        result = await async_function()
+        assert result == "result"
+        mock_service.async_method.assert_called_once()
+```
+
+**Para Error Handling:**
+```python
+def test_error_handling_success():
+    """Test manejo de error exitoso"""
+    with patch('module.risky_function') as mock_func:
+        mock_func.side_effect = Exception("Test error")
+        result = function_with_error_handling()
+        assert result == "error_handled"
+
+def test_error_handling_failure():
+    """Test manejo de error fallido"""
+    with patch('module.risky_function') as mock_func:
+        mock_func.return_value = "success"
+        result = function_with_error_handling()
+        assert result == "success"
+```
+
+#### 4. Checklist de Cobertura por Día
+**Día 1-3: Fundaciones**
+- [ ] **Configuración**: 100% cobertura en `config.py`
+- [ ] **Base de datos**: 100% cobertura en `database.py`
+- [ ] **Aplicación**: 100% cobertura en `main.py`
+- [ ] **Context Managers**: Tests para `lifespan` completo
+- [ ] **Error Paths**: Tests para todos los `try/except`
+
+**Día 4-6: Modelos y Excepciones**
+- [ ] **Modelos Pydantic**: 100% cobertura en validadores
+- [ ] **Excepciones**: Tests para todas las excepciones custom
+- [ ] **Serialización**: Tests para `model_dump()` y `model_validate()`
+- [ ] **Edge Cases**: Tests para valores límite
+
+**Día 7-9: Autenticación**
+- [ ] **JWT**: 100% cobertura en creación/validación
+- [ ] **OAuth**: Tests para todos los flujos OAuth
+- [ ] **Middleware**: Tests para autenticación/autorización
+- [ ] **Error Cases**: Tests para tokens inválidos/expirados
+
+#### 5. Templates Estándar para 100% Cobertura
+**Template para Context Manager:**
+```python
+@pytest.mark.asyncio
+async def test_{context_manager_name}_success():
+    """Test {context_manager_name} caso exitoso"""
+    with patch('{module_path}') as mock_dependency:
+        mock_dependency.method = AsyncMock()
+        async with {context_manager_name}():
+            # Verificar startup
+            mock_dependency.method.assert_called_once()
+        # Verificar shutdown
+        mock_dependency.cleanup.assert_called_once()
+
+@pytest.mark.asyncio
+async def test_{context_manager_name}_startup_error():
+    """Test {context_manager_name} error en startup"""
+    with patch('{module_path}') as mock_dependency:
+        mock_dependency.method = AsyncMock(side_effect=Exception("Startup failed"))
+        async with {context_manager_name}():
+            # Verificar manejo de error
+            mock_dependency.method.assert_called_once()
+
+@pytest.mark.asyncio
+async def test_{context_manager_name}_shutdown_error():
+    """Test {context_manager_name} error en shutdown"""
+    with patch('{module_path}') as mock_dependency:
+        mock_dependency.method = AsyncMock()
+        mock_dependency.cleanup = AsyncMock(side_effect=Exception("Shutdown failed"))
+        async with {context_manager_name}():
+            pass  # Trigger shutdown
+        # Verificar manejo de error
+        mock_dependency.cleanup.assert_called_once()
+```
+
+**Template para Async Function:**
+```python
+@pytest.mark.asyncio
+async def test_{async_function_name}_success():
+    """Test {async_function_name} caso exitoso"""
+    with patch('{module_path}') as mock_service:
+        mock_service.async_method = AsyncMock(return_value="expected_result")
+        result = await {async_function_name}()
+        assert result == "expected_result"
+        mock_service.async_method.assert_called_once()
+
+@pytest.mark.asyncio
+async def test_{async_function_name}_error():
+    """Test {async_function_name} caso de error"""
+    with patch('{module_path}') as mock_service:
+        mock_service.async_method = AsyncMock(side_effect=Exception("Service error"))
+        with pytest.raises(Exception, match="Service error"):
+            await {async_function_name}()
+        mock_service.async_method.assert_called_once()
+```
+
+#### 6. Comandos de Verificación Específicos
+```bash
+# Verificar cobertura específica por archivo
+pytest tests/unit/test_main.py --cov=src/app/main --cov-report=term-missing
+
+# Verificar cobertura de context managers
+pytest tests/unit/test_lifespan.py --cov=src/app/main --cov-report=term-missing
+
+# Verificar cobertura de async functions
+pytest tests/unit/test_database.py --cov=src/app/core/database --cov-report=term-missing
+
+# Verificar cobertura de modelos
+pytest tests/unit/test_models.py --cov=src/app/models --cov-report=term-missing
+
+# Verificar cobertura de autenticación
+pytest tests/unit/test_auth.py --cov=src/app/api/auth --cov-report=term-missing
+```
+
+#### 7. Métricas de Cobertura por Módulo
+**Backend - Módulos Críticos (100% requerido):**
+- `src/app/core/config.py` - Configuración
+- `src/app/core/database.py` - Base de datos
+- `src/app/main.py` - Aplicación principal
+- `src/app/core/security.py` - Seguridad
+- `src/app/models/user.py` - Modelos de usuario
+- `src/app/api/auth.py` - Autenticación
+
+**Frontend - Componentes Críticos (100% requerido):**
+- `src/components/Auth/` - Componentes de autenticación
+- `src/hooks/useAuth.ts` - Hook de autenticación
+- `src/services/api.ts` - Servicios de API
+- `src/utils/auth.ts` - Utilidades de autenticación
+
+#### 8. Verificación Automática de Cobertura
+```bash
+# Script para verificar cobertura 100% en CI/CD
+#!/bin/bash
+echo "Verificando cobertura 100%..."
+
+# Verificar módulos críticos
+CRITICAL_MODULES=(
+    "src/app/core/config"
+    "src/app/core/database" 
+    "src/app/main"
+    "src/app/core/security"
+)
+
+for module in "${CRITICAL_MODULES[@]}"; do
+    echo "Verificando $module..."
+    coverage=$(pytest tests/ --cov=$module --cov-report=term-missing | grep "TOTAL" | awk '{print $4}' | sed 's/%//')
+    if [ "$coverage" != "100" ]; then
+        echo "❌ $module: $coverage% (requerido: 100%)"
+        exit 1
+    else
+        echo "✅ $module: $coverage%"
+    fi
+done
+
+echo "🎉 Todos los módulos críticos tienen 100% de cobertura"
+```
 
 </llm:section>
 
