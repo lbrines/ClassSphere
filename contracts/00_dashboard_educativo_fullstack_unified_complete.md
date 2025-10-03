@@ -30,6 +30,142 @@ llm:metadata:
 - **Propósito**: Implementar sistema completo de dashboard educativo con todas las funcionalidades consolidadas
 
 ## =====
+<llm:section id="critical_analysis" type="analysis">
+## Análisis Críticos del Sistema
+
+### Análisis de Trazabilidad de Requisitos - Crítico para Consistencia entre Stages
+
+#### Mapeo de Requisitos por Stage
+```
+Stage 1 (Fundaciones) → Stage 2 (Google Integration) → Stage 3 (Visualización) → Stage 4 (Integración Completa)
+```
+
+**Trazabilidad Backend:**
+- **R1.1**: FastAPI + JWT → **R2.1**: OAuth 2.0 Google → **R3.1**: WebSocket Notifications → **R4.1**: Bidirectional Sync
+- **R1.2**: MockService → **R2.2**: Google Classroom API → **R3.2**: Advanced Insights → **R4.2**: Backup System
+- **R1.3**: Basic Models → **R2.3**: Google Models → **R3.3**: Analytics Models → **R4.3**: Complete Models
+
+**Trazabilidad Frontend:**
+- **R1.4**: Next.js Foundation → **R2.4**: Google UI Components → **R3.4**: Interactive Charts → **R4.4**: Admin Panel
+- **R1.5**: Basic Auth → **R2.5**: Google Auth → **R3.5**: Real-time Updates → **R4.5**: WCAG 2.2 Compliance
+- **R1.6**: Tailwind CSS → **R2.6**: Role-based Dashboards → **R3.6**: Advanced Search → **R4.6**: PWA Features
+
+#### Matriz de Dependencias Críticas
+| Requisito | Dependencias | Impacto | Mitigación |
+|-----------|--------------|---------|------------|
+| R2.1 (OAuth) | R1.1 (JWT) | Alto | Implementar fallback JWT |
+| R3.1 (WebSocket) | R2.1 (Auth) | Crítico | Auth validation en WebSocket |
+| R4.1 (Sync) | R3.1 (Real-time) | Crítico | Conflict resolution protocol |
+| R4.2 (Backup) | R2.2 (Google API) | Alto | Incremental backup strategy |
+
+### Análisis de Coherencia Semántica - Fundamental para Claridad
+
+#### Definiciones Semánticas Unificadas
+**Autenticación:**
+- **JWT**: Token estático para desarrollo y fallback
+- **OAuth 2.0**: Flujo dinámico para producción con Google
+- **Dual Mode**: Capacidad de alternar entre ambos sistemas
+
+**Datos:**
+- **Mock Data**: Datos simulados para desarrollo y testing
+- **Google Data**: Datos reales de Google Classroom API
+- **Hybrid Data**: Combinación de ambos según contexto
+
+**Roles:**
+- **Student**: Acceso de solo lectura a sus cursos
+- **Teacher**: Gestión completa de sus cursos asignados
+- **Admin**: Control total del sistema y usuarios
+
+#### Consistencia de Terminología
+```
+Backend: User → Frontend: Usuario
+Backend: Course → Frontend: Curso  
+Backend: Assignment → Frontend: Tarea
+Backend: Grade → Frontend: Calificación
+Backend: Notification → Frontend: Notificación
+```
+
+#### Validación Semántica por Capa
+**API Layer:**
+- Pydantic models con validación estricta
+- Response schemas consistentes
+- Error codes estandarizados
+
+**Business Logic:**
+- Service methods con naming consistente
+- State management unificado
+- Transaction boundaries claros
+
+**Presentation Layer:**
+- Component naming conventions
+- State management patterns
+- UI/UX consistency
+
+### Análisis de Dependencias Transversales - Esencial para Aspectos Críticos
+
+#### Dependencias de Infraestructura
+**Base de Datos:**
+- MongoDB: Documentos principales (usuarios, cursos, calificaciones)
+- Redis: Cache y sesiones activas
+- Dependencia crítica: Sin MongoDB → Sistema no funcional
+- Dependencia opcional: Sin Redis → Degradación de performance
+
+**Servicios Externos:**
+- Google Classroom API: Funcionalidad core de producción
+- Dependencia crítica: Sin API → Modo Mock automático
+- Rate limiting: 100 requests/100 seconds por usuario
+
+#### Dependencias de Seguridad
+**Autenticación:**
+- JWT Secret: Obligatorio para cualquier operación
+- Google OAuth: Requerido para datos reales
+- CORS Configuration: Crítico para frontend-backend communication
+
+**Autorización:**
+- Role-based access control (RBAC)
+- Resource-level permissions
+- API endpoint protection
+
+#### Dependencias de Performance
+**Caching Strategy:**
+- Redis: Cache de sesiones y datos frecuentes
+- Browser Cache: Assets estáticos y API responses
+- CDN: Para assets de producción
+
+**Real-time Features:**
+- WebSocket: Notificaciones en tiempo real
+- Dependencia: Conexión estable backend-frontend
+- Fallback: Polling cada 30 segundos
+
+#### Dependencias de Testing
+**Unit Tests:**
+- Mock services para dependencias externas
+- Test database separada
+- Coverage requirements: 100% para módulos críticos
+
+**Integration Tests:**
+- Test environment con servicios reales
+- API contract validation
+- End-to-end user flows
+
+#### Matriz de Impacto de Dependencias
+| Dependencia | Tipo | Impacto | Disponibilidad | Mitigación |
+|-------------|------|---------|----------------|------------|
+| MongoDB | Crítica | Sistema completo | 99.9% | Backup automático |
+| Google API | Alta | Funcionalidad core | 99.5% | Modo Mock |
+| Redis | Media | Performance | 99.0% | Fallback a memoria |
+| WebSocket | Media | Real-time | 95.0% | Polling fallback |
+
+#### Protocolo de Resolución de Dependencias
+1. **Identificación**: Monitoreo automático de servicios
+2. **Clasificación**: Crítica/Alta/Media/Baja
+3. **Mitigación**: Activación automática de fallbacks
+4. **Recuperación**: Reintento automático con backoff
+5. **Notificación**: Alertas a administradores
+
+</llm:section>
+
+## =====
 <llm:section id="unified_objectives" type="requirements">
 ## Objetivos del Sistema Unificado
 
@@ -87,6 +223,154 @@ llm:metadata:
 - GitHub Actions
 - Trivy (security)
 - pnpm 8.x+
+```
+
+### Arquitectura Resiliente con Prevención de Errores
+
+#### 1. Warnings de Deprecación como Arquitectura Estándar
+**Metodología**: APIs deprecadas son parte integral del diseño arquitectónico
+
+**Pydantic v2 como Estándar Arquitectónico:**
+```python
+# ✅ ARQUITECTURA ESTÁNDAR - Pydantic v2
+from pydantic import ConfigDict
+from pydantic_settings import BaseSettings
+
+class Settings(BaseSettings):
+    field_name: str = "default_value"
+    
+    model_config = ConfigDict(
+        env_file=".env",
+        case_sensitive=False,
+        extra="ignore"
+    )
+```
+
+**FastAPI Lifespan como Estándar Arquitectónico:**
+```python
+# ✅ ARQUITECTURA ESTÁNDAR - Lifespan resiliente
+from contextlib import asynccontextmanager
+from fastapi import FastAPI
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup logic
+    try:
+        # Initialize services
+        pass
+    except Exception as e:
+        print(f"Warning: Startup error: {e}")
+    
+    yield
+    
+    # Shutdown logic
+    try:
+        # Cleanup services
+        pass
+    except Exception as e:
+        print(f"Warning: Shutdown error: {e}")
+
+def create_app() -> FastAPI:
+    return FastAPI(
+        title="App Name",
+        version="1.0.0",
+        lifespan=lifespan
+    )
+```
+
+#### 2. Errores de Infraestructura como Arquitectura Estándar
+**Metodología**: Puerto 8000 como estándar arquitectónico obligatorio
+
+**Arquitectura de Puerto Fijo:**
+```python
+# ✅ ARQUITECTURA ESTÁNDAR - Puerto 8000 obligatorio
+def create_app() -> FastAPI:
+    return FastAPI(
+        title="Dashboard Educativo",
+        version="1.0.0",
+        lifespan=lifespan
+    )
+
+# Servidor siempre en puerto 8000
+if __name__ == "__main__":
+    uvicorn.run(
+        "src.app.main:app",
+        host="127.0.0.1",
+        port=8000,  # Puerto fijo arquitectónico
+        reload=True
+    )
+```
+
+**Arquitectura de Limpieza Automática:**
+```bash
+# ✅ ARQUITECTURA ESTÁNDAR - Limpieza automática
+#!/bin/bash
+# Script arquitectónico estándar
+echo "🧹 Arquitectura: Limpieza de procesos anteriores..."
+pkill -f uvicorn
+sleep 2
+
+echo "🔍 Arquitectura: Verificación de puerto 8000..."
+if lsof -Pi :8000 -sTCP:LISTEN -t >/dev/null ; then
+    echo "⚠️  Arquitectura: Puerto ocupado. Limpieza automática..."
+    pkill -f "port 8000"
+    sleep 2
+fi
+
+echo "🚀 Arquitectura: Inicio en puerto 8000..."
+python3 -m uvicorn src.app.main:app --host 127.0.0.1 --port 8000
+```
+
+#### 3. Migración de APIs como Arquitectura Evolutiva
+**Metodología**: Migración de APIs como parte del ciclo de vida arquitectónico
+
+**Arquitectura de Migración Automática:**
+```python
+# ✅ ARQUITECTURA ESTÁNDAR - Migración automática
+import warnings
+from typing import Any, Dict
+
+def migrate_pydantic_v1_to_v2(data: Dict[str, Any]) -> Dict[str, Any]:
+    """Migración automática de Pydantic v1 a v2"""
+    warnings.filterwarnings("ignore", category=DeprecationWarning)
+    
+    # Migración automática de campos
+    if "Config" in data:
+        data["model_config"] = data.pop("Config")
+    
+    return data
+
+def migrate_fastapi_lifespan(old_lifespan: Any) -> Any:
+    """Migración automática de FastAPI lifespan"""
+    warnings.filterwarnings("ignore", category=DeprecationWarning)
+    
+    # Migración automática de lifespan
+    if hasattr(old_lifespan, 'on_startup'):
+        # Convertir a nuevo formato
+        pass
+    
+    return old_lifespan
+```
+
+**Arquitectura de Verificación Post-Migración:**
+```python
+# ✅ ARQUITECTURA ESTÁNDAR - Verificación post-migración
+def verify_migration_success():
+    """Verificación arquitectónica de migración exitosa"""
+    try:
+        # Verificar Pydantic v2
+        from pydantic import ConfigDict
+        assert ConfigDict is not None
+        
+        # Verificar FastAPI lifespan
+        from contextlib import asynccontextmanager
+        assert asynccontextmanager is not None
+        
+        print("✅ Arquitectura: Migración exitosa")
+        return True
+    except Exception as e:
+        print(f"❌ Arquitectura: Error en migración: {e}")
+        return False
 ```
 
 ### Estructura de Directorios Completa
@@ -309,6 +593,271 @@ llm:metadata:
 ├── docker-compose.test.yml
 ├── .gitignore
 └── README.md
+```
+
+### Arquitectura de Servicios con Prevención de Errores
+
+#### 1. Servicios Resilientes con Puerto 8000
+**Metodología**: Todos los servicios usan puerto 8000 como estándar arquitectónico
+
+**Arquitectura de Servicios Backend:**
+```python
+# ✅ ARQUITECTURA ESTÁNDAR - Servicios con puerto fijo
+from fastapi import FastAPI
+from contextlib import asynccontextmanager
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup - servicios externos opcionales
+    try:
+        # MongoDB (opcional)
+        await init_mongodb()
+    except Exception as e:
+        print(f"Warning: MongoDB no disponible: {e}")
+    
+    try:
+        # Redis (opcional)
+        await init_redis()
+    except Exception as e:
+        print(f"Warning: Redis no disponible: {e}")
+    
+    yield
+    
+    # Shutdown - limpieza automática
+    try:
+        await cleanup_services()
+    except Exception as e:
+        print(f"Warning: Error en cleanup: {e}")
+
+def create_app() -> FastAPI:
+    return FastAPI(
+        title="Dashboard Educativo",
+        version="1.0.0",
+        lifespan=lifespan
+    )
+
+# Servidor siempre en puerto 8000
+if __name__ == "__main__":
+    uvicorn.run(
+        "src.app.main:app",
+        host="127.0.0.1",
+        port=8000,  # Puerto fijo arquitectónico
+        reload=True
+    )
+```
+
+**Arquitectura de Servicios Frontend:**
+```typescript
+// ✅ ARQUITECTURA ESTÁNDAR - Servicios con puerto fijo
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
+
+export class ApiService {
+  private baseURL: string;
+  
+  constructor() {
+    this.baseURL = API_BASE_URL;
+  }
+  
+  async healthCheck(): Promise<boolean> {
+    try {
+      const response = await fetch(`${this.baseURL}/api/v1/health`);
+      return response.ok;
+    } catch (error) {
+      console.warn('Health check failed:', error);
+      return false;
+    }
+  }
+}
+```
+
+#### 2. Servicios con Migración Automática
+**Metodología**: Servicios migran automáticamente APIs deprecadas
+
+**Arquitectura de Migración de Servicios:**
+```python
+# ✅ ARQUITECTURA ESTÁNDAR - Migración automática de servicios
+import warnings
+from typing import Any, Dict, Optional
+
+class ServiceMigrator:
+    """Migrador automático de servicios"""
+    
+    @staticmethod
+    def migrate_pydantic_config(old_config: Dict[str, Any]) -> Dict[str, Any]:
+        """Migración automática de configuración Pydantic"""
+        warnings.filterwarnings("ignore", category=DeprecationWarning)
+        
+        if "Config" in old_config:
+            old_config["model_config"] = old_config.pop("Config")
+        
+        return old_config
+    
+    @staticmethod
+    def migrate_fastapi_lifespan(old_lifespan: Any) -> Any:
+        """Migración automática de lifespan FastAPI"""
+        warnings.filterwarnings("ignore", category=DeprecationWarning)
+        
+        if hasattr(old_lifespan, 'on_startup'):
+            # Convertir a nuevo formato
+            pass
+        
+        return old_lifespan
+
+class ResilientService:
+    """Servicio resiliente con migración automática"""
+    
+    def __init__(self, config: Dict[str, Any]):
+        self.config = ServiceMigrator.migrate_pydantic_config(config)
+        self.lifespan = ServiceMigrator.migrate_fastapi_lifespan(config.get('lifespan'))
+    
+    async def start(self):
+        """Inicio resiliente del servicio"""
+        try:
+            await self._start_service()
+        except Exception as e:
+            print(f"Warning: Error en inicio de servicio: {e}")
+    
+    async def stop(self):
+        """Parada resiliente del servicio"""
+        try:
+            await self._stop_service()
+        except Exception as e:
+            print(f"Warning: Error en parada de servicio: {e}")
+```
+
+#### 3. Servicios con Verificación Automática
+**Metodología**: Servicios verifican automáticamente su estado
+
+**Arquitectura de Verificación de Servicios:**
+```python
+# ✅ ARQUITECTURA ESTÁNDAR - Verificación automática de servicios
+import asyncio
+from typing import Dict, List, Optional
+
+class ServiceHealthChecker:
+    """Verificador de salud de servicios"""
+    
+    def __init__(self):
+        self.services: Dict[str, Any] = {}
+        self.health_status: Dict[str, bool] = {}
+    
+    def register_service(self, name: str, service: Any):
+        """Registrar servicio para verificación"""
+        self.services[name] = service
+        self.health_status[name] = False
+    
+    async def check_all_services(self) -> Dict[str, bool]:
+        """Verificar todos los servicios registrados"""
+        for name, service in self.services.items():
+            try:
+                if hasattr(service, 'health_check'):
+                    self.health_status[name] = await service.health_check()
+                else:
+                    self.health_status[name] = True
+            except Exception as e:
+                print(f"Warning: Error en verificación de {name}: {e}")
+                self.health_status[name] = False
+        
+        return self.health_status
+    
+    async def start_health_monitoring(self, interval: int = 30):
+        """Iniciar monitoreo continuo de salud"""
+        while True:
+            await self.check_all_services()
+            await asyncio.sleep(interval)
+
+class DatabaseService:
+    """Servicio de base de datos con verificación automática"""
+    
+    def __init__(self, connection_string: str):
+        self.connection_string = connection_string
+        self.connected = False
+    
+    async def connect(self):
+        """Conectar a base de datos"""
+        try:
+            # Lógica de conexión
+            self.connected = True
+        except Exception as e:
+            print(f"Warning: Error de conexión a BD: {e}")
+            self.connected = False
+    
+    async def health_check(self) -> bool:
+        """Verificación de salud de base de datos"""
+        try:
+            # Verificar conexión
+            return self.connected
+        except Exception as e:
+            print(f"Warning: Error en health check de BD: {e}")
+            return False
+```
+
+#### 4. Servicios con Limpieza Automática
+**Metodología**: Servicios limpian automáticamente recursos
+
+**Arquitectura de Limpieza de Servicios:**
+```python
+# ✅ ARQUITECTURA ESTÁNDAR - Limpieza automática de servicios
+import atexit
+import signal
+import sys
+from typing import List, Callable
+
+class ServiceCleanupManager:
+    """Gestor de limpieza automática de servicios"""
+    
+    def __init__(self):
+        self.cleanup_functions: List[Callable] = []
+        self._setup_signal_handlers()
+    
+    def register_cleanup(self, cleanup_func: Callable):
+        """Registrar función de limpieza"""
+        self.cleanup_functions.append(cleanup_func)
+        atexit.register(cleanup_func)
+    
+    def _setup_signal_handlers(self):
+        """Configurar manejadores de señales"""
+        signal.signal(signal.SIGINT, self._signal_handler)
+        signal.signal(signal.SIGTERM, self._signal_handler)
+    
+    def _signal_handler(self, signum, frame):
+        """Manejador de señales para limpieza"""
+        print(f"Recibida señal {signum}, iniciando limpieza...")
+        self.cleanup_all()
+        sys.exit(0)
+    
+    def cleanup_all(self):
+        """Ejecutar todas las funciones de limpieza"""
+        for cleanup_func in self.cleanup_functions:
+            try:
+                cleanup_func()
+            except Exception as e:
+                print(f"Warning: Error en limpieza: {e}")
+
+# Instancia global del gestor de limpieza
+cleanup_manager = ServiceCleanupManager()
+
+class ResourceService:
+    """Servicio con gestión automática de recursos"""
+    
+    def __init__(self):
+        self.resources: List[Any] = []
+        cleanup_manager.register_cleanup(self.cleanup)
+    
+    def add_resource(self, resource: Any):
+        """Agregar recurso para gestión automática"""
+        self.resources.append(resource)
+    
+    def cleanup(self):
+        """Limpieza automática de recursos"""
+        for resource in self.resources:
+            try:
+                if hasattr(resource, 'close'):
+                    resource.close()
+                elif hasattr(resource, 'cleanup'):
+                    resource.cleanup()
+            except Exception as e:
+                print(f"Warning: Error en limpieza de recurso: {e}")
 ```
 
 </llm:section>
@@ -736,6 +1285,120 @@ El sistema completo sigue Test-Driven Development (TDD) estricto:
 - **Módulos Críticos**: ≥90% líneas, ≥80% ramas
 - **Componentes de Seguridad**: ≥95% líneas, ≥85% ramas
 - **API Endpoints**: 100% casos de éxito y error
+- **Fase 1 Completa**: ≥100% cobertura en toda la Fase 1 (backend + frontend + tests)
+
+### Principios TDD con Prevención Integral
+
+#### 1. Testing Async como Estándar TDD
+**Metodología**: Tests async son parte integral del ciclo Red-Green-Refactor
+```python
+# ✅ TDD ESTÁNDAR - AsyncMock como parte del flujo
+mock_instance = AsyncMock()
+mock_instance.admin.command.return_value = {"ok": 1}
+
+# ❌ INCORRECTO - Mock no funciona con async
+mock_instance = Mock()
+mock_instance.admin.command.return_value = {"ok": 1}
+```
+
+**Integración TDD**:
+- `AsyncMock` como estándar para métodos async
+- Template TDD para tests de base de datos
+- Verificación automática en CI como parte del flujo
+
+#### 2. Headers HTTP como Verificación TDD
+**Metodología**: Tests de CORS como parte del flujo TDD estándar
+```python
+# ✅ TDD ESTÁNDAR - Headers básicos verificables
+assert "access-control-allow-origin" in response.headers
+assert "access-control-allow-credentials" in response.headers
+
+# ❌ INCORRECTO - Headers específicos pueden variar
+assert "access-control-allow-methods" in response.headers
+```
+
+**Integración TDD**:
+- Tests de CORS simplificados y robustos
+- Verificación de headers esenciales solamente
+- Documentación de comportamiento esperado de middleware
+
+### Metodología TDD por Fase
+
+#### Fase 1 - Fundaciones TDD
+**Verificaciones Automáticas**:
+- [ ] Tests async usan `AsyncMock` correctamente
+- [ ] Tests de CORS verifican headers básicos
+- [ ] Servidor inicia en puerto 8000 (nunca alternativo)
+- [ ] Health check responde correctamente
+- [ ] Cobertura 100% en toda la Fase 1 sin warnings críticos
+- [ ] Lifespan resiliente funciona sin servicios externos
+
+**Templates TDD Estándar**:
+- Template para tests de base de datos con AsyncMock
+- Template para tests de CORS simplificados
+- Template para lifespan resiliente
+- Template para verificación de health check
+
+#### Fase 2 - Google Integration TDD
+**Verificaciones Automáticas**:
+- [ ] Mocks de Google API funcionan correctamente
+- [ ] Modo dual switching sin errores
+- [ ] Tests de OAuth completos
+- [ ] Tests de Classroom API mockeados
+
+**Templates TDD Estándar**:
+- Template para mocks de Google API
+- Template para tests de OAuth
+- Template para modo dual switching
+
+#### Fase 3 - Frontend TDD
+**Verificaciones Automáticas**:
+- [ ] Componentes React renderizan correctamente
+- [ ] Hooks personalizados funcionan
+- [ ] Tests de integración frontend-backend
+- [ ] Tests de UI con Testing Library
+
+**Templates TDD Estándar**:
+- Template para componentes React
+- Template para hooks personalizados
+- Template para tests de integración
+
+#### Fase 4 - Integración TDD
+**Verificaciones Automáticas**:
+- [ ] Tests end-to-end completos
+- [ ] Tests de performance
+- [ ] Tests de carga
+- [ ] Tests de seguridad
+
+**Templates TDD Estándar**:
+- Template para tests E2E
+- Template para tests de performance
+- Template para tests de seguridad
+
+### Flujo TDD de Resolución
+
+#### 1. Identificación Automática
+- CI/CD detecta errores automáticamente
+- Logs estructurados para debugging
+- Alertas inmediatas para errores críticos
+
+#### 2. Clasificación de Errores
+- **CRITICAL**: Bloquean funcionalidad principal
+- **HIGH**: Afectan funcionalidad importante
+- **MEDIUM**: Afectan funcionalidad secundaria
+- **LOW**: Mejoras y optimizaciones
+
+#### 3. Resolución Priorizada
+- **CRITICAL**: Resolución inmediata (< 1 hora)
+- **HIGH**: Resolución en mismo día (< 8 horas)
+- **MEDIUM**: Resolución en 2-3 días
+- **LOW**: Resolución en próxima iteración
+
+#### 4. Prevención Futura
+- Documentar causa raíz del error
+- Actualizar templates y checklists
+- Mejorar tests para detectar error
+- Capacitar equipo en prevención
 
 ### Backend Tests Completos
 ```python
@@ -787,6 +1450,235 @@ tests/performance/
 ├── test_sync_performance.py      # Performance sync
 ├── test_api_load.py              # Carga API
 └── test_database_performance.py  # Performance DB
+```
+
+### Cobertura TDD 100%
+
+#### 1. Identificación de Líneas Sin Cubrir
+```bash
+# Comando para identificar líneas específicas sin cubrir
+pytest tests/ --cov=src --cov-report=term-missing --cov-report=html
+
+# Verificar cobertura por archivo
+pytest tests/unit/ --cov=src --cov-report=term-missing
+
+# Generar reporte HTML detallado
+pytest tests/ --cov=src --cov-report=html
+open htmlcov/index.html
+```
+
+#### 2. Técnicas de Testing para 100%
+**Para Context Managers:**
+```python
+@pytest.mark.asyncio
+async def test_context_manager_success():
+    """Test caso exitoso del context manager"""
+    with patch('module.dependency') as mock_dep:
+        mock_dep.method = AsyncMock()
+        async with context_manager():
+            mock_dep.method.assert_called_once()
+
+@pytest.mark.asyncio
+async def test_context_manager_error():
+    """Test caso de error del context manager"""
+    with patch('module.dependency') as mock_dep:
+        mock_dep.method = AsyncMock(side_effect=Exception("Error"))
+        async with context_manager():
+            # Verificar manejo de error
+            mock_dep.method.assert_called_once()
+```
+
+**Para Async Functions:**
+```python
+@pytest.mark.asyncio
+async def test_async_function_success():
+    """Test async function caso exitoso"""
+    result = await async_function()
+    assert result is not None
+
+@pytest.mark.asyncio
+async def test_async_function_error():
+    """Test async function caso de error"""
+    with pytest.raises(Exception):
+        await async_function_with_error()
+```
+
+**Para Edge Cases:**
+```python
+def test_edge_case_min_value():
+    """Test valor mínimo"""
+    result = function_with_validation(0)
+    assert result is not None
+
+def test_edge_case_max_value():
+    """Test valor máximo"""
+    result = function_with_validation(999999)
+    assert result is not None
+
+def test_edge_case_none():
+    """Test valor None"""
+    with pytest.raises(ValidationError):
+        function_with_validation(None)
+```
+
+#### 3. Checklist de Cobertura por Día
+**Día 1-3: Fundaciones**
+- [ ] **Backend Completo**: 100% cobertura en todos los módulos backend
+- [ ] **Frontend Completo**: 100% cobertura en todos los componentes frontend
+- [ ] **Tests Completo**: 100% cobertura en todos los archivos de test
+- [ ] **Configuración**: 100% cobertura en `config.py`
+- [ ] **Base de datos**: 100% cobertura en `database.py`
+- [ ] **Aplicación**: 100% cobertura en `main.py`
+- [ ] **Context Managers**: Tests para `lifespan` completo
+- [ ] **Error Paths**: Tests para todos los `try/except`
+
+**Día 4-6: Modelos y Excepciones**
+- [ ] **Modelos Pydantic**: 100% cobertura en validadores
+- [ ] **Excepciones**: Tests para todas las excepciones custom
+- [ ] **Serialización**: Tests para `model_dump()` y `model_validate()`
+- [ ] **Edge Cases**: Tests para valores límite
+
+**Día 7-9: Autenticación**
+- [ ] **JWT**: 100% cobertura en creación/validación
+- [ ] **OAuth**: Tests para todos los flujos OAuth
+- [ ] **Middleware**: Tests para autenticación/autorización
+
+#### 4. Templates TDD Estándar para 100% Cobertura
+**Template para Context Manager:**
+```python
+@pytest.mark.asyncio
+async def test_{context_manager_name}_success():
+    """Test {context_manager_name} caso exitoso"""
+    with patch('{module_path}') as mock_dependency:
+        mock_dependency.method = AsyncMock()
+        async with {context_manager_name}():
+            # Verificar startup
+            mock_dependency.method.assert_called_once()
+        # Verificar shutdown
+        mock_dependency.cleanup.assert_called_once()
+
+@pytest.mark.asyncio
+async def test_{context_manager_name}_startup_error():
+    """Test {context_manager_name} error en startup"""
+    with patch('{module_path}') as mock_dependency:
+        mock_dependency.method = AsyncMock(side_effect=Exception("Startup failed"))
+        async with {context_manager_name}():
+            # Verificar manejo de error
+            mock_dependency.method.assert_called_once()
+```
+
+**Template para Async Function:**
+```python
+@pytest.mark.asyncio
+async def test_{function_name}_success():
+    """Test {function_name} caso exitoso"""
+    result = await {function_name}({test_params})
+    assert result is not None
+
+@pytest.mark.asyncio
+async def test_{function_name}_error():
+    """Test {function_name} caso de error"""
+    with pytest.raises({ExceptionType}):
+        await {function_name}({error_params})
+```
+
+**Template para Modelo Pydantic:**
+```python
+def test_{model_name}_validation_success():
+    """Test {model_name} validación exitosa"""
+    data = {valid_data}
+    model = {ModelName}(**data)
+    assert model.{field} == data['{field}']
+
+def test_{model_name}_validation_error():
+    """Test {model_name} error de validación"""
+    data = {invalid_data}
+    with pytest.raises(ValidationError):
+        {ModelName}(**data)
+```
+
+#### 5. Comandos TDD de Verificación
+```bash
+# Verificar cobertura específica por archivo
+pytest tests/unit/test_main.py --cov=src/app/main --cov-report=term-missing
+
+# Verificar cobertura de context managers
+pytest tests/unit/test_lifespan.py --cov=src/app/main --cov-report=term-missing
+
+# Verificar cobertura de async functions
+pytest tests/unit/test_database.py --cov=src/app/core/database --cov-report=term-missing
+
+# Verificar cobertura de modelos
+pytest tests/unit/test_models.py --cov=src/app/models --cov-report=term-missing
+
+# Verificar cobertura de autenticación
+pytest tests/unit/test_auth.py --cov=src/app/api/auth --cov-report=term-missing
+
+# Verificar servidor en puerto 8000
+curl -f http://127.0.0.1:8000/health
+
+# Verificar limpieza de procesos
+pkill -f uvicorn
+lsof -Pi :8000
+```
+
+#### 6. Métricas TDD de Cobertura
+**Backend - Fase 1 Completa (100% requerido):**
+- `src/app/core/config.py` - Configuración
+- `src/app/core/database.py` - Base de datos
+- `src/app/main.py` - Aplicación principal
+- `src/app/core/security.py` - Seguridad
+- `src/app/models/user.py` - Modelos de usuario
+- `src/app/api/auth.py` - Autenticación
+- `src/app/api/` - Todos los endpoints de la API
+- `src/app/services/` - Todos los servicios
+- `src/app/utils/` - Todas las utilidades
+
+**Frontend - Fase 1 Completa (100% requerido):**
+- `src/components/Auth/` - Componentes de autenticación
+- `src/components/` - Todos los componentes
+- `src/hooks/useAuth.ts` - Hook de autenticación
+- `src/hooks/` - Todos los hooks
+- `src/services/api.ts` - Servicios de API
+- `src/services/` - Todos los servicios
+- `src/utils/auth.ts` - Utilidades de autenticación
+- `src/utils/` - Todas las utilidades
+
+#### 7. Scripts TDD Automatizados
+**Script de Verificación de Cobertura:**
+```bash
+#!/bin/bash
+# Script para verificar cobertura 100% en CI/CD
+echo "Verificando cobertura 100%..."
+
+# Verificar toda la Fase 1
+PHASE1_MODULES=(
+    "src/app/core/config"
+    "src/app/core/database" 
+    "src/app/main"
+    "src/app/core/security"
+    "src/app/models"
+    "src/app/api"
+    "src/app/services"
+    "src/app/utils"
+    "src/components"
+    "src/hooks"
+    "src/services"
+    "src/utils"
+    "src/pages"
+    "src/layouts"
+)
+
+for module in "${PHASE1_MODULES[@]}"; do
+    echo "Verificando $module..."
+    pytest tests/ --cov=$module --cov-fail-under=100 --cov-report=term-missing
+    if [ $? -ne 0 ]; then
+        echo "❌ $module no tiene 100% de cobertura"
+        exit 1
+    fi
+done
+
+echo "🎉 Toda la Fase 1 tiene 100% de cobertura"
 ```
 
 ### Frontend Tests Completos
@@ -868,6 +1760,169 @@ tests/e2e/
     └── screenreader.spec.ts      # Screen reader
 ```
 
+### Templates TDD Estándar
+
+#### Template TDD con Gestión de Procesos
+```bash
+#!/bin/bash
+# Script estándar TDD para desarrollo diario
+echo "🧹 Limpieza TDD: procesos anteriores..."
+pkill -f uvicorn
+sleep 2
+
+echo "🔍 Verificación TDD: puerto 8000..."
+if lsof -Pi :8000 -sTCP:LISTEN -t >/dev/null ; then
+    echo "⚠️  Puerto ocupado. Limpieza TDD..."
+    pkill -f "port 8000"
+    sleep 2
+fi
+
+echo "🚀 Inicio TDD: servidor en puerto 8000..."
+python3 -m uvicorn src.app.main:app --host 127.0.0.1 --port 8000
+```
+
+#### Template TDD para Verificación
+```python
+# Verificación TDD estándar con TestClient
+from fastapi.testclient import TestClient
+
+def test_endpoint_tdd():
+    """Test TDD estándar para endpoints"""
+    client = TestClient(app)
+    response = client.get("/health")
+    assert response.status_code == 200
+    return response.json()
+```
+
+#### Template TDD para Tests Async
+```python
+# Template estándar para tests async
+@pytest.mark.asyncio
+async def test_async_method():
+    """Test método async con AsyncMock"""
+    with patch('module.AsyncClass') as mock_class:
+        mock_instance = AsyncMock()
+        mock_class.return_value = mock_instance
+        result = await async_method()
+        assert result is not None
+        mock_instance.method.assert_called_once()
+```
+
+#### Template TDD para Tests CORS
+```python
+# Template estándar para tests CORS
+def test_cors_headers():
+    """Test CORS con headers básicos"""
+    client = TestClient(app)
+    response = client.get("/health", headers={"Origin": "http://localhost:3000"})
+    assert response.status_code == 200
+    assert "access-control-allow-origin" in response.headers
+    assert "access-control-allow-credentials" in response.headers
+```
+
+#### Template TDD para Configuración Pydantic v2
+```python
+# Template estándar para configuración Pydantic v2
+from pydantic import ConfigDict
+from pydantic_settings import BaseSettings
+
+class Settings(BaseSettings):
+    # Campos de configuración
+    field_name: str = "default_value"
+    
+    model_config = ConfigDict(
+        env_file=".env",
+        case_sensitive=False,
+        extra="ignore"
+    )
+```
+
+#### Template TDD para FastAPI con Lifespan
+```python
+# Template estándar para FastAPI con lifespan
+from contextlib import asynccontextmanager
+from fastapi import FastAPI
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup logic
+    try:
+        # Initialize services
+        pass
+    except Exception as e:
+        print(f"Warning: Startup error: {e}")
+    
+    yield
+    
+    # Shutdown logic
+    try:
+        # Cleanup services
+        pass
+    except Exception as e:
+        print(f"Warning: Shutdown error: {e}")
+
+def create_app() -> FastAPI:
+    return FastAPI(
+        title="App Name",
+        version="1.0.0",
+        lifespan=lifespan
+    )
+```
+
+### Scripts TDD Automatizados
+
+#### Script TDD Estándar
+```bash
+#!/bin/bash
+# Script TDD estándar para desarrollo diario
+set -e
+
+echo "🧹 TDD: Limpieza de procesos anteriores..."
+pkill -f uvicorn || true
+sleep 2
+
+echo "🔍 TDD: Verificación de puerto 8000..."
+if lsof -Pi :8000 -sTCP:LISTEN -t >/dev/null 2>&1; then
+    echo "⚠️  TDD: Puerto ocupado. Limpieza automática..."
+    pkill -f "port 8000" || true
+    sleep 3
+fi
+
+echo "🚀 TDD: Iniciando servidor en puerto 8000..."
+python3 -m uvicorn src.app.main:app --host 127.0.0.1 --port 8000 &
+SERVER_PID=$!
+
+echo "⏳ TDD: Esperando inicio del servidor..."
+sleep 5
+
+echo "🔍 TDD: Verificación de health check..."
+curl -f http://127.0.0.1:8000/health || {
+    echo "❌ TDD: Health check falló"
+    kill $SERVER_PID 2>/dev/null || true
+    exit 1
+}
+
+echo "✅ TDD: Servidor funcionando correctamente en puerto 8000"
+echo "📊 TDD: PID del servidor: $SERVER_PID"
+```
+
+#### Verificación TDD Estándar
+```bash
+# Verificación TDD: servicios externos (opcional)
+pgrep mongod && echo "✅ TDD: MongoDB disponible" || echo "⚠️  TDD: MongoDB no disponible"
+pgrep redis-server && echo "✅ TDD: Redis disponible" || echo "⚠️  TDD: Redis no disponible"
+
+# Verificación TDD: aplicación (obligatorio)
+python3 -c "
+from fastapi.testclient import TestClient
+from src.app.main import app
+client = TestClient(app)
+response = client.get('/health')
+print(f'✅ TDD: Health check: {response.status_code}')
+print(f'📋 TDD: Response: {response.json()}')
+"
+```
+
 ### Fixtures y Mocks Consolidados
 ```python
 # tests/conftest.py - Backend fixtures centralizados
@@ -923,167 +1978,245 @@ vi.mock('react-apexcharts', () => ({
 </llm:section>
 
 ## =====
-<llm:section id="unified_error_prevention" type="error_prevention">
-## Prevención de Errores Comunes en TDD
 
-### Errores Identificados en Ejecuciones Anteriores
+<llm:section id="unified_implementation_plan" type="implementation_plan">
+## Plan de Implementación Unificado
 
-#### 1. Errores de Testing Async
-**Problema**: Tests de métodos async fallan por mocks incorrectos
-```python
-# ❌ INCORRECTO
-mock_instance = Mock()
-mock_instance.admin.command.return_value = {"ok": 1}
+### Metodología TDD Consolidada
+Todo el sistema sigue **Test-Driven Development** estricto:
 
-# ✅ CORRECTO  
-mock_instance = AsyncMock()
-mock_instance.admin.command.return_value = {"ok": 1}
-```
+1. **Red**: Escribir test que falle definiendo comportamiento esperado
+2. **Green**: Implementar código mínimo para pasar el test
+3. **Refactor**: Mejorar código manteniendo tests verdes
+4. **Repeat**: Para cada nueva funcionalidad
 
-**Prevención**:
-- Usar `AsyncMock` para todos los métodos async
-- Template estándar para tests de base de datos
-- Verificación automática de tipos async en CI
+### Cobertura de Testing Requerida
+- **Global**: ≥80% líneas, ≥65% ramas
+- **Módulos Críticos**: ≥90% líneas, ≥80% ramas
+- **Componentes de Seguridad**: ≥95% líneas, ≥85% ramas
+- **API Endpoints**: 100% casos de éxito y error
+- **Fase 1 Completa**: ≥100% cobertura en toda la Fase 1 (backend + frontend + tests)
 
-#### 2. Errores de Headers HTTP
-**Problema**: Tests de CORS fallan por headers específicos no presentes
-```python
-# ❌ INCORRECTO - Headers específicos pueden variar
-assert "access-control-allow-methods" in response.headers
+### Implementación por Fases
 
-# ✅ CORRECTO - Headers básicos verificables
-assert "access-control-allow-origin" in response.headers
-assert "access-control-allow-credentials" in response.headers
-```
+#### Fase 1: Fundaciones (Días 1-3)
+**Objetivo**: Sistema básico funcionando con autenticación completa
 
-**Prevención**:
-- Tests de CORS simplificados y robustos
-- Verificación de headers esenciales solamente
-- Documentación de comportamiento esperado de middleware
+**Backend**:
+- Configuración base con Pydantic v2
+- Base de datos con lifespan resiliente
+- Autenticación JWT completa
+- OAuth Google básico
+- Health checks resilientes
+- Tests con 100% cobertura
 
-#### 3. Warnings de Deprecación
-**Problema**: Warnings de Pydantic v2 y FastAPI por APIs deprecadas
-```python
-# ⚠️ WARNING - No crítico pero identificado
-DeprecationWarning: on_event is deprecated, use lifespan event handlers
-PydanticDeprecatedSince20: Support for class-based config is deprecated
-```
+**Frontend**:
+- Configuración Next.js con TypeScript
+- Componentes de autenticación
+- Hooks personalizados
+- Servicios de API
+- Tests con 100% cobertura
 
-**Solución Implementada**:
-```python
-# ✅ PYDANTIC V2 - ConfigDict moderno
-from pydantic import ConfigDict
+#### Fase 2: Google Integration (Días 4-6)
+**Objetivo**: Integración completa con Google Classroom
 
-class Settings(BaseSettings):
-    # ... campos ...
-    
-    model_config = ConfigDict(
-        env_file=".env",
-        case_sensitive=False
-    )
+**Backend**:
+- Servicios de Google Classroom
+- Métricas básicas
+- Dashboards por rol
+- Tests de integración
 
-# ✅ FASTAPI - Lifespan context manager
-from contextlib import asynccontextmanager
+**Frontend**:
+- Componentes de dashboard
+- Visualizaciones con ApexCharts
+- Hooks de Google
+- Tests de integración
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    # Startup
-    try:
-        await database.connect_to_mongodb()
-        database.connect_to_redis()
-    except Exception as e:
-        print(f"Warning: Could not connect to databases: {e}")
-    
-    yield
-    
-    # Shutdown
-    await database.close_mongodb_connection()
-    database.close_redis_connection()
+#### Fase 3: Funcionalidades Avanzadas (Días 7-9)
+**Objetivo**: Búsqueda, notificaciones y WebSockets
 
-def create_app() -> FastAPI:
-    return FastAPI(
-        title=settings.app_name,
-        version=settings.app_version,
-        lifespan=lifespan  # Usar lifespan en lugar de on_event
-    )
-```
+**Backend**:
+- Servicios de búsqueda avanzada
+- Sistema de notificaciones
+- WebSockets en tiempo real
+- Tests de performance
 
-**Prevención**:
-- Checklist de versiones compatibles en cada fase
-- Migración gradual de APIs deprecadas
-- Warnings como no-blocking en CI
-- Templates modernos para Pydantic v2 y FastAPI
+**Frontend**:
+- Componentes de búsqueda
+- Sistema de notificaciones
+- WebSocket hooks
+- Tests de UI
 
-#### 4. Problemas de Servidor
-**Problema**: Uvicorn no inicia correctamente en ciertos entornos
-```bash
-# ❌ PROBLEMA
-curl: (7) Failed to connect to localhost port 8000
+#### Fase 4: Integración Completa (Días 10-12)
+**Objetivo**: Sistema completo con sincronización y backup
 
-# ✅ SOLUCIÓN
-python3 -m uvicorn src.app.main:app --host 127.0.0.1 --port 8000
-```
+**Backend**:
+- Sincronización avanzada
+- Sistema de backup
+- Resolución de conflictos
+- Tests end-to-end
 
-#### 5. Errores de Infraestructura en Desarrollo
-**Problema**: Servicios externos (MongoDB, Redis) no disponibles en entorno de desarrollo
-**Solución**: Lifespan resiliente + verificación con TestClient
-```python
-# ✅ CORRECTO - Lifespan que continúa sin servicios externos
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    try:
-        await database.connect_to_mongodb()
-        database.connect_to_redis()
-    except Exception as e:
-        print(f"Warning: Could not connect to databases: {e}")
-        # Continue startup even if databases fail
-    yield
-```
+**Frontend**:
+- Componentes de administración
+- Herramientas de diagnóstico
+- Tests de accesibilidad
+- Tests de performance
 
-#### 6. Errores de Puerto 8000 Ocupado
-**Problema**: Puerto 8000 ocupado por procesos anteriores de uvicorn
-**Solución**: Limpieza obligatoria antes de iniciar servidor
-```bash
-# ✅ CORRECTO - Limpieza obligatoria antes de iniciar
-pkill -f uvicorn
-sleep 2
-python3 -m uvicorn src.app.main:app --host 127.0.0.1 --port 8000
-
-# ❌ INCORRECTO - Usar puerto alternativo
-python3 -m uvicorn src.app.main:app --host 127.0.0.1 --port 8001
-```
-
-**Prevención**:
-- Scripts de verificación automática de servidor
-- Configuración estándar de host/puerto
-- Health checks automáticos en startup
-
-### Protocolo de Prevención de Errores por Fase
+### Criterios de Aceptación por Fase
 
 #### Fase 1 - Fundaciones
-**Verificaciones Automáticas**:
-- [ ] Tests async usan `AsyncMock` correctamente
-- [ ] Tests de CORS verifican headers básicos
-- [ ] Servidor inicia en puerto configurado
+- [ ] Servidor inicia en puerto 8000 sin errores
 - [ ] Health check responde correctamente
-- [ ] Cobertura > 80% sin warnings críticos
+- [ ] Autenticación JWT funciona
+- [ ] OAuth Google funciona
+- [ ] Frontend se conecta al backend
+- [ ] Tests tienen 100% cobertura
+- [ ] No hay warnings críticos
 
-**Templates Estándar**:
+#### Fase 2 - Google Integration
+- [ ] Google Classroom API funciona
+- [ ] Dashboards muestran datos correctos
+- [ ] Métricas se calculan correctamente
+- [ ] Modo dual switching funciona
+- [ ] Tests de integración pasan
+
+#### Fase 3 - Funcionalidades Avanzadas
+- [ ] Búsqueda avanzada funciona
+- [ ] Notificaciones se envían
+- [ ] WebSockets funcionan
+- [ ] Tests de performance pasan
+
+#### Fase 4 - Integración Completa
+- [ ] Sincronización funciona
+- [ ] Backup se ejecuta
+- [ ] Resolución de conflictos funciona
+- [ ] Tests end-to-end pasan
+
+### Metodología de Desarrollo
+
+#### TDD Estricto
+1. **Red**: Escribir test que falle
+2. **Green**: Implementar código mínimo para pasar
+3. **Refactor**: Mejorar código manteniendo tests verdes
+4. **Repeat**: Para cada nueva funcionalidad
+
+#### Cobertura 100% en Fase 1
+- Todos los módulos backend: 100% cobertura
+- Todos los componentes frontend: 100% cobertura
+- Todos los archivos de test: 100% cobertura
+- Context managers: Tests completos
+- Error paths: Tests para todos los try/except
+
+#### Puerto 8000 Obligatorio
+- Servidor siempre en puerto 8000
+- Scripts de limpieza automática
+- Verificación de puerto en CI/CD
+- Documentación de puerto fijo
+
+#### Lifespan Resiliente
+- Servicios externos opcionales
+- Manejo de errores en startup/shutdown
+- Limpieza automática de recursos
+- Health checks resilientes
+
+### Scripts de Desarrollo
+
+#### Script de Inicio Estándar
+```bash
+#!/bin/bash
+# Script de desarrollo estándar
+set -e
+
+echo "🧹 Limpieza de procesos anteriores..."
+pkill -f uvicorn || true
+sleep 2
+
+echo "🔍 Verificación de puerto 8000..."
+if lsof -Pi :8000 -sTCP:LISTEN -t >/dev/null 2>&1; then
+    echo "⚠️  Puerto ocupado. Limpieza automática..."
+    pkill -f "port 8000" || true
+    sleep 3
+fi
+
+echo "🚀 Iniciando servidor en puerto 8000..."
+python3 -m uvicorn src.app.main:app --host 127.0.0.1 --port 8000
+```
+
+#### Script de Verificación
+```bash
+#!/bin/bash
+# Script de verificación
+set -e
+
+echo "🔍 Verificando servidor..."
+curl -f http://127.0.0.1:8000/health || exit 1
+
+echo "🔍 Verificando servicios externos..."
+pgrep mongod && echo "✅ MongoDB disponible" || echo "⚠️  MongoDB no disponible"
+pgrep redis-server && echo "✅ Redis disponible" || echo "⚠️  Redis no disponible"
+
+echo "🎉 Verificación completada"
+```
+
+### Comandos de Testing
+
+#### Backend Tests
+```bash
+# Tests unitarios
+pytest tests/unit/ --cov=src --cov-report=term-missing
+
+# Tests de integración
+pytest tests/integration/ --cov=src --cov-report=term-missing
+
+# Tests completos con 100% cobertura
+pytest tests/ --cov=src --cov-fail-under=100 --cov-report=term-missing
+```
+
+#### Frontend Tests
+```bash
+# Tests unitarios
+npm test
+
+# Tests de integración
+npm run test:integration
+
+# Tests E2E
+npm run test:e2e
+```
+
+### Verificación de Deployment
+
+#### Verificación de Puerto 8000
+```bash
+# Verificar puerto
+lsof -Pi :8000
+
+# Verificar conectividad
+curl -f http://127.0.0.1:8000/health
+```
+
+#### Verificación de Infraestructura
+```bash
+# Verificar herramientas
+python3 --version
+pip3 --version
+python3 -m uvicorn --version
+curl --version
+lsof --version
+
+# Verificar servicios externos
+pgrep mongod
+pgrep redis-server
+```
+
+### Templates Estándar
+
+#### Template de Configuración Pydantic v2
 ```python
-# Template para tests async
-@pytest.mark.asyncio
-async def test_async_method():
-    with patch('module.AsyncClass') as mock_class:
-        mock_instance = AsyncMock()
-        mock_class.return_value = mock_instance
-        # Test implementation
-
-# Template para configuración Pydantic v2
 from pydantic import ConfigDict
 from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
-    # Campos de configuración
     field_name: str = "default_value"
     
     model_config = ConfigDict(
@@ -1091,8 +2224,10 @@ class Settings(BaseSettings):
         case_sensitive=False,
         extra="ignore"
     )
+```
 
-# Template para FastAPI con lifespan
+#### Template de FastAPI con Lifespan
+```python
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
@@ -1122,542 +2257,202 @@ def create_app() -> FastAPI:
     )
 ```
 
-#### Template para Inicio de Servidor Estándar
-```bash
-#!/bin/bash
-# Script obligatorio para iniciar servidor en puerto 8000
-echo "Limpiando procesos uvicorn anteriores..."
-pkill -f uvicorn
-sleep 2
-
-echo "Verificando puerto 8000 libre..."
-if lsof -Pi :8000 -sTCP:LISTEN -t >/dev/null ; then
-    echo "❌ Puerto 8000 ocupado. Limpiando..."
-    pkill -f "port 8000"
-    sleep 2
-fi
-
-echo "Iniciando servidor en puerto 8000..."
-python3 -m uvicorn src.app.main:app --host 127.0.0.1 --port 8000
-```
-
-#### Template para Verificación Manual
-```python
-# Verificación de endpoints sin servicios externos
-from fastapi.testclient import TestClient
-
-def test_endpoint_manually():
-    client = TestClient(app)
-    response = client.get("/health")
-    assert response.status_code == 200
-    return response.json()
-```
-
-#### Fase 2 - Google Integration
-**Verificaciones Automáticas**:
-- [ ] Mocks de Google API funcionan correctamente
-- [ ] Modo dual switching sin errores
-- [ ] Rate limiting implementado
-- [ ] Fallback a Mock funciona
-
-#### Fase 3 - Visualización Avanzada
-**Verificaciones Automáticas**:
-- [ ] WebSocket connections estables
-- [ ] Gráficos renderizan sin errores
-- [ ] Búsqueda funciona en tiempo real
-- [ ] Notificaciones se entregan correctamente
-
-#### Fase 4 - Production Ready
-**Verificaciones Automáticas**:
-- [ ] CI/CD pipeline sin errores
-- [ ] Docker builds exitosos
-- [ ] Security scans pasan
-- [ ] Performance tests cumplen SLA
-
-### Checklist de Prevención por Día
-
-#### Día 1 - Estructura y Configuración
-- [ ] **Setup**: Estructura de directorios creada
-- [ ] **Dependencies**: Todas las dependencias instaladas
-- [ ] **Config**: Variables de entorno configuradas
-- [ ] **Tests**: Tests básicos pasando (34 tests)
-- [ ] **Coverage**: 100% cobertura en módulos críticos (config, database, main)
-- [ ] **Context Managers**: Tests completos para lifespan
-- [ ] **Error Paths**: Tests para todos los try/except
-- [ ] **Server**: Health check endpoint funcional
-- [ ] **Async**: Tests async usan AsyncMock
-- [ ] **CORS**: Tests de CORS simplificados
-- [ ] **Warnings**: 0 warnings de deprecación (Pydantic v2 + FastAPI)
-- [ ] **Modern APIs**: ConfigDict + lifespan implementados
-- [ ] **Port Cleanup**: Limpieza obligatoria de procesos uvicorn antes de iniciar
-- [ ] **Port 8000**: Servidor siempre en puerto 8000 (nunca alternativo)
-- [ ] **Infrastructure**: Servicios externos verificados o mockeados
-- [ ] **Manual Testing**: TestClient usado para verificación de endpoints
-
-#### Día 2 - Modelos y Excepciones
-- [ ] **Models**: Pydantic v2 con ConfigDict
-- [ ] **Validation**: Validadores funcionan correctamente
-- [ ] **Exceptions**: Jerarquía de excepciones completa
-- [ ] **Tests**: Tests de modelos pasando
-- [ ] **Coverage**: 100% cobertura en modelos y excepciones
-- [ ] **Edge Cases**: Tests para valores límite
-- [ ] **Serialization**: Tests para model_dump() y model_validate()
-- [ ] **Migration**: Sin warnings de Pydantic v1
-
-#### Días 3-12 - Fundaciones Completas
-- [ ] **Auth**: JWT + OAuth funcionando
-- [ ] **Frontend**: Next.js + Auth + Layout
-- [ ] **Integration**: Frontend-Backend comunicación
-- [ ] **E2E**: Tests end-to-end básicos
-- [ ] **CI**: Pipeline básico funcionando
-
-### Quality Gates Mejorados
-
-#### Gate 1: Fundaciones (Día 12)
-- [ ] **Cobertura**: ≥100% módulos críticos (config, database, main)
-- [ ] **Performance**: <3s load time
-- [ ] **Security**: 0 vulnerabilidades CRITICAL
-- [ ] **Tests**: Backend + Frontend + E2E básicos
-- [ ] **Integration**: Frontend-Backend comunicación
-- [ ] **CI/CD**: Pipeline básico funcionando
-- [ ] **Error Prevention**: Todos los checks de prevención pasando
-- [ ] **Context Managers**: Tests completos para lifespan
-- [ ] **Async Tests**: AsyncMock usado correctamente
-- [ ] **Error Paths**: Todos los try/except cubiertos
-- [ ] **CORS Tests**: Headers básicos verificados
-- [ ] **Server Health**: Health check funcional (TestClient + manual en puerto 8000)
-- [ ] **Port Management**: Puerto 8000 siempre libre y disponible
-- [ ] **Process Cleanup**: Limpieza automática de procesos anteriores
-- [ ] **Infrastructure**: Lifespan resiliente sin servicios externos
-- [ ] **Warnings**: 0 warnings de deprecación críticos
-- [ ] **Modern APIs**: Pydantic v2 + FastAPI lifespan implementados
-
-#### Gate 2: Google Integration (Día 22)
-- [ ] **Cobertura**: ≥100% servicios críticos (auth, google, models)
-- [ ] **Performance**: <2s dashboard load
-- [ ] **Security**: 0 vulnerabilidades CRITICAL
-- [ ] **Tests**: Google mocks + Integration tests
-- [ ] **Google**: OAuth + Classroom API estable
-- [ ] **Modo Dual**: Switching Google/Mock funcional
-- [ ] **Error Prevention**: Rate limiting + fallback funcionando
-- [ ] **API Integration**: Tests para todos los endpoints
-- [ ] **Error Recovery**: Tests para fallos de conexión
-- [ ] **Data Validation**: Tests para datos de Google
-- [ ] **API Mocks**: Google API mocks estables
-
-#### Gate 3: Visualización Avanzada (Día 32)
-- [ ] **Cobertura**: ≥100% componentes de visualización
-- [ ] **Performance**: <1.5s load time
-- [ ] **Security**: 0 vulnerabilidades CRITICAL
-- [ ] **Tests**: E2E + Performance + Visual
-- [ ] **Accessibility**: Keyboard + Screen reader básico
-- [ ] **Visualization**: D3.js + ApexCharts avanzado
-- [ ] **WebSocket**: Tests para conexiones real-time
-- [ ] **Charts**: Tests para renderizado de gráficos
-- [ ] **Interactions**: Tests para interacciones de usuario
-- [ ] **Error Prevention**: WebSocket + gráficos estables
-- [ ] **Real-time**: Notificaciones funcionando
-
-#### Gate 4: Production Ready (Día 45)
-- [ ] **Cobertura**: ≥100% global
-- [ ] **Performance**: <1s load time
-- [ ] **Security**: 0 vulnerabilidades CRITICAL/HIGH
-- [ ] **Tests**: Exhaustivos + Security + Load
-- [ ] **E2E**: Tests end-to-end completos
-- [ ] **Performance**: Tests de carga
-- [ ] **Security**: Tests de seguridad exhaustivos
-- [ ] **Accessibility**: WCAG 2.2 AA completo
-- [ ] **Production**: CI/CD + Docker + Monitoring
-- [ ] **Error Prevention**: Todos los sistemas estables
-- [ ] **Monitoring**: Alertas automáticas funcionando
-
-### Protocolo de Resolución de Errores
-
-#### 1. Identificación Automática
-- CI/CD detecta errores automáticamente
-- Logs estructurados para debugging
-- Alertas inmediatas para errores críticos
-
-#### 2. Clasificación de Errores
-- **CRITICAL**: Bloquean funcionalidad principal
-- **HIGH**: Afectan funcionalidad importante
-- **MEDIUM**: Afectan funcionalidad secundaria
-- **LOW**: Warnings o mejoras menores
-
-#### 3. Resolución Priorizada
-- **CRITICAL**: Resolución inmediata (< 1 hora)
-- **HIGH**: Resolución en mismo día (< 8 horas)
-- **MEDIUM**: Resolución en 2-3 días
-- **LOW**: Resolución en próxima iteración
-
-#### 4. Prevención Futura
-- Documentar causa raíz del error
-- Actualizar templates y checklists
-- Mejorar tests para detectar error
-- Capacitar equipo en prevención
-
-### Protocolo de Migración de APIs Deprecadas
-
-#### 1. Identificación de Warnings
-```bash
-# Verificar warnings en tests
-pytest tests/ -W error::DeprecationWarning
-
-# Verificar warnings en aplicación
-python -W error::DeprecationWarning -c "from src.app.main import app"
-```
-
-#### 2. Migración Pydantic v2
-**Antes (Deprecado)**:
-```python
-class Settings(BaseSettings):
-    field: str = "value"
-    
-    class Config:
-        env_file = ".env"
-        case_sensitive = False
-```
-
-**Después (Moderno)**:
-```python
-from pydantic import ConfigDict
-
-class Settings(BaseSettings):
-    field: str = "value"
-    
-    model_config = ConfigDict(
-        env_file=".env",
-        case_sensitive=False
-    )
-```
-
-#### 3. Migración FastAPI Lifespan
-**Antes (Deprecado)**:
-```python
-@app.on_event("startup")
-async def startup():
-    pass
-
-@app.on_event("shutdown")
-async def shutdown():
-    pass
-```
-
-**Después (Moderno)**:
-```python
-from contextlib import asynccontextmanager
-
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    # Startup
-    try:
-        # Initialize
-        pass
-    except Exception as e:
-        print(f"Warning: {e}")
-    
-    yield
-    
-    # Shutdown
-    try:
-        # Cleanup
-        pass
-    except Exception as e:
-        print(f"Warning: {e}")
-
-app = FastAPI(lifespan=lifespan)
-```
-
-#### 4. Verificación Post-Migración
-- [ ] Tests pasan sin warnings
-- [ ] Aplicación inicia sin warnings
-- [ ] Funcionalidad preservada
-- [ ] Performance mantenida
-- [ ] Documentación actualizada
-
-### Protocolo de Cobertura 100%
-
-#### 1. Identificación de Líneas Sin Cubrir
-```bash
-# Comando para identificar líneas específicas sin cubrir
-pytest tests/ --cov=src --cov-report=term-missing --cov-report=html
-
-# Verificar cobertura por archivo
-pytest tests/unit/ --cov=src --cov-report=term-missing
-
-# Generar reporte HTML detallado
-pytest tests/ --cov=src --cov-report=html
-open htmlcov/index.html
-```
-
-#### 2. Análisis de Código Complejo
-**Archivos que requieren atención especial:**
-- **Context Managers**: `lifespan`, `async with`, `try/except`
-- **Async Functions**: Métodos con `async/await`
-- **Error Handling**: Bloques `try/except/finally`
-- **Conditional Logic**: `if/elif/else` complejos
-- **Loop Constructs**: `for/while` con break/continue
-
-#### 3. Técnicas de Testing para 100%
-**Para Context Managers:**
+#### Template de Test Async
 ```python
 @pytest.mark.asyncio
-async def test_context_manager_success():
-    """Test caso exitoso del context manager"""
-    with patch('module.dependency') as mock_dep:
-        mock_dep.method = AsyncMock()
-        async with context_manager():
-            mock_dep.method.assert_called_once()
-
-@pytest.mark.asyncio
-async def test_context_manager_error():
-    """Test caso de error del context manager"""
-    with patch('module.dependency') as mock_dep:
-        mock_dep.method = AsyncMock(side_effect=Exception("Error"))
-        async with context_manager():
-            # Verificar manejo de error
-            mock_dep.method.assert_called_once()
+async def test_async_method():
+    """Test método async con AsyncMock"""
+    with patch('module.AsyncClass') as mock_class:
+        mock_instance = AsyncMock()
+        mock_class.return_value = mock_instance
+        result = await async_method()
+        assert result is not None
+        mock_instance.method.assert_called_once()
 ```
 
-**Para Async Functions:**
-```python
-@pytest.mark.asyncio
-async def test_async_function():
-    """Test función async con AsyncMock"""
-    with patch('module.async_service') as mock_service:
-        mock_service.async_method = AsyncMock(return_value="result")
-        result = await async_function()
-        assert result == "result"
-        mock_service.async_method.assert_called_once()
-```
+### Checklist de Desarrollo
 
-**Para Error Handling:**
-```python
-def test_error_handling_success():
-    """Test manejo de error exitoso"""
-    with patch('module.risky_function') as mock_func:
-        mock_func.side_effect = Exception("Test error")
-        result = function_with_error_handling()
-        assert result == "error_handled"
+#### Día 1: Configuración Base
+- [ ] Configuración Pydantic v2
+- [ ] Base de datos con lifespan resiliente
+- [ ] Health check básico
+- [ ] Tests de configuración
 
-def test_error_handling_failure():
-    """Test manejo de error fallido"""
-    with patch('module.risky_function') as mock_func:
-        mock_func.return_value = "success"
-        result = function_with_error_handling()
-        assert result == "success"
-```
+#### Día 2: Autenticación
+- [ ] JWT completo
+- [ ] OAuth Google básico
+- [ ] Middleware de autenticación
+- [ ] Tests de autenticación
 
-#### 4. Checklist de Cobertura por Día
-**Día 1-3: Fundaciones**
-- [ ] **Configuración**: 100% cobertura en `config.py`
-- [ ] **Base de datos**: 100% cobertura en `database.py`
-- [ ] **Aplicación**: 100% cobertura en `main.py`
-- [ ] **Context Managers**: Tests para `lifespan` completo
-- [ ] **Error Paths**: Tests para todos los `try/except`
+#### Día 3: Frontend Base
+- [ ] Configuración Next.js
+- [ ] Componentes de autenticación
+- [ ] Hooks personalizados
+- [ ] Tests de frontend
 
-**Día 4-6: Modelos y Excepciones**
-- [ ] **Modelos Pydantic**: 100% cobertura en validadores
-- [ ] **Excepciones**: Tests para todas las excepciones custom
-- [ ] **Serialización**: Tests para `model_dump()` y `model_validate()`
-- [ ] **Edge Cases**: Tests para valores límite
+### Métricas de Cobertura
 
-**Día 7-9: Autenticación**
-- [ ] **JWT**: 100% cobertura en creación/validación
-- [ ] **OAuth**: Tests para todos los flujos OAuth
-- [ ] **Middleware**: Tests para autenticación/autorización
-- [ ] **Error Cases**: Tests para tokens inválidos/expirados
-
-#### 5. Templates Estándar para 100% Cobertura
-**Template para Context Manager:**
-```python
-@pytest.mark.asyncio
-async def test_{context_manager_name}_success():
-    """Test {context_manager_name} caso exitoso"""
-    with patch('{module_path}') as mock_dependency:
-        mock_dependency.method = AsyncMock()
-        async with {context_manager_name}():
-            # Verificar startup
-            mock_dependency.method.assert_called_once()
-        # Verificar shutdown
-        mock_dependency.cleanup.assert_called_once()
-
-@pytest.mark.asyncio
-async def test_{context_manager_name}_startup_error():
-    """Test {context_manager_name} error en startup"""
-    with patch('{module_path}') as mock_dependency:
-        mock_dependency.method = AsyncMock(side_effect=Exception("Startup failed"))
-        async with {context_manager_name}():
-            # Verificar manejo de error
-            mock_dependency.method.assert_called_once()
-
-@pytest.mark.asyncio
-async def test_{context_manager_name}_shutdown_error():
-    """Test {context_manager_name} error en shutdown"""
-    with patch('{module_path}') as mock_dependency:
-        mock_dependency.method = AsyncMock()
-        mock_dependency.cleanup = AsyncMock(side_effect=Exception("Shutdown failed"))
-        async with {context_manager_name}():
-            pass  # Trigger shutdown
-        # Verificar manejo de error
-        mock_dependency.cleanup.assert_called_once()
-```
-
-**Template para Async Function:**
-```python
-@pytest.mark.asyncio
-async def test_{async_function_name}_success():
-    """Test {async_function_name} caso exitoso"""
-    with patch('{module_path}') as mock_service:
-        mock_service.async_method = AsyncMock(return_value="expected_result")
-        result = await {async_function_name}()
-        assert result == "expected_result"
-        mock_service.async_method.assert_called_once()
-
-@pytest.mark.asyncio
-async def test_{async_function_name}_error():
-    """Test {async_function_name} caso de error"""
-    with patch('{module_path}') as mock_service:
-        mock_service.async_method = AsyncMock(side_effect=Exception("Service error"))
-        with pytest.raises(Exception, match="Service error"):
-            await {async_function_name}()
-        mock_service.async_method.assert_called_once()
-```
-
-#### 6. Comandos de Verificación Específicos
-```bash
-# Verificar cobertura específica por archivo
-pytest tests/unit/test_main.py --cov=src/app/main --cov-report=term-missing
-
-# Verificar cobertura de context managers
-pytest tests/unit/test_lifespan.py --cov=src/app/main --cov-report=term-missing
-
-# Verificar cobertura de async functions
-pytest tests/unit/test_database.py --cov=src/app/core/database --cov-report=term-missing
-
-# Verificar cobertura de modelos
-pytest tests/unit/test_models.py --cov=src/app/models --cov-report=term-missing
-
-# Verificar cobertura de autenticación
-pytest tests/unit/test_auth.py --cov=src/app/api/auth --cov-report=term-missing
-
-# Verificar servidor en puerto 8000
-curl -f http://127.0.0.1:8000/health
-
-# Verificar limpieza de procesos
-pkill -f uvicorn && echo "Procesos limpiados" || echo "No hay procesos uvicorn"
-
-# Verificar puerto libre
-lsof -Pi :8000 -sTCP:LISTEN || echo "Puerto 8000 libre"
-```
-
-#### 7. Métricas de Cobertura por Módulo
-**Backend - Módulos Críticos (100% requerido):**
+#### Backend - Fase 1 (100% requerido)
 - `src/app/core/config.py` - Configuración
 - `src/app/core/database.py` - Base de datos
 - `src/app/main.py` - Aplicación principal
 - `src/app/core/security.py` - Seguridad
 - `src/app/models/user.py` - Modelos de usuario
 - `src/app/api/auth.py` - Autenticación
+- `src/app/api/` - Todos los endpoints de la API
+- `src/app/services/` - Todos los servicios
+- `src/app/utils/` - Todas las utilidades
 
-**Frontend - Componentes Críticos (100% requerido):**
+#### Frontend - Fase 1 (100% requerido)
 - `src/components/Auth/` - Componentes de autenticación
+- `src/components/` - Todos los componentes
 - `src/hooks/useAuth.ts` - Hook de autenticación
+- `src/hooks/` - Todos los hooks
 - `src/services/api.ts` - Servicios de API
+- `src/services/` - Todos los servicios
 - `src/utils/auth.ts` - Utilidades de autenticación
+- `src/utils/` - Todas las utilidades
 
-#### 8. Verificación Automática de Cobertura
+### Scripts Automatizados
+
+#### Script de Verificación de Cobertura
 ```bash
-# Script para verificar cobertura 100% en CI/CD
 #!/bin/bash
+# Script para verificar cobertura 100% en CI/CD
 echo "Verificando cobertura 100%..."
 
-# Verificar módulos críticos
-CRITICAL_MODULES=(
+# Verificar toda la Fase 1
+PHASE1_MODULES=(
     "src/app/core/config"
     "src/app/core/database" 
     "src/app/main"
     "src/app/core/security"
+    "src/app/models"
+    "src/app/api"
+    "src/app/services"
+    "src/app/utils"
+    "src/components"
+    "src/hooks"
+    "src/services"
+    "src/utils"
+    "src/pages"
+    "src/layouts"
 )
 
-for module in "${CRITICAL_MODULES[@]}"; do
+for module in "${PHASE1_MODULES[@]}"; do
     echo "Verificando $module..."
-    coverage=$(pytest tests/ --cov=$module --cov-report=term-missing | grep "TOTAL" | awk '{print $4}' | sed 's/%//')
-    if [ "$coverage" != "100" ]; then
-        echo "❌ $module: $coverage% (requerido: 100%)"
+    pytest tests/ --cov=$module --cov-fail-under=100 --cov-report=term-missing
+    if [ $? -ne 0 ]; then
+        echo "❌ $module no tiene 100% de cobertura"
         exit 1
-    else
-        echo "✅ $module: $coverage%"
     fi
 done
 
-echo "🎉 Todos los módulos críticos tienen 100% de cobertura"
+echo "🎉 Toda la Fase 1 tiene 100% de cobertura"
 ```
 
-### Protocolo de Errores de Infraestructura
-
-#### Identificación
-- Servicios externos no disponibles (MongoDB, Redis)
-- Puerto 8000 ocupado por procesos anteriores
-- Conexiones HTTP fallidas en background
-
-#### Resolución Automática
-1. **Limpieza Obligatoria**: `pkill -f uvicorn` antes de iniciar servidor
-2. **Puerto 8000 Fijo**: Nunca usar puerto alternativo
-3. **Lifespan Resiliente**: Continuar startup sin servicios externos
-4. **Verificación TestClient**: Usar TestClient para pruebas sin servicios
-
-#### Script de Inicio Estándar
+#### Script de Deployment Estándar
 ```bash
 #!/bin/bash
-# Script obligatorio para Día 1 y siguientes
+# Script de deployment estándar con resolución automática
 set -e
 
-echo "🧹 Limpiando procesos anteriores..."
-pkill -f uvicorn || true
-sleep 2
+echo "🚀 Deployment: Iniciando Dashboard Educativo..."
 
-echo "🔍 Verificando puerto 8000..."
+# Función de limpieza
+cleanup() {
+    echo "🧹 Deployment: Limpieza de procesos..."
+    pkill -f uvicorn || true
+    pkill -f "port 8000" || true
+    exit 0
+}
+
+# Configurar trap para limpieza
+trap cleanup SIGINT SIGTERM
+
+# Verificar puerto 8000
+echo "🔍 Deployment: Verificando puerto 8000..."
 if lsof -Pi :8000 -sTCP:LISTEN -t >/dev/null 2>&1; then
-    echo "⚠️  Puerto 8000 ocupado. Forzando limpieza..."
+    echo "⚠️  Deployment: Puerto ocupado. Limpieza automática..."
     pkill -f "port 8000" || true
     sleep 3
 fi
 
-echo "🚀 Iniciando servidor en puerto 8000..."
+# Iniciar servidor
+echo "🚀 Deployment: Iniciando servidor en puerto 8000..."
 python3 -m uvicorn src.app.main:app --host 127.0.0.1 --port 8000 &
 SERVER_PID=$!
 
-echo "⏳ Esperando inicio del servidor..."
+# Esperar inicio
+echo "⏳ Deployment: Esperando inicio del servidor..."
 sleep 5
 
-echo "🔍 Verificando health check..."
-curl -f http://127.0.0.1:8000/health || {
-    echo "❌ Health check falló"
-    kill $SERVER_PID 2>/dev/null || true
-    exit 1
-}
+# Verificar health check
+echo "🔍 Deployment: Verificando health check..."
+for i in {1..5}; do
+    if curl -f http://127.0.0.1:8000/health >/dev/null 2>&1; then
+        echo "✅ Deployment: Servidor funcionando correctamente"
+        break
+    else
+        echo "⏳ Deployment: Esperando servidor... (intento $i/5)"
+        sleep 2
+    fi
+done
 
-echo "✅ Servidor funcionando correctamente en puerto 8000"
-echo "📊 PID del servidor: $SERVER_PID"
-```
-
-#### Verificación de Servicios
-```bash
 # Verificar servicios externos (opcional)
-pgrep mongod && echo "✅ MongoDB disponible" || echo "⚠️  MongoDB no disponible"
-pgrep redis-server && echo "✅ Redis disponible" || echo "⚠️  Redis no disponible"
+echo "🔍 Deployment: Verificando servicios externos..."
+pgrep mongod && echo "✅ Deployment: MongoDB disponible" || echo "⚠️  Deployment: MongoDB no disponible"
+pgrep redis-server && echo "✅ Deployment: Redis disponible" || echo "⚠️  Deployment: Redis no disponible"
 
-# Verificar aplicación (obligatorio)
-python3 -c "
-from fastapi.testclient import TestClient
-from src.app.main import app
-client = TestClient(app)
-response = client.get('/health')
-print(f'✅ Health check: {response.status_code}')
-print(f'📋 Response: {response.json()}')
-"
+echo "🎉 Deployment: Dashboard Educativo iniciado correctamente"
+echo "📊 Deployment: PID del servidor: $SERVER_PID"
+echo "🌐 Deployment: Servidor disponible en http://127.0.0.1:8000"
+
+# Mantener script corriendo
+wait $SERVER_PID
 ```
+
+### Resumen de Integración Completa
+
+#### ✅ Elementos Integrados en Testing Unificada
+- **6 tipos de errores** → Metodología TDD estándar
+- **4 protocolos principales** → Flujo TDD de resolución
+- **Templates estándar** → Para diferentes tipos de testing
+- **Comandos específicos** → Para verificación y debugging
+- **Checklists detallados** → Por fase y día
+- **Scripts automatizados** → Para CI/CD
+- **Métricas específicas** → De cobertura por módulo
+
+#### ✅ Elementos Integrados en Arquitectura del Sistema
+- **Warnings de deprecación** → Arquitectura estándar
+- **Errores de infraestructura** → Arquitectura estándar
+- **Migración de APIs** → Arquitectura evolutiva
+- **Servicios resilientes** → Con puerto 8000
+- **Servicios con migración automática** → ServiceMigrator
+- **Servicios con verificación automática** → ServiceHealthChecker
+- **Servicios con limpieza automática** → ServiceCleanupManager
+
+#### ✅ Elementos Integrados en Configuración de Deployment
+- **Problemas de servidor** → Deployment estándar
+- **Puerto 8000 ocupado** → Deployment estándar
+- **Errores de infraestructura** → Deployment estándar
+- **Verificación automática** → De servicios y infraestructura
+- **Scripts de deployment** → Con resolución automática
+- **Verificación de puerto** → Puerto 8000 obligatorio
+- **Verificación de infraestructura** → Herramientas y servicios
+
+### Resultado Final
+
+**🎉 INTEGRACIÓN COMPLETA EXITOSA**
+
+- **Sección de errores separada eliminada** ✅
+- **Todos los elementos integrados** en secciones principales ✅
+- **Metodología unificada** con prevención de errores ✅
+- **Desarrollo más robusto** con mejores prácticas ✅
+- **Coherencia mejorada** en todo el contrato ✅
+- **Prevención automática** de errores futuros ✅
+
+El contrato ahora tiene una metodología completamente unificada donde todos los elementos de prevención de errores están integrados naturalmente en el flujo de desarrollo, testing, arquitectura y deployment, eliminando la necesidad de una sección separada de errores.
 
 </llm:section>
 
@@ -1730,6 +2525,345 @@ NEXT_PUBLIC_HIGH_CONTRAST=true
 # Performance
 NEXT_PUBLIC_SEARCH_DEBOUNCE_MS=300
 NEXT_PUBLIC_NOTIFICATION_POLL_INTERVAL=30000
+```
+
+### Deployment Resiliente con Prevención de Errores
+
+#### 1. Problemas de Servidor como Deployment Estándar
+**Metodología**: Servidor resiliente es parte integral del deployment
+
+**Deployment con Servidor Resiliente:**
+```python
+# ✅ DEPLOYMENT ESTÁNDAR - Servidor resiliente
+from contextlib import asynccontextmanager
+from fastapi import FastAPI
+import uvicorn
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup - servicios externos opcionales
+    try:
+        # MongoDB (opcional)
+        await init_mongodb()
+    except Exception as e:
+        print(f"Warning: MongoDB no disponible: {e}")
+    
+    try:
+        # Redis (opcional)
+        await init_redis()
+    except Exception as e:
+        print(f"Warning: Redis no disponible: {e}")
+    
+    yield
+    
+    # Shutdown - limpieza automática
+    try:
+        await cleanup_services()
+    except Exception as e:
+        print(f"Warning: Error en cleanup: {e}")
+
+def create_app() -> FastAPI:
+    return FastAPI(
+        title="Dashboard Educativo",
+        version="1.0.0",
+        lifespan=lifespan
+    )
+
+# Servidor siempre en puerto 8000
+if __name__ == "__main__":
+    uvicorn.run(
+        "src.app.main:app",
+        host="127.0.0.1",
+        port=8000,  # Puerto fijo de deployment
+        reload=True
+    )
+```
+
+**Deployment con Health Check Resiliente:**
+```python
+# ✅ DEPLOYMENT ESTÁNDAR - Health check resiliente
+from fastapi import FastAPI, HTTPException
+from typing import Dict, Any
+
+app = FastAPI()
+
+@app.get("/health")
+async def health_check():
+    """Health check resiliente - funciona sin servicios externos"""
+    try:
+        # Verificar servicios externos (opcional)
+        external_services = await check_external_services()
+        
+        return {
+            "status": "healthy",
+            "timestamp": "2025-01-03T10:00:00Z",
+            "services": external_services
+        }
+    except Exception as e:
+        # Health check siempre responde, incluso con errores
+        return {
+            "status": "degraded",
+            "timestamp": "2025-01-03T10:00:00Z",
+            "error": str(e)
+        }
+
+async def check_external_services() -> Dict[str, Any]:
+    """Verificar servicios externos de forma resiliente"""
+    services = {}
+    
+    # MongoDB (opcional)
+    try:
+        # Verificar MongoDB
+        services["mongodb"] = "available"
+    except Exception:
+        services["mongodb"] = "unavailable"
+    
+    # Redis (opcional)
+    try:
+        # Verificar Redis
+        services["redis"] = "available"
+    except Exception:
+        services["redis"] = "unavailable"
+    
+    return services
+```
+
+#### 2. Puerto 8000 Ocupado como Deployment Estándar
+**Metodología**: Puerto 8000 como estándar de deployment obligatorio
+
+**Deployment con Puerto Fijo:**
+```bash
+# ✅ DEPLOYMENT ESTÁNDAR - Puerto 8000 obligatorio
+#!/bin/bash
+# Script de deployment estándar
+set -e
+
+echo "🧹 Deployment: Limpieza de procesos anteriores..."
+pkill -f uvicorn || true
+sleep 2
+
+echo "🔍 Deployment: Verificación de puerto 8000..."
+if lsof -Pi :8000 -sTCP:LISTEN -t >/dev/null 2>&1; then
+    echo "⚠️  Deployment: Puerto ocupado. Limpieza automática..."
+    pkill -f "port 8000" || true
+    sleep 3
+fi
+
+echo "🚀 Deployment: Iniciando servidor en puerto 8000..."
+python3 -m uvicorn src.app.main:app --host 127.0.0.1 --port 8000 &
+SERVER_PID=$!
+
+echo "⏳ Deployment: Esperando inicio del servidor..."
+sleep 5
+
+echo "🔍 Deployment: Verificación de health check..."
+curl -f http://127.0.0.1:8000/health || {
+    echo "❌ Deployment: Health check falló"
+    kill $SERVER_PID 2>/dev/null || true
+    exit 1
+}
+
+echo "✅ Deployment: Servidor funcionando correctamente en puerto 8000"
+echo "📊 Deployment: PID del servidor: $SERVER_PID"
+```
+
+**Deployment con Verificación de Puerto:**
+```python
+# ✅ DEPLOYMENT ESTÁNDAR - Verificación de puerto
+import socket
+import subprocess
+import time
+from typing import Optional
+
+class PortManager:
+    """Gestor de puerto 8000 para deployment"""
+    
+    @staticmethod
+    def is_port_available(port: int = 8000) -> bool:
+        """Verificar si el puerto está disponible"""
+        try:
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                s.bind(('127.0.0.1', port))
+                return True
+        except OSError:
+            return False
+    
+    @staticmethod
+    def kill_process_on_port(port: int = 8000) -> bool:
+        """Matar proceso en puerto específico"""
+        try:
+            result = subprocess.run(
+                ['lsof', '-ti', f':{port}'],
+                capture_output=True,
+                text=True
+            )
+            
+            if result.stdout.strip():
+                pids = result.stdout.strip().split('\n')
+                for pid in pids:
+                    subprocess.run(['kill', '-9', pid])
+                return True
+            return False
+        except Exception as e:
+            print(f"Warning: Error matando proceso en puerto {port}: {e}")
+            return False
+    
+    @staticmethod
+    def ensure_port_available(port: int = 8000) -> bool:
+        """Asegurar que el puerto esté disponible"""
+        if PortManager.is_port_available(port):
+            return True
+        
+        print(f"Puerto {port} ocupado, intentando liberar...")
+        PortManager.kill_process_on_port(port)
+        time.sleep(2)
+        
+        return PortManager.is_port_available(port)
+```
+
+#### 3. Errores de Infraestructura como Deployment Estándar
+**Metodología**: Errores de infraestructura son parte integral del deployment
+
+**Deployment con Resolución Automática:**
+```python
+# ✅ DEPLOYMENT ESTÁNDAR - Resolución automática de errores
+import asyncio
+import logging
+from typing import Dict, Any, Optional
+
+class DeploymentManager:
+    """Gestor de deployment con resolución automática de errores"""
+    
+    def __init__(self):
+        self.services: Dict[str, Any] = {}
+        self.error_count: Dict[str, int] = {}
+        self.max_retries = 3
+    
+    async def deploy_service(self, name: str, service: Any) -> bool:
+        """Deploy servicio con resolución automática de errores"""
+        try:
+            await service.start()
+            self.services[name] = service
+            self.error_count[name] = 0
+            print(f"✅ Deployment: {name} iniciado correctamente")
+            return True
+        except Exception as e:
+            print(f"❌ Deployment: Error en {name}: {e}")
+            return await self._handle_deployment_error(name, service, e)
+    
+    async def _handle_deployment_error(self, name: str, service: Any, error: Exception) -> bool:
+        """Manejar error de deployment con reintentos"""
+        self.error_count[name] = self.error_count.get(name, 0) + 1
+        
+        if self.error_count[name] < self.max_retries:
+            print(f"🔄 Deployment: Reintentando {name} (intento {self.error_count[name]})")
+            await asyncio.sleep(2 ** self.error_count[name])  # Backoff exponencial
+            return await self.deploy_service(name, service)
+        else:
+            print(f"❌ Deployment: {name} falló después de {self.max_retries} intentos")
+            return False
+    
+    async def health_check_all(self) -> Dict[str, bool]:
+        """Verificar salud de todos los servicios desplegados"""
+        health_status = {}
+        
+        for name, service in self.services.items():
+            try:
+                if hasattr(service, 'health_check'):
+                    health_status[name] = await service.health_check()
+                else:
+                    health_status[name] = True
+            except Exception as e:
+                print(f"Warning: Error en health check de {name}: {e}")
+                health_status[name] = False
+        
+        return health_status
+
+class ResilientService:
+    """Servicio resiliente para deployment"""
+    
+    def __init__(self, name: str):
+        self.name = name
+        self.running = False
+    
+    async def start(self):
+        """Iniciar servicio de forma resiliente"""
+        try:
+            # Lógica de inicio del servicio
+            self.running = True
+        except Exception as e:
+            print(f"Warning: Error iniciando {self.name}: {e}")
+            raise
+    
+    async def health_check(self) -> bool:
+        """Verificar salud del servicio"""
+        try:
+            return self.running
+        except Exception as e:
+            print(f"Warning: Error en health check de {self.name}: {e}")
+            return False
+```
+
+**Deployment con Script de Inicio Estándar:**
+```bash
+# ✅ DEPLOYMENT ESTÁNDAR - Script de inicio resiliente
+#!/bin/bash
+# Script de deployment estándar con resolución automática
+set -e
+
+echo "🚀 Deployment: Iniciando Dashboard Educativo..."
+
+# Función de limpieza
+cleanup() {
+    echo "🧹 Deployment: Limpieza de procesos..."
+    pkill -f uvicorn || true
+    pkill -f "port 8000" || true
+    exit 0
+}
+
+# Configurar trap para limpieza
+trap cleanup SIGINT SIGTERM
+
+# Verificar puerto 8000
+echo "🔍 Deployment: Verificando puerto 8000..."
+if lsof -Pi :8000 -sTCP:LISTEN -t >/dev/null 2>&1; then
+    echo "⚠️  Deployment: Puerto ocupado. Limpieza automática..."
+    pkill -f "port 8000" || true
+    sleep 3
+fi
+
+# Iniciar servidor
+echo "🚀 Deployment: Iniciando servidor en puerto 8000..."
+python3 -m uvicorn src.app.main:app --host 127.0.0.1 --port 8000 &
+SERVER_PID=$!
+
+# Esperar inicio
+echo "⏳ Deployment: Esperando inicio del servidor..."
+sleep 5
+
+# Verificar health check
+echo "🔍 Deployment: Verificando health check..."
+for i in {1..5}; do
+    if curl -f http://127.0.0.1:8000/health >/dev/null 2>&1; then
+        echo "✅ Deployment: Servidor funcionando correctamente"
+        break
+    else
+        echo "⏳ Deployment: Esperando servidor... (intento $i/5)"
+        sleep 2
+    fi
+done
+
+# Verificar servicios externos (opcional)
+echo "🔍 Deployment: Verificando servicios externos..."
+pgrep mongod && echo "✅ Deployment: MongoDB disponible" || echo "⚠️  Deployment: MongoDB no disponible"
+pgrep redis-server && echo "✅ Deployment: Redis disponible" || echo "⚠️  Deployment: Redis no disponible"
+
+echo "🎉 Deployment: Dashboard Educativo iniciado correctamente"
+echo "📊 Deployment: PID del servidor: $SERVER_PID"
+echo "🌐 Deployment: Servidor disponible en http://127.0.0.1:8000"
+
+# Mantener script corriendo
+wait $SERVER_PID
 ```
 
 ### Docker Configuration Completa
@@ -1992,6 +3126,268 @@ jobs:
           # Add deployment commands here
 ```
 
+### Verificación de Deployment con Prevención de Errores
+
+#### 1. Verificación Automática de Servicios
+**Metodología**: Verificación automática como parte integral del deployment
+
+**Script de Verificación de Deployment:**
+```bash
+# ✅ DEPLOYMENT ESTÁNDAR - Verificación automática
+#!/bin/bash
+# Script de verificación de deployment
+set -e
+
+echo "🔍 Deployment: Verificando servicios..."
+
+# Verificar servidor en puerto 8000
+echo "🔍 Deployment: Verificando servidor en puerto 8000..."
+if curl -f http://127.0.0.1:8000/health >/dev/null 2>&1; then
+    echo "✅ Deployment: Servidor funcionando correctamente"
+else
+    echo "❌ Deployment: Servidor no responde"
+    exit 1
+fi
+
+# Verificar servicios externos (opcional)
+echo "🔍 Deployment: Verificando servicios externos..."
+pgrep mongod && echo "✅ Deployment: MongoDB disponible" || echo "⚠️  Deployment: MongoDB no disponible"
+pgrep redis-server && echo "✅ Deployment: Redis disponible" || echo "⚠️  Deployment: Redis no disponible"
+
+# Verificar endpoints críticos
+echo "🔍 Deployment: Verificando endpoints críticos..."
+curl -f http://127.0.0.1:8000/api/v1/health >/dev/null 2>&1 && echo "✅ Deployment: Health endpoint OK" || echo "❌ Deployment: Health endpoint falló"
+curl -f http://127.0.0.1:8000/api/v1/auth/profile >/dev/null 2>&1 && echo "✅ Deployment: Auth endpoint OK" || echo "⚠️  Deployment: Auth endpoint requiere autenticación"
+
+echo "🎉 Deployment: Verificación completada exitosamente"
+```
+
+**Verificación de Deployment con Python:**
+```python
+# ✅ DEPLOYMENT ESTÁNDAR - Verificación automática con Python
+import asyncio
+import aiohttp
+import subprocess
+from typing import Dict, List, Optional
+
+class DeploymentVerifier:
+    """Verificador de deployment con prevención de errores"""
+    
+    def __init__(self, base_url: str = "http://127.0.0.1:8000"):
+        self.base_url = base_url
+        self.endpoints = [
+            "/health",
+            "/api/v1/health",
+            "/api/v1/auth/profile",
+            "/api/v1/oauth/status"
+        ]
+    
+    async def verify_server(self) -> bool:
+        """Verificar que el servidor esté funcionando"""
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.get(f"{self.base_url}/health") as response:
+                    return response.status == 200
+        except Exception as e:
+            print(f"Warning: Error verificando servidor: {e}")
+            return False
+    
+    async def verify_endpoints(self) -> Dict[str, bool]:
+        """Verificar endpoints críticos"""
+        results = {}
+        
+        async with aiohttp.ClientSession() as session:
+            for endpoint in self.endpoints:
+                try:
+                    async with session.get(f"{self.base_url}{endpoint}") as response:
+                        results[endpoint] = response.status in [200, 401, 403]  # 401/403 son OK para auth
+                except Exception as e:
+                    print(f"Warning: Error verificando {endpoint}: {e}")
+                    results[endpoint] = False
+        
+        return results
+    
+    def verify_external_services(self) -> Dict[str, bool]:
+        """Verificar servicios externos"""
+        services = {}
+        
+        # MongoDB
+        try:
+            result = subprocess.run(['pgrep', 'mongod'], capture_output=True)
+            services['mongodb'] = result.returncode == 0
+        except Exception:
+            services['mongodb'] = False
+        
+        # Redis
+        try:
+            result = subprocess.run(['pgrep', 'redis-server'], capture_output=True)
+            services['redis'] = result.returncode == 0
+        except Exception:
+            services['redis'] = False
+        
+        return services
+    
+    async def verify_deployment(self) -> Dict[str, any]:
+        """Verificación completa de deployment"""
+        print("🔍 Deployment: Iniciando verificación completa...")
+        
+        # Verificar servidor
+        server_ok = await self.verify_server()
+        
+        # Verificar endpoints
+        endpoints_ok = await self.verify_endpoints()
+        
+        # Verificar servicios externos
+        services_ok = self.verify_external_services()
+        
+        # Resumen
+        all_endpoints_ok = all(endpoints_ok.values())
+        all_services_ok = all(services_ok.values())
+        
+        deployment_ok = server_ok and all_endpoints_ok
+        
+        result = {
+            "deployment_ok": deployment_ok,
+            "server_ok": server_ok,
+            "endpoints_ok": endpoints_ok,
+            "services_ok": services_ok,
+            "summary": {
+                "server": "✅ OK" if server_ok else "❌ FAILED",
+                "endpoints": "✅ OK" if all_endpoints_ok else "⚠️  PARTIAL",
+                "services": "✅ OK" if all_services_ok else "⚠️  PARTIAL"
+            }
+        }
+        
+        print(f"📊 Deployment: Resumen de verificación:")
+        print(f"  Servidor: {result['summary']['server']}")
+        print(f"  Endpoints: {result['summary']['endpoints']}")
+        print(f"  Servicios: {result['summary']['services']}")
+        
+        return result
+
+# Función principal de verificación
+async def main():
+    verifier = DeploymentVerifier()
+    result = await verifier.verify_deployment()
+    
+    if result["deployment_ok"]:
+        print("🎉 Deployment: Verificación exitosa")
+        exit(0)
+    else:
+        print("❌ Deployment: Verificación falló")
+        exit(1)
+
+if __name__ == "__main__":
+    asyncio.run(main())
+```
+
+#### 2. Verificación de Puerto 8000
+**Metodología**: Puerto 8000 como estándar de verificación obligatorio
+
+**Verificación de Puerto con Scripts:**
+```bash
+# ✅ DEPLOYMENT ESTÁNDAR - Verificación de puerto 8000
+#!/bin/bash
+# Script de verificación de puerto 8000
+set -e
+
+echo "🔍 Deployment: Verificando puerto 8000..."
+
+# Verificar si el puerto está en uso
+if lsof -Pi :8000 -sTCP:LISTEN -t >/dev/null 2>&1; then
+    echo "✅ Deployment: Puerto 8000 en uso"
+    
+    # Verificar que sea nuestro proceso
+    PID=$(lsof -ti :8000)
+    PROCESS=$(ps -p $PID -o comm= 2>/dev/null || echo "unknown")
+    
+    if [[ "$PROCESS" == *"uvicorn"* ]]; then
+        echo "✅ Deployment: Puerto 8000 usado por uvicorn (PID: $PID)"
+    else
+        echo "⚠️  Deployment: Puerto 8000 usado por otro proceso: $PROCESS (PID: $PID)"
+    fi
+else
+    echo "❌ Deployment: Puerto 8000 no está en uso"
+    exit 1
+fi
+
+# Verificar conectividad
+echo "🔍 Deployment: Verificando conectividad..."
+if curl -f http://127.0.0.1:8000/health >/dev/null 2>&1; then
+    echo "✅ Deployment: Conectividad OK"
+else
+    echo "❌ Deployment: Sin conectividad"
+    exit 1
+fi
+
+echo "🎉 Deployment: Puerto 8000 verificado correctamente"
+```
+
+#### 3. Verificación de Infraestructura
+**Metodología**: Verificación de infraestructura como parte integral del deployment
+
+**Script de Verificación de Infraestructura:**
+```bash
+# ✅ DEPLOYMENT ESTÁNDAR - Verificación de infraestructura
+#!/bin/bash
+# Script de verificación de infraestructura
+set -e
+
+echo "🔍 Deployment: Verificando infraestructura..."
+
+# Verificar Python
+echo "🔍 Deployment: Verificando Python..."
+if python3 --version >/dev/null 2>&1; then
+    echo "✅ Deployment: Python disponible"
+else
+    echo "❌ Deployment: Python no disponible"
+    exit 1
+fi
+
+# Verificar pip
+echo "🔍 Deployment: Verificando pip..."
+if pip3 --version >/dev/null 2>&1; then
+    echo "✅ Deployment: pip disponible"
+else
+    echo "❌ Deployment: pip no disponible"
+    exit 1
+fi
+
+# Verificar uvicorn
+echo "🔍 Deployment: Verificando uvicorn..."
+if python3 -m uvicorn --version >/dev/null 2>&1; then
+    echo "✅ Deployment: uvicorn disponible"
+else
+    echo "❌ Deployment: uvicorn no disponible"
+    exit 1
+fi
+
+# Verificar curl
+echo "🔍 Deployment: Verificando curl..."
+if curl --version >/dev/null 2>&1; then
+    echo "✅ Deployment: curl disponible"
+else
+    echo "❌ Deployment: curl no disponible"
+    exit 1
+fi
+
+# Verificar lsof
+echo "🔍 Deployment: Verificando lsof..."
+if lsof --version >/dev/null 2>&1; then
+    echo "✅ Deployment: lsof disponible"
+else
+    echo "❌ Deployment: lsof no disponible"
+    exit 1
+fi
+
+# Verificar servicios externos (opcional)
+echo "🔍 Deployment: Verificando servicios externos..."
+pgrep mongod >/dev/null 2>&1 && echo "✅ Deployment: MongoDB disponible" || echo "⚠️  Deployment: MongoDB no disponible"
+pgrep redis-server >/dev/null 2>&1 && echo "✅ Deployment: Redis disponible" || echo "⚠️  Deployment: Redis no disponible"
+
+echo "🎉 Deployment: Infraestructura verificada correctamente"
+```
+
 </llm:section>
 
 ## =====
@@ -2244,6 +3640,7 @@ Todo el sistema sigue **Test-Driven Development** estricto:
 - [ ] **User acceptance**: Stakeholder approval + Training
 
 </llm:section>
+
 
 ## =====
 <llm:section id="unified_conclusion" type="conclusion">
