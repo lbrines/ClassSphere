@@ -1,7 +1,7 @@
 ---
 llm:metadata:
   title: "Contrato Unificado Completo: Dashboard Educativo Full-Stack"
-  version: "2.3"
+  version: "2.4"
   type: "unified_implementation_contract"
   stage: "unified"
   execution_priority: "complete_system"
@@ -15,6 +15,7 @@ llm:metadata:
     - comprehensive_testing
     - error_prevention_protocols
     - coverage_100_protocols
+    - infrastructure_error_prevention
     - ci_cd_pipeline
     - production_deployment
 ---
@@ -25,7 +26,7 @@ llm:metadata:
 - **Proyecto**: Dashboard Educativo - Sistema Completo
 - **Fase**: Implementación Unificada - Todas las Funcionalidades
 - **Autor**: Sistema de Contratos LLM
-- **Fecha**: 2025-10-03 (Actualizado con Prevención de Errores + Corrección de Warnings + Cobertura 100%)
+- **Fecha**: 2025-10-03 (Actualizado con Prevención de Errores + Corrección de Warnings + Cobertura 100% + Infraestructura)
 - **Propósito**: Implementar sistema completo de dashboard educativo con todas las funcionalidades consolidadas
 
 ## =====
@@ -1023,6 +1024,35 @@ curl: (7) Failed to connect to localhost port 8000
 python3 -m uvicorn src.app.main:app --host 127.0.0.1 --port 8000
 ```
 
+#### 5. Errores de Infraestructura en Desarrollo
+**Problema**: Servicios externos (MongoDB, Redis) no disponibles en entorno de desarrollo
+**Solución**: Lifespan resiliente + verificación con TestClient
+```python
+# ✅ CORRECTO - Lifespan que continúa sin servicios externos
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    try:
+        await database.connect_to_mongodb()
+        database.connect_to_redis()
+    except Exception as e:
+        print(f"Warning: Could not connect to databases: {e}")
+        # Continue startup even if databases fail
+    yield
+```
+
+#### 6. Errores de Puerto 8000 Ocupado
+**Problema**: Puerto 8000 ocupado por procesos anteriores de uvicorn
+**Solución**: Limpieza obligatoria antes de iniciar servidor
+```bash
+# ✅ CORRECTO - Limpieza obligatoria antes de iniciar
+pkill -f uvicorn
+sleep 2
+python3 -m uvicorn src.app.main:app --host 127.0.0.1 --port 8000
+
+# ❌ INCORRECTO - Usar puerto alternativo
+python3 -m uvicorn src.app.main:app --host 127.0.0.1 --port 8001
+```
+
 **Prevención**:
 - Scripts de verificación automática de servidor
 - Configuración estándar de host/puerto
@@ -1092,6 +1122,37 @@ def create_app() -> FastAPI:
     )
 ```
 
+#### Template para Inicio de Servidor Estándar
+```bash
+#!/bin/bash
+# Script obligatorio para iniciar servidor en puerto 8000
+echo "Limpiando procesos uvicorn anteriores..."
+pkill -f uvicorn
+sleep 2
+
+echo "Verificando puerto 8000 libre..."
+if lsof -Pi :8000 -sTCP:LISTEN -t >/dev/null ; then
+    echo "❌ Puerto 8000 ocupado. Limpiando..."
+    pkill -f "port 8000"
+    sleep 2
+fi
+
+echo "Iniciando servidor en puerto 8000..."
+python3 -m uvicorn src.app.main:app --host 127.0.0.1 --port 8000
+```
+
+#### Template para Verificación Manual
+```python
+# Verificación de endpoints sin servicios externos
+from fastapi.testclient import TestClient
+
+def test_endpoint_manually():
+    client = TestClient(app)
+    response = client.get("/health")
+    assert response.status_code == 200
+    return response.json()
+```
+
 #### Fase 2 - Google Integration
 **Verificaciones Automáticas**:
 - [ ] Mocks de Google API funcionan correctamente
@@ -1128,6 +1189,10 @@ def create_app() -> FastAPI:
 - [ ] **CORS**: Tests de CORS simplificados
 - [ ] **Warnings**: 0 warnings de deprecación (Pydantic v2 + FastAPI)
 - [ ] **Modern APIs**: ConfigDict + lifespan implementados
+- [ ] **Port Cleanup**: Limpieza obligatoria de procesos uvicorn antes de iniciar
+- [ ] **Port 8000**: Servidor siempre en puerto 8000 (nunca alternativo)
+- [ ] **Infrastructure**: Servicios externos verificados o mockeados
+- [ ] **Manual Testing**: TestClient usado para verificación de endpoints
 
 #### Día 2 - Modelos y Excepciones
 - [ ] **Models**: Pydantic v2 con ConfigDict
@@ -1160,7 +1225,10 @@ def create_app() -> FastAPI:
 - [ ] **Async Tests**: AsyncMock usado correctamente
 - [ ] **Error Paths**: Todos los try/except cubiertos
 - [ ] **CORS Tests**: Headers básicos verificados
-- [ ] **Server Health**: Health check funcional
+- [ ] **Server Health**: Health check funcional (TestClient + manual en puerto 8000)
+- [ ] **Port Management**: Puerto 8000 siempre libre y disponible
+- [ ] **Process Cleanup**: Limpieza automática de procesos anteriores
+- [ ] **Infrastructure**: Lifespan resiliente sin servicios externos
 - [ ] **Warnings**: 0 warnings de deprecación críticos
 - [ ] **Modern APIs**: Pydantic v2 + FastAPI lifespan implementados
 
@@ -1472,6 +1540,15 @@ pytest tests/unit/test_models.py --cov=src/app/models --cov-report=term-missing
 
 # Verificar cobertura de autenticación
 pytest tests/unit/test_auth.py --cov=src/app/api/auth --cov-report=term-missing
+
+# Verificar servidor en puerto 8000
+curl -f http://127.0.0.1:8000/health
+
+# Verificar limpieza de procesos
+pkill -f uvicorn && echo "Procesos limpiados" || echo "No hay procesos uvicorn"
+
+# Verificar puerto libre
+lsof -Pi :8000 -sTCP:LISTEN || echo "Puerto 8000 libre"
 ```
 
 #### 7. Métricas de Cobertura por Módulo
@@ -1515,6 +1592,71 @@ for module in "${CRITICAL_MODULES[@]}"; do
 done
 
 echo "🎉 Todos los módulos críticos tienen 100% de cobertura"
+```
+
+### Protocolo de Errores de Infraestructura
+
+#### Identificación
+- Servicios externos no disponibles (MongoDB, Redis)
+- Puerto 8000 ocupado por procesos anteriores
+- Conexiones HTTP fallidas en background
+
+#### Resolución Automática
+1. **Limpieza Obligatoria**: `pkill -f uvicorn` antes de iniciar servidor
+2. **Puerto 8000 Fijo**: Nunca usar puerto alternativo
+3. **Lifespan Resiliente**: Continuar startup sin servicios externos
+4. **Verificación TestClient**: Usar TestClient para pruebas sin servicios
+
+#### Script de Inicio Estándar
+```bash
+#!/bin/bash
+# Script obligatorio para Día 1 y siguientes
+set -e
+
+echo "🧹 Limpiando procesos anteriores..."
+pkill -f uvicorn || true
+sleep 2
+
+echo "🔍 Verificando puerto 8000..."
+if lsof -Pi :8000 -sTCP:LISTEN -t >/dev/null 2>&1; then
+    echo "⚠️  Puerto 8000 ocupado. Forzando limpieza..."
+    pkill -f "port 8000" || true
+    sleep 3
+fi
+
+echo "🚀 Iniciando servidor en puerto 8000..."
+python3 -m uvicorn src.app.main:app --host 127.0.0.1 --port 8000 &
+SERVER_PID=$!
+
+echo "⏳ Esperando inicio del servidor..."
+sleep 5
+
+echo "🔍 Verificando health check..."
+curl -f http://127.0.0.1:8000/health || {
+    echo "❌ Health check falló"
+    kill $SERVER_PID 2>/dev/null || true
+    exit 1
+}
+
+echo "✅ Servidor funcionando correctamente en puerto 8000"
+echo "📊 PID del servidor: $SERVER_PID"
+```
+
+#### Verificación de Servicios
+```bash
+# Verificar servicios externos (opcional)
+pgrep mongod && echo "✅ MongoDB disponible" || echo "⚠️  MongoDB no disponible"
+pgrep redis-server && echo "✅ Redis disponible" || echo "⚠️  Redis no disponible"
+
+# Verificar aplicación (obligatorio)
+python3 -c "
+from fastapi.testclient import TestClient
+from src.app.main import app
+client = TestClient(app)
+response = client.get('/health')
+print(f'✅ Health check: {response.status_code}')
+print(f'📋 Response: {response.json()}')
+"
 ```
 
 </llm:section>
