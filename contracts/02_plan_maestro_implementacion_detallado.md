@@ -1,35 +1,37 @@
 ---
 llm:metadata:
   title: "Plan Maestro de Implementación Detallado - Dashboard Educativo"
-  version: "1.2"
+  version: "2.4"
   type: "implementation_master_plan"
-  stage: "planning"
-  execution_priority: "comprehensive_roadmap"
+  stage: "unified_implementation"
+  execution_priority: "complete_system_roadmap"
   contains:
-    - detailed_phase_breakdown
+    - unified_phase_breakdown
     - tdd_methodology_strict
     - quality_gates_per_phase
-    - technical_specifications
-    - testing_strategy_detailed
+    - unified_technical_specifications
+    - comprehensive_testing_strategy
     - coverage_100_protocols
-    - deployment_roadmap
+    - error_prevention_protocols
+    - infrastructure_error_prevention
+    - production_deployment_roadmap
 ---
 
 # Plan Maestro de Implementación Detallado - Dashboard Educativo
 
 ## Información del Proyecto
-- **Proyecto**: Dashboard Educativo - Sistema Completo
-- **Plan**: Implementación Detallada por Fases
+- **Proyecto**: Dashboard Educativo - Sistema Completo Unificado
+- **Plan**: Implementación Detallada por Fases Unificadas
 - **Autor**: Sistema de Contratos LLM
-- **Fecha**: 2025-10-03 (Actualizado con Prevención de Errores + Cobertura 100%)
-- **Propósito**: Plan detallado para cumplir el contrato unificado con metodología TDD estricta
+- **Fecha**: 2025-10-03 (Actualizado con Especificación Unificada Completa + Prevención de Errores + Cobertura 100% + Infraestructura)
+- **Propósito**: Plan detallado para cumplir el contrato unificado completo con metodología TDD estricta y arquitectura resiliente
 
 ## =====
 <llm:section id="plan_overview" type="overview">
 ## Resumen Ejecutivo del Plan
 
 ### Objetivo Principal
-Implementar el Dashboard Educativo completo siguiendo el contrato unificado `00_dashboard_educativo_fullstack_unified_complete.md` con metodología TDD estricta y quality gates por fase.
+Implementar el Dashboard Educativo completo siguiendo el contrato unificado `00_dashboard_educativo_fullstack_unified_complete.md` con metodología TDD estricta, arquitectura resiliente, prevención de errores y quality gates por fase.
 
 ### Metodología TDD Consolidada
 **Ciclo Red-Green-Refactor estricto**:
@@ -41,47 +43,72 @@ Implementar el Dashboard Educativo completo siguiendo el contrato unificado `00_
 6. **Validate**: Validar cumplimiento de criterios de aceptación
 
 ### Duración Total: 45 días
-- **Fase 1**: Fundaciones (12 días)
-- **Fase 2**: Google Integration (10 días)
-- **Fase 3**: Visualización Avanzada (10 días)
-- **Fase 4**: Production Ready (13 días)
+- **Fase 1**: Fundaciones Unificadas (12 días)
+- **Fase 2**: Google Integration Completa (10 días)
+- **Fase 3**: Visualización Avanzada + Notificaciones (10 días)
+- **Fase 4**: Production Ready + WCAG 2.2 AA (13 días)
+
+### Stack Tecnológico Unificado
+```
+# Backend Unificado
+- Python 3.11.4 (pyenv)
+- FastAPI 0.104.1 + Pydantic v2 (validación estricta)
+- Google Classroom API + WebSockets (notificaciones)
+- MongoDB + Redis (cache y sesiones)
+- pytest (testing exhaustivo)
+
+# Frontend Unificado
+- Next.js 13.5.6 (LTS) + React 18.2.0
+- TypeScript 5.1.6 + @tanstack/react-query 4.36.1
+- ApexCharts 5.3.5 + D3.js (visualizaciones)
+- Tailwind CSS 3.3.3 + i18n (internacionalización)
+- Vitest + Playwright (testing completo)
+
+# DevOps Unificado
+- Docker (multi-stage) + GitHub Actions
+- Trivy (security) + pnpm 8.x+
+- Quality Gates + Auto-deploy
+```
 
 ### Quality Gates Obligatorios
 - **Cobertura**: ≥100% módulos críticos (config, database, main, auth, models)
-- **Performance**: <2s dashboard load
+- **Performance**: <2s dashboard load (Fase 2), <1.5s (Fase 3), <1s (Fase 4)
 - **Security**: 0 vulnerabilidades CRITICAL/HIGH
-- **Accessibility**: WCAG 2.2 AA compliance
-- **Testing**: E2E + Unit + Integration + Performance
-- **Error Prevention**: 0 warnings críticos + APIs modernas
-- **Context Managers**: Tests completos para lifespan
-- **Error Paths**: Todos los try/except cubiertos
-- **Modern APIs**: Pydantic v2 + FastAPI lifespan + AsyncMock
+- **Accessibility**: WCAG 2.2 AA compliance completo (Fase 4)
+- **Testing**: E2E + Unit + Integration + Performance + Visual
+- **Error Prevention**: 0 warnings críticos + APIs modernas + Puerto 8000 fijo
+- **Context Managers**: Tests completos para lifespan + AsyncMock
+- **Error Paths**: Todos los try/except cubiertos + Limpieza automática
+- **Modern APIs**: Pydantic v2 + FastAPI lifespan + Migración automática
+- **Infraestructura**: Servicios resilientes + Verificación automática
 
 </llm:section>
 
 ## =====
 <llm:section id="phase1_foundations" type="detailed_phase">
-## Fase 1: Fundaciones (Días 1-12)
+## Fase 1: Fundaciones Unificadas (Días 1-12)
 
 ### Objetivo de la Fase
-Establecer las fundaciones sólidas del sistema con backend FastAPI, frontend Next.js, autenticación completa y comunicación API funcional.
+Establecer las fundaciones sólidas del sistema unificado con backend FastAPI + Pydantic v2, frontend Next.js + React Query, autenticación dual (JWT + OAuth 2.0), comunicación API funcional y arquitectura resiliente con puerto 8000 fijo.
 
 ### Días 1-3: Backend Fundacional
 
-#### Día 1: Estructura y Configuración
+#### Día 1: Estructura y Configuración Unificada
 **TDD Approach**:
-- [ ] Crear estructura de directorios backend/
-- [ ] Configurar requirements.txt con rangos de versiones
-- [ ] Crear pytest.ini y pyproject.toml
-- [ ] Configurar variables de entorno (.env.example)
-- [ ] Escribir tests fallidos para configuración base
+- [ ] Crear estructura de directorios backend/ completa según especificación unificada
+- [ ] Configurar requirements.txt con versiones exactas (FastAPI 0.104.1, Pydantic v2)
+- [ ] Crear pytest.ini y pyproject.toml con configuración unificada
+- [ ] Configurar variables de entorno (.env.example) con todas las variables necesarias
+- [ ] Escribir tests fallidos para configuración base + arquitectura resiliente
 
 **Implementación**:
-- [ ] Instalar dependencias: FastAPI, Pydantic v2, pydantic-settings
-- [ ] Configurar settings con BaseSettings
-- [ ] Crear main.py básico con FastAPI app
-- [ ] Implementar health check endpoint
-- [ ] Verificar que tests pasen
+- [ ] Instalar dependencias: FastAPI 0.104.1, Pydantic v2, pydantic-settings, MongoDB, Redis
+- [ ] Configurar settings con BaseSettings + ConfigDict (Pydantic v2)
+- [ ] Crear main.py con FastAPI app + lifespan context manager
+- [ ] Implementar health check endpoint + verificación de servicios
+- [ ] Configurar puerto 8000 fijo como estándar arquitectónico
+- [ ] Implementar limpieza automática de procesos
+- [ ] Verificar que tests pasen + arquitectura resiliente
 
 **Quality Gate**:
 - [ ] pytest -q ejecuta sin errores (34 tests pasando)
@@ -93,17 +120,20 @@ Establecer las fundaciones sólidas del sistema con backend FastAPI, frontend Ne
 - [ ] ConfigDict + lifespan implementados correctamente
 - [ ] Tests async usan AsyncMock
 
-#### Día 2: Modelos y Excepciones
+#### Día 2: Modelos y Excepciones Unificadas
 **TDD Approach**:
-- [ ] Escribir tests para modelos User (Pydantic v2)
-- [ ] Tests para excepciones personalizadas
-- [ ] Tests para validación de datos
+- [ ] Escribir tests para modelos User + OAuthToken (Pydantic v2)
+- [ ] Tests para excepciones personalizadas + OAuth exceptions
+- [ ] Tests para validación de datos + OAuth token validation
+- [ ] Tests para migración automática de APIs deprecadas
 
 **Implementación**:
-- [ ] Crear modelos User, UserCreate, UserResponse
-- [ ] Implementar excepciones: AuthenticationError, TokenExpiredError
-- [ ] Configurar json_encoders con model_config (Pydantic v2)
-- [ ] Campos opcionales para compatibilidad MockService
+- [ ] Crear modelos User, UserCreate, UserResponse + OAuthToken, OAuthTokenCreate
+- [ ] Implementar excepciones: AuthenticationError, TokenExpiredError, OAuthError, GoogleAPIError
+- [ ] Configurar json_encoders con model_config (Pydantic v2) + ConfigDict
+- [ ] Campos opcionales para compatibilidad MockService + Google API
+- [ ] Implementar migración automática de Pydantic v1 a v2
+- [ ] Configurar validadores estrictos para OAuth tokens
 
 **Quality Gate**:
 - [ ] Todos los tests de modelos pasan
@@ -116,19 +146,23 @@ Establecer las fundaciones sólidas del sistema con backend FastAPI, frontend Ne
 - [ ] Tests de modelos usan AsyncMock para métodos async
 - [ ] Validadores funcionan sin deprecation warnings
 
-#### Día 3: Autenticación JWT
+#### Día 3: Autenticación Dual (JWT + OAuth 2.0)
 **TDD Approach**:
-- [ ] Tests para AuthService.create_access_token
-- [ ] Tests para AuthService.verify_token
+- [ ] Tests para AuthService.create_access_token (JWT)
+- [ ] Tests para AuthService.verify_token (JWT)
+- [ ] Tests para OAuthService.google_oauth_flow
+- [ ] Tests para OAuthService.exchange_code_for_token
 - [ ] Tests para hash_password/verify_password
 - [ ] Tests para get_user_permissions_by_role
 
 **Implementación**:
-- [ ] Implementar AuthService con JWT estándar
-- [ ] Campo 'sub' en payload JWT (estándar)
-- [ ] Campos email, id, role, exp, iat
-- [ ] Manejo de TokenExpiredError
-- [ ] Configuración JWT con variables de entorno
+- [ ] Implementar AuthService con JWT estándar + refresh rotation
+- [ ] Implementar OAuthService con Google OAuth 2.0 + PKCE
+- [ ] Campo 'sub' en payload JWT (estándar) + OAuth token validation
+- [ ] Campos email, id, role, exp, iat + OAuth scopes
+- [ ] Manejo de TokenExpiredError + OAuthError
+- [ ] Configuración JWT + OAuth con variables de entorno
+- [ ] Implementar dual mode switching (JWT/Mock vs OAuth/Google)
 
 **Quality Gate**:
 - [ ] JWT se crea y verifica correctamente
@@ -137,19 +171,20 @@ Establecer las fundaciones sólidas del sistema con backend FastAPI, frontend Ne
 
 ### Días 4-6: Frontend Fundacional
 
-#### Día 4: Estructura Next.js
+#### Día 4: Estructura Next.js Unificada
 **TDD Approach**:
-- [ ] Crear estructura de directorios frontend/
-- [ ] Configurar package.json con dependencias
-- [ ] Configurar Next.js 13.5.6 + TypeScript
-- [ ] Escribir tests fallidos para componentes base
+- [ ] Crear estructura de directorios frontend/ completa según especificación unificada
+- [ ] Configurar package.json con dependencias exactas
+- [ ] Configurar Next.js 13.5.6 + TypeScript 5.1.6
+- [ ] Escribir tests fallidos para componentes base + i18n
 
 **Implementación**:
-- [ ] Instalar Next.js, React 18.2.0, TypeScript 5.1.6
-- [ ] Configurar Tailwind CSS 3.3.3
-- [ ] Configurar React Query v4
-- [ ] Crear layout básico
-- [ ] Configurar routing
+- [ ] Instalar Next.js 13.5.6, React 18.2.0, TypeScript 5.1.6
+- [ ] Configurar Tailwind CSS 3.3.3 + @tanstack/react-query 4.36.1
+- [ ] Configurar i18n (internacionalización) + locales
+- [ ] Crear layout básico + providers (QueryProvider)
+- [ ] Configurar routing + middleware de autenticación
+- [ ] Configurar puerto 3000 fijo para desarrollo
 
 **Quality Gate**:
 - [ ] Next.js se ejecuta sin errores
@@ -173,19 +208,20 @@ Establecer las fundaciones sólidas del sistema con backend FastAPI, frontend Ne
 - [ ] Design responsivo funciona
 - [ ] Tests de componentes pasan
 
-#### Día 6: Autenticación Frontend
+#### Día 6: Autenticación Dual Frontend
 **TDD Approach**:
-- [ ] Tests para LoginForm component
-- [ ] Tests para AuthGuard
-- [ ] Tests para useAuth hook
-- [ ] Tests para manejo de tokens
+- [ ] Tests para LoginForm component + OAuthButton
+- [ ] Tests para AuthGuard + OAuthGuard
+- [ ] Tests para useAuth hook + useOAuth hook
+- [ ] Tests para manejo de tokens (JWT + OAuth)
 
 **Implementación**:
-- [ ] Crear LoginForm con validación
-- [ ] Implementar AuthGuard para rutas protegidas
-- [ ] Crear useAuth hook con React Query
-- [ ] Manejo de tokens en localStorage
-- [ ] Redirección post-login
+- [ ] Crear LoginForm con validación + OAuthButton component
+- [ ] Implementar AuthGuard para rutas protegidas + OAuth flow
+- [ ] Crear useAuth hook con React Query + useOAuth hook
+- [ ] Manejo de tokens en localStorage + OAuth token management
+- [ ] Redirección post-login + OAuth callback handling
+- [ ] Implementar dual mode switching en frontend
 
 **Quality Gate**:
 - [ ] Login funciona end-to-end
@@ -303,15 +339,16 @@ Establecer las fundaciones sólidas del sistema con backend FastAPI, frontend Ne
 - [ ] Cobertura > 80%
 
 ### Criterios de Finalización Fase 1
-- [ ] **Backend**: FastAPI + JWT + OAuth funcionando
-- [ ] **Frontend**: Next.js + Auth + Layout responsivo
-- [ ] **Testing**: ≥80% cobertura + CI básico
-- [ ] **Integration**: Frontend-Backend comunicación
-- [ ] **Performance**: <3s load time
-- [ ] **Security**: 0 vulnerabilidades CRITICAL
-- [ ] **Error Prevention**: AsyncMock + CORS tests + Server health
-- [ ] **Warnings**: 0 warnings de deprecación críticos
-- [ ] **Modern APIs**: Pydantic v2 + FastAPI lifespan implementados
+- [ ] **Backend**: FastAPI + JWT + OAuth 2.0 + Pydantic v2 funcionando
+- [ ] **Frontend**: Next.js + React Query + Auth dual + Layout responsivo + i18n
+- [ ] **Testing**: ≥80% cobertura + CI básico + AsyncMock
+- [ ] **Integration**: Frontend-Backend comunicación + OAuth flow completo
+- [ ] **Performance**: <3s load time + Puerto 8000 fijo
+- [ ] **Security**: 0 vulnerabilidades CRITICAL + CORS configurado
+- [ ] **Error Prevention**: AsyncMock + CORS tests + Server health + Limpieza automática
+- [ ] **Warnings**: 0 warnings de deprecación críticos + Migración automática
+- [ ] **Modern APIs**: Pydantic v2 + FastAPI lifespan + ConfigDict implementados
+- [ ] **Arquitectura**: Servicios resilientes + Verificación automática + Puerto fijo
 
 </llm:section>
 
@@ -666,25 +703,27 @@ echo "🎉 Todos los módulos críticos tienen 100% de cobertura"
 
 ## =====
 <llm:section id="phase2_google_integration" type="detailed_phase">
-## Fase 2: Google Integration (Días 13-22)
+## Fase 2: Google Integration Completa (Días 13-22)
 
 ### Objetivo de la Fase
-Integrar Google Classroom API con modo dual (Google/Mock), implementar dashboards por rol y métricas básicas.
+Integrar Google Classroom API completa con modo dual (Google/Mock), implementar dashboards avanzados por rol, métricas educativas, visualizaciones ApexCharts y sistema de cache Redis.
 
 ### Días 13-15: Backend Google
 
-#### Día 13: Google Classroom API
+#### Día 13: Google Classroom API Completa
 **TDD Approach**:
-- [ ] Tests para GoogleService
-- [ ] Tests para ClassroomService
-- [ ] Tests para autenticación OAuth
+- [ ] Tests para GoogleService + GoogleClassroomService
+- [ ] Tests para ClassroomService + MetricsService
+- [ ] Tests para autenticación OAuth + Google API authentication
+- [ ] Tests para rate limiting + error handling + fallback
 
 **Implementación**:
-- [ ] Implementar GoogleService con API v1
-- [ ] Crear ClassroomService para lógica de negocio
-- [ ] Configurar OAuth 2.0 con Google
-- [ ] Manejo de tokens de acceso
-- [ ] Rate limiting y error handling
+- [ ] Implementar GoogleService con API v1 + todas las funcionalidades
+- [ ] Crear ClassroomService para lógica de negocio + métricas educativas
+- [ ] Configurar OAuth 2.0 con Google + PKCE + scopes limitados
+- [ ] Manejo de tokens de acceso + refresh + expiration
+- [ ] Rate limiting (100 requests/100 seconds) + error handling + fallback automático
+- [ ] Implementar cache Redis para datos de Google API
 
 **Quality Gate**:
 - [ ] Google API se conecta correctamente
@@ -803,18 +842,19 @@ Integrar Google Classroom API con modo dual (Google/Mock), implementar dashboard
 - [ ] Agregaciones funcionan
 - [ ] Performance optimizada
 
-#### Día 20: ApexCharts Integration
+#### Día 20: ApexCharts Integration Completa
 **TDD Approach**:
-- [ ] Tests para ChartWidget
-- [ ] Tests para diferentes tipos de gráficos
-- [ ] Tests para interactividad
+- [ ] Tests para ChartWidget + AdvancedChart
+- [ ] Tests para diferentes tipos de gráficos (Bar, Line, Pie, Area)
+- [ ] Tests para interactividad + drill-down + export
 
 **Implementación**:
-- [ ] Integrar ApexCharts v5.3.5
-- [ ] Crear ChartWidget genérico
-- [ ] Implementar gráficos básicos
-- [ ] Interactividad drill-down
-- [ ] Export functionality
+- [ ] Integrar ApexCharts v5.3.5 + configuración completa
+- [ ] Crear ChartWidget genérico + AdvancedChart component
+- [ ] Implementar gráficos básicos + avanzados (heatmaps, treemaps)
+- [ ] Interactividad drill-down + zoom + pan
+- [ ] Export functionality (PDF, PNG, SVG) + custom themes
+- [ ] Implementar responsive charts + accessibility features
 
 **Quality Gate**:
 - [ ] Gráficos renderizan correctamente
@@ -860,21 +900,23 @@ Integrar Google Classroom API con modo dual (Google/Mock), implementar dashboard
 - [ ] Cobertura > 85%
 
 ### Criterios de Finalización Fase 2
-- [ ] **Backend**: Google API + Modo dual + Dashboards
-- [ ] **Frontend**: Google UI + ApexCharts + Dashboards rol
-- [ ] **Testing**: Google mocks + Integration tests
-- [ ] **Performance**: <2s dashboard load
-- [ ] **Google**: OAuth + Classroom API funcionando
-- [ ] **Modo Dual**: Switching Google/Mock estable
+- [ ] **Backend**: Google API completa + Modo dual + Dashboards + Métricas educativas
+- [ ] **Frontend**: Google UI + ApexCharts v5.3.5 + Dashboards por rol + Cache Redis
+- [ ] **Testing**: Google mocks + Integration tests + Chart tests
+- [ ] **Performance**: <2s dashboard load + Cache optimizado
+- [ ] **Google**: OAuth + Classroom API + Rate limiting funcionando
+- [ ] **Modo Dual**: Switching Google/Mock estable + Fallback automático
+- [ ] **Visualizaciones**: ApexCharts avanzados + Export + Responsive
+- [ ] **Cache**: Redis implementado + Invalidación inteligente
 
 </llm:section>
 
 ## =====
 <llm:section id="phase3_advanced_visualization" type="detailed_phase">
-## Fase 3: Visualización Avanzada (Días 23-32)
+## Fase 3: Visualización Avanzada + Notificaciones (Días 23-32)
 
 ### Objetivo de la Fase
-Implementar búsqueda avanzada, notificaciones en tiempo real, visualizaciones interactivas y métricas predictivas.
+Implementar búsqueda avanzada, notificaciones WebSocket en tiempo real, visualizaciones D3.js interactivas, métricas predictivas y widgets personalizables.
 
 ### Días 23-25: Backend Avanzado
 
@@ -896,18 +938,19 @@ Implementar búsqueda avanzada, notificaciones en tiempo real, visualizaciones i
 - [ ] Filtros avanzados implementados
 - [ ] Performance < 1s search time
 
-#### Día 24: Notificaciones WebSocket
+#### Día 24: Notificaciones WebSocket Completas
 **TDD Approach**:
-- [ ] Tests para WebSocketService
-- [ ] Tests para notificaciones real-time
-- [ ] Tests para delivery garantizada
+- [ ] Tests para WebSocketService + NotificationService
+- [ ] Tests para notificaciones real-time + WebSocket connections
+- [ ] Tests para delivery garantizada + fallback polling
 
 **Implementación**:
-- [ ] Implementar WebSocketService
-- [ ] Notificaciones real-time
-- [ ] Multi-channel delivery
-- [ ] Smart alerts
-- [ ] Preferences por usuario
+- [ ] Implementar WebSocketService + WebSocket endpoints
+- [ ] Notificaciones real-time + WebSocket connections
+- [ ] Multi-channel delivery (WebSocket + Email + Telegram mock)
+- [ ] Smart alerts + notification preferences
+- [ ] Preferences por usuario + notification center
+- [ ] Implementar fallback polling cada 30 segundos
 
 **Quality Gate**:
 - [ ] WebSocket funciona correctamente
@@ -990,18 +1033,19 @@ Implementar búsqueda avanzada, notificaciones en tiempo real, visualizaciones i
 
 ### Días 29-31: Visualización Completa
 
-#### Día 29: D3.js Integration
+#### Día 29: D3.js Integration Completa
 **TDD Approach**:
-- [ ] Tests para visualizaciones D3
-- [ ] Tests para animaciones
-- [ ] Tests para interactividad
+- [ ] Tests para visualizaciones D3 + AdvancedChart
+- [ ] Tests para animaciones + transitions
+- [ ] Tests para interactividad + zoom + brush
 
 **Implementación**:
-- [ ] Integrar D3.js
-- [ ] Visualizaciones custom
-- [ ] Animaciones fluidas
-- [ ] Interactividad avanzada
-- [ ] Export avanzado
+- [ ] Integrar D3.js + configuración completa
+- [ ] Visualizaciones custom (network graphs, treemaps, heatmaps)
+- [ ] Animaciones fluidas + transitions + easing
+- [ ] Interactividad avanzada + zoom + pan + brush
+- [ ] Export avanzado + SVG + Canvas + WebGL
+- [ ] Implementar responsive D3 charts + accessibility
 
 **Quality Gate**:
 - [ ] D3.js funciona correctamente
@@ -1065,36 +1109,37 @@ Implementar búsqueda avanzada, notificaciones en tiempo real, visualizaciones i
 - [ ] Cobertura > 88%
 
 ### Criterios de Finalización Fase 3
-- [ ] **Backend**: Búsqueda + Notificaciones + WebSocket
-- [ ] **Frontend**: UI avanzada + Gráficos interactivos
-- [ ] **Testing**: E2E scenarios + Performance
-- [ ] **Accessibility**: Keyboard + Screen reader básico
-- [ ] **Performance**: <1.5s load time
-- [ ] **Visualization**: D3.js + ApexCharts avanzado
+- [ ] **Backend**: Búsqueda avanzada + Notificaciones WebSocket + Métricas predictivas
+- [ ] **Frontend**: UI avanzada + Gráficos D3.js + ApexCharts + Widgets personalizables
+- [ ] **Testing**: E2E scenarios + Performance + Visual + WebSocket tests
+- [ ] **Accessibility**: Keyboard + Screen reader básico + Chart accessibility
+- [ ] **Performance**: <1.5s load time + Optimización de gráficos
+- [ ] **Visualization**: D3.js completo + ApexCharts avanzado + Export + Responsive
+- [ ] **Real-time**: WebSocket estable + Fallback polling + Multi-channel delivery
 
 </llm:section>
 
 ## =====
 <llm:section id="phase4_production_ready" type="detailed_phase">
-## Fase 4: Production Ready (Días 33-45)
+## Fase 4: Production Ready + WCAG 2.2 AA (Días 33-45)
 
 ### Objetivo de la Fase
-Completar Google sync bidireccional, implementar WCAG 2.2 AA completo, testing exhaustivo y deployment production-ready.
+Completar Google sync bidireccional, implementar WCAG 2.2 AA completo, testing exhaustivo, deployment production-ready y sistema de monitoreo 24/7.
 
 ### Días 33-35: Google Completo
 
-#### Día 33: Sincronización Bidireccional
+#### Día 33: Sincronización Bidireccional Completa
 **TDD Approach**:
-- [ ] Tests para GoogleSyncService
-- [ ] Tests para conflict resolution
-- [ ] Tests para backup/restore
+- [ ] Tests para GoogleSyncService + ConflictResolutionService
+- [ ] Tests para conflict resolution + audit trail
+- [ ] Tests para backup/restore + point-in-time recovery
 
 **Implementación**:
-- [ ] Implementar GoogleSyncService
-- [ ] Sincronización bidireccional
-- [ ] Conflict resolution automática
-- [ ] Backup automático
-- [ ] Webhooks para eventos
+- [ ] Implementar GoogleSyncService + ConflictResolutionService
+- [ ] Sincronización bidireccional + incremental + programada
+- [ ] Conflict resolution automática + manual + audit trail
+- [ ] Backup automático + selectivo + point-in-time
+- [ ] Webhooks para eventos + signature validation + retry logic
 
 **Quality Gate**:
 - [ ] Sync bidireccional funciona
@@ -1137,56 +1182,57 @@ Completar Google sync bidireccional, implementar WCAG 2.2 AA completo, testing e
 - [ ] Monitoring implementado
 - [ ] Alertas automáticas
 
-### Días 36-38: Accesibilidad WCAG 2.2 AA
+### Días 36-38: Accesibilidad WCAG 2.2 AA Completa
 
-#### Día 36: Keyboard Navigation
+#### Día 36: Keyboard Navigation Completa
 **TDD Approach**:
-- [ ] Tests de navegación por teclado
-- [ ] Tests de focus management
-- [ ] Tests de shortcuts
+- [ ] Tests de navegación por teclado + focus management
+- [ ] Tests de shortcuts + tab order + skip links
+- [ ] Tests de accessibility con axe-core
 
 **Implementación**:
-- [ ] Navegación completa por teclado
-- [ ] Focus management
-- [ ] Keyboard shortcuts
-- [ ] Tab order correcto
-- [ ] Skip links
+- [ ] Navegación completa por teclado + focus management
+- [ ] Keyboard shortcuts + tab order correcto + skip links
+- [ ] Implementar FocusTrap + SkipLink components
+- [ ] Configurar axe-core para testing automático
+- [ ] Implementar keyboard navigation para gráficos
 
 **Quality Gate**:
 - [ ] Navegación por teclado completa
 - [ ] Focus management correcto
 - [ ] Shortcuts funcionan
 
-#### Día 37: Screen Reader Support
+#### Día 37: Screen Reader Support Completo
 **TDD Approach**:
-- [ ] Tests con screen reader
-- [ ] Tests de ARIA
-- [ ] Tests de semantic HTML
+- [ ] Tests con screen reader + axe-core
+- [ ] Tests de ARIA + semantic HTML + live regions
+- [ ] Tests de accessibility con pa11y
 
 **Implementación**:
-- [ ] ARIA labels completos
-- [ ] Semantic HTML
-- [ ] Screen reader announcements
-- [ ] Live regions
-- [ ] Alternative text
+- [ ] ARIA labels completos + roles + states + properties
+- [ ] Semantic HTML + landmarks + headings hierarchy
+- [ ] Screen reader announcements + live regions + alternative text
+- [ ] Implementar ScreenReaderText component
+- [ ] Configurar pa11y para testing automático de accessibility
 
 **Quality Gate**:
 - [ ] Screen reader funciona
 - [ ] ARIA implementado correctamente
 - [ ] Semantic HTML completo
 
-#### Día 38: Visual Accessibility
+#### Día 38: Visual Accessibility Completa
 **TDD Approach**:
-- [ ] Tests de contraste
-- [ ] Tests de escalabilidad
-- [ ] Tests de color-blind friendly
+- [ ] Tests de contraste + escalabilidad + color-blind friendly
+- [ ] Tests de high contrast mode + visual indicators
+- [ ] Tests de accessibility con axe-core + pa11y
 
 **Implementación**:
-- [ ] Contraste AA/AAA
-- [ ] Fonts escalables
-- [ ] Color-blind friendly
-- [ ] High contrast mode
-- [ ] Visual indicators
+- [ ] Contraste AA/AAA + color contrast validation
+- [ ] Fonts escalables + responsive typography
+- [ ] Color-blind friendly + alternative color schemes
+- [ ] High contrast mode + ContrastToggle component
+- [ ] Visual indicators + focus indicators + error indicators
+- [ ] Implementar accessibility testing automático en CI/CD
 
 **Quality Gate**:
 - [ ] Contraste AA/AAA
@@ -1324,12 +1370,14 @@ Completar Google sync bidireccional, implementar WCAG 2.2 AA completo, testing e
 - [ ] Training materials
 
 ### Criterios de Finalización Fase 4
-- [ ] **Google**: Sync bidireccional + Backup + Webhooks
-- [ ] **Accessibility**: WCAG 2.2 AA completo
-- [ ] **Testing**: ≥90% críticos + Security + Load
-- [ ] **CI/CD**: Pipeline completo + Docker + Monitoring
-- [ ] **Production**: Deployment ready + Monitoring
-- [ ] **Documentation**: Completa + Runbooks + Training
+- [ ] **Google**: Sync bidireccional + Backup + Webhooks + Conflict resolution
+- [ ] **Accessibility**: WCAG 2.2 AA completo + axe-core + pa11y + Keyboard + Screen reader
+- [ ] **Testing**: ≥90% críticos + Security + Load + Accessibility + Visual
+- [ ] **CI/CD**: Pipeline completo + Docker + Monitoring + Quality gates
+- [ ] **Production**: Deployment ready + Monitoring 24/7 + Alertas automáticas
+- [ ] **Documentation**: Completa + Runbooks + Training + API docs
+- [ ] **Performance**: <1s load time + Optimización completa + Bundle optimization
+- [ ] **Security**: 0 vulnerabilidades CRITICAL/HIGH + OWASP compliance
 
 </llm:section>
 
@@ -1337,63 +1385,55 @@ Completar Google sync bidireccional, implementar WCAG 2.2 AA completo, testing e
 <llm:section id="quality_gates" type="quality_assurance">
 ## Quality Gates por Fase
 
-### Gate 1: Fundaciones (Día 12)
-- [ ] **Cobertura**: ≥100% módulos críticos (config, database, main)
-- [ ] **Performance**: <3s load time
-- [ ] **Security**: 0 vulnerabilidades CRITICAL
-- [ ] **Tests**: Backend + Frontend + E2E básicos
-- [ ] **Integration**: Frontend-Backend comunicación
-- [ ] **CI/CD**: Pipeline básico funcionando
-- [ ] **Error Prevention**: Todos los checks de prevención pasando
-- [ ] **Context Managers**: Tests completos para lifespan
-- [ ] **Error Paths**: Todos los try/except cubiertos
-- [ ] **Async Tests**: AsyncMock usado correctamente
-- [ ] **CORS Tests**: Headers básicos verificados
-- [ ] **Server Health**: Health check funcional
-- [ ] **Warnings**: 0 warnings de deprecación críticos
-- [ ] **Modern APIs**: Pydantic v2 + FastAPI lifespan implementados
+### Gate 1: Fundaciones Unificadas (Día 12)
+- [ ] **Cobertura**: ≥100% módulos críticos (config, database, main, auth, models)
+- [ ] **Performance**: <3s load time + Puerto 8000 fijo
+- [ ] **Security**: 0 vulnerabilidades CRITICAL + CORS configurado
+- [ ] **Tests**: Backend + Frontend + E2E básicos + AsyncMock
+- [ ] **Integration**: Frontend-Backend comunicación + OAuth flow completo
+- [ ] **CI/CD**: Pipeline básico funcionando + Quality gates
+- [ ] **Error Prevention**: Todos los checks de prevención pasando + Limpieza automática
+- [ ] **Context Managers**: Tests completos para lifespan + AsyncMock
+- [ ] **Error Paths**: Todos los try/except cubiertos + Migración automática
+- [ ] **Modern APIs**: Pydantic v2 + FastAPI lifespan + ConfigDict implementados
+- [ ] **Arquitectura**: Servicios resilientes + Verificación automática + Puerto fijo
 
-### Gate 2: Google Integration (Día 22)
-- [ ] **Cobertura**: ≥100% servicios críticos (auth, google, models)
-- [ ] **Performance**: <2s dashboard load
-- [ ] **Security**: 0 vulnerabilidades CRITICAL
-- [ ] **Tests**: Google mocks + Integration tests
-- [ ] **Google**: OAuth + Classroom API estable
-- [ ] **Modo Dual**: Switching Google/Mock funcional
-- [ ] **Error Prevention**: Rate limiting + fallback funcionando
-- [ ] **API Integration**: Tests para todos los endpoints
-- [ ] **Error Recovery**: Tests para fallos de conexión
-- [ ] **Data Validation**: Tests para datos de Google
-- [ ] **API Mocks**: Google API mocks estables
-- [ ] **Warnings**: 0 warnings críticos en Google integration
+### Gate 2: Google Integration Completa (Día 22)
+- [ ] **Cobertura**: ≥100% servicios críticos (auth, google, models, metrics)
+- [ ] **Performance**: <2s dashboard load + Cache Redis optimizado
+- [ ] **Security**: 0 vulnerabilidades CRITICAL + Rate limiting
+- [ ] **Tests**: Google mocks + Integration tests + Chart tests
+- [ ] **Google**: OAuth + Classroom API + Rate limiting estable
+- [ ] **Modo Dual**: Switching Google/Mock + Fallback automático funcional
+- [ ] **Error Prevention**: Rate limiting + fallback + Cache Redis funcionando
+- [ ] **API Integration**: Tests para todos los endpoints + Métricas educativas
+- [ ] **Visualizaciones**: ApexCharts v5.3.5 + Export + Responsive
+- [ ] **Cache**: Redis implementado + Invalidación inteligente
 
-### Gate 3: Visualización Avanzada (Día 32)
-- [ ] **Cobertura**: ≥100% componentes de visualización
-- [ ] **Performance**: <1.5s load time
-- [ ] **Security**: 0 vulnerabilidades CRITICAL
-- [ ] **Tests**: E2E + Performance + Visual
-- [ ] **Accessibility**: Keyboard + Screen reader básico
-- [ ] **Visualization**: D3.js + ApexCharts avanzado
-- [ ] **WebSocket**: Tests para conexiones real-time
-- [ ] **Charts**: Tests para renderizado de gráficos
-- [ ] **Interactions**: Tests para interacciones de usuario
-- [ ] **Error Prevention**: WebSocket + gráficos estables
-- [ ] **Real-time**: Notificaciones funcionando
-- [ ] **Warnings**: 0 warnings críticos en visualizaciones
+### Gate 3: Visualización Avanzada + Notificaciones (Día 32)
+- [ ] **Cobertura**: ≥100% componentes de visualización + WebSocket
+- [ ] **Performance**: <1.5s load time + Optimización de gráficos
+- [ ] **Security**: 0 vulnerabilidades CRITICAL + WebSocket security
+- [ ] **Tests**: E2E + Performance + Visual + WebSocket tests
+- [ ] **Accessibility**: Keyboard + Screen reader básico + Chart accessibility
+- [ ] **Visualization**: D3.js completo + ApexCharts avanzado + Export + Responsive
+- [ ] **WebSocket**: Tests para conexiones real-time + Fallback polling
+- [ ] **Real-time**: Notificaciones WebSocket + Multi-channel delivery funcionando
+- [ ] **Widgets**: Sistema de widgets personalizables + Drag & drop
+- [ ] **Búsqueda**: Búsqueda avanzada + Filtros + Resultados contextuales
 
-### Gate 4: Production Ready (Día 45)
-- [ ] **Cobertura**: ≥100% global
-- [ ] **Performance**: <1s load time
-- [ ] **Security**: 0 vulnerabilidades CRITICAL/HIGH
-- [ ] **Tests**: Exhaustivos + Security + Load
-- [ ] **E2E**: Tests end-to-end completos
-- [ ] **Performance**: Tests de carga
-- [ ] **Security**: Tests de seguridad exhaustivos
-- [ ] **Accessibility**: WCAG 2.2 AA completo
-- [ ] **Production**: CI/CD + Docker + Monitoring
-- [ ] **Error Prevention**: Todos los sistemas estables
-- [ ] **Monitoring**: Alertas automáticas funcionando
-- [ ] **Warnings**: 0 warnings críticos en producción
+### Gate 4: Production Ready + WCAG 2.2 AA (Día 45)
+- [ ] **Cobertura**: ≥100% global + Accessibility tests
+- [ ] **Performance**: <1s load time + Optimización completa + Bundle optimization
+- [ ] **Security**: 0 vulnerabilidades CRITICAL/HIGH + OWASP compliance
+- [ ] **Tests**: Exhaustivos + Security + Load + Accessibility + Visual
+- [ ] **E2E**: Tests end-to-end completos + Cross-browser + Mobile
+- [ ] **Performance**: Tests de carga + Stress + Memory leak
+- [ ] **Security**: Tests de seguridad exhaustivos + Penetration + Dependency audit
+- [ ] **Accessibility**: WCAG 2.2 AA completo + axe-core + pa11y + Keyboard + Screen reader
+- [ ] **Production**: CI/CD + Docker + Monitoring 24/7 + Alertas automáticas
+- [ ] **Google**: Sync bidireccional + Backup + Webhooks + Conflict resolution
+- [ ] **Documentation**: Completa + Runbooks + Training + API docs
 
 </llm:section>
 
@@ -1466,14 +1506,16 @@ Completar Google sync bidireccional, implementar WCAG 2.2 AA completo, testing e
 ## Conclusión del Plan Maestro
 
 ### Resumen Ejecutivo
-Este plan maestro detalla la implementación completa del Dashboard Educativo siguiendo el contrato unificado con metodología TDD estricta. El plan garantiza calidad, performance y accessibility desde el primer día.
+Este plan maestro detalla la implementación completa del Dashboard Educativo siguiendo el contrato unificado completo con metodología TDD estricta, arquitectura resiliente y prevención de errores. El plan garantiza calidad, performance, accessibility WCAG 2.2 AA y producción ready desde el primer día.
 
-### Beneficios del Plan
-1. **Calidad Garantizada**: TDD + Quality Gates aseguran alta calidad
-2. **Risk Mitigation**: Identificación y mitigación proactiva de riesgos
-3. **Time Management**: Plan detallado de 45 días con buffers
-4. **Success Metrics**: KPIs claros para medir éxito
-5. **Production Ready**: Deploy production-ready desde día 45
+### Beneficios del Plan Unificado
+1. **Calidad Garantizada**: TDD + Quality Gates + Arquitectura resiliente aseguran alta calidad
+2. **Risk Mitigation**: Identificación y mitigación proactiva de riesgos + Prevención de errores
+3. **Time Management**: Plan detallado de 45 días con buffers + Fases unificadas
+4. **Success Metrics**: KPIs claros para medir éxito + Métricas de accessibility
+5. **Production Ready**: Deploy production-ready + WCAG 2.2 AA + Monitoring 24/7 desde día 45
+6. **Arquitectura Resiliente**: Puerto 8000 fijo + Servicios resilientes + Verificación automática
+7. **Modern APIs**: Pydantic v2 + FastAPI lifespan + Migración automática
 
 ### Próximos Pasos
 1. **Aprobación**: Validar plan con stakeholders
@@ -1482,6 +1524,6 @@ Este plan maestro detalla la implementación completa del Dashboard Educativo si
 4. **Monitoring**: Seguir métricas de éxito
 5. **Delivery**: Entregar sistema completo en 45 días
 
-**Este plan garantiza la implementación exitosa del Dashboard Educativo más robusto y completo, cumpliendo todos los requisitos del contrato unificado con la más alta calidad.**
+**Este plan garantiza la implementación exitosa del Dashboard Educativo más robusto y completo, cumpliendo todos los requisitos del contrato unificado completo con la más alta calidad, arquitectura resiliente, prevención de errores y accessibility WCAG 2.2 AA.**
 
 </llm:section>
