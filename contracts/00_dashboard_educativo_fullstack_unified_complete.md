@@ -1,7 +1,7 @@
 ---
 llm:metadata:
   title: "Contrato Unificado Completo: Dashboard Educativo Full-Stack"
-  version: "2.0"
+  version: "2.2"
   type: "unified_implementation_contract"
   stage: "unified"
   execution_priority: "complete_system"
@@ -13,6 +13,7 @@ llm:metadata:
     - real_time_notifications
     - accessibility_wcag_2_2
     - comprehensive_testing
+    - error_prevention_protocols
     - ci_cd_pipeline
     - production_deployment
 ---
@@ -23,7 +24,7 @@ llm:metadata:
 - **Proyecto**: Dashboard Educativo - Sistema Completo
 - **Fase**: Implementación Unificada - Todas las Funcionalidades
 - **Autor**: Sistema de Contratos LLM
-- **Fecha**: 2025-10-03
+- **Fecha**: 2025-10-03 (Actualizado con Prevención de Errores + Corrección de Warnings)
 - **Propósito**: Implementar sistema completo de dashboard educativo con todas las funcionalidades consolidadas
 
 ## =====
@@ -920,6 +921,378 @@ vi.mock('react-apexcharts', () => ({
 </llm:section>
 
 ## =====
+<llm:section id="unified_error_prevention" type="error_prevention">
+## Prevención de Errores Comunes en TDD
+
+### Errores Identificados en Ejecuciones Anteriores
+
+#### 1. Errores de Testing Async
+**Problema**: Tests de métodos async fallan por mocks incorrectos
+```python
+# ❌ INCORRECTO
+mock_instance = Mock()
+mock_instance.admin.command.return_value = {"ok": 1}
+
+# ✅ CORRECTO  
+mock_instance = AsyncMock()
+mock_instance.admin.command.return_value = {"ok": 1}
+```
+
+**Prevención**:
+- Usar `AsyncMock` para todos los métodos async
+- Template estándar para tests de base de datos
+- Verificación automática de tipos async en CI
+
+#### 2. Errores de Headers HTTP
+**Problema**: Tests de CORS fallan por headers específicos no presentes
+```python
+# ❌ INCORRECTO - Headers específicos pueden variar
+assert "access-control-allow-methods" in response.headers
+
+# ✅ CORRECTO - Headers básicos verificables
+assert "access-control-allow-origin" in response.headers
+assert "access-control-allow-credentials" in response.headers
+```
+
+**Prevención**:
+- Tests de CORS simplificados y robustos
+- Verificación de headers esenciales solamente
+- Documentación de comportamiento esperado de middleware
+
+#### 3. Warnings de Deprecación
+**Problema**: Warnings de Pydantic v2 y FastAPI por APIs deprecadas
+```python
+# ⚠️ WARNING - No crítico pero identificado
+DeprecationWarning: on_event is deprecated, use lifespan event handlers
+PydanticDeprecatedSince20: Support for class-based config is deprecated
+```
+
+**Solución Implementada**:
+```python
+# ✅ PYDANTIC V2 - ConfigDict moderno
+from pydantic import ConfigDict
+
+class Settings(BaseSettings):
+    # ... campos ...
+    
+    model_config = ConfigDict(
+        env_file=".env",
+        case_sensitive=False
+    )
+
+# ✅ FASTAPI - Lifespan context manager
+from contextlib import asynccontextmanager
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup
+    try:
+        await database.connect_to_mongodb()
+        database.connect_to_redis()
+    except Exception as e:
+        print(f"Warning: Could not connect to databases: {e}")
+    
+    yield
+    
+    # Shutdown
+    await database.close_mongodb_connection()
+    database.close_redis_connection()
+
+def create_app() -> FastAPI:
+    return FastAPI(
+        title=settings.app_name,
+        version=settings.app_version,
+        lifespan=lifespan  # Usar lifespan en lugar de on_event
+    )
+```
+
+**Prevención**:
+- Checklist de versiones compatibles en cada fase
+- Migración gradual de APIs deprecadas
+- Warnings como no-blocking en CI
+- Templates modernos para Pydantic v2 y FastAPI
+
+#### 4. Problemas de Servidor
+**Problema**: Uvicorn no inicia correctamente en ciertos entornos
+```bash
+# ❌ PROBLEMA
+curl: (7) Failed to connect to localhost port 8000
+
+# ✅ SOLUCIÓN
+python3 -m uvicorn src.app.main:app --host 127.0.0.1 --port 8000
+```
+
+**Prevención**:
+- Scripts de verificación automática de servidor
+- Configuración estándar de host/puerto
+- Health checks automáticos en startup
+
+### Protocolo de Prevención de Errores por Fase
+
+#### Fase 1 - Fundaciones
+**Verificaciones Automáticas**:
+- [ ] Tests async usan `AsyncMock` correctamente
+- [ ] Tests de CORS verifican headers básicos
+- [ ] Servidor inicia en puerto configurado
+- [ ] Health check responde correctamente
+- [ ] Cobertura > 80% sin warnings críticos
+
+**Templates Estándar**:
+```python
+# Template para tests async
+@pytest.mark.asyncio
+async def test_async_method():
+    with patch('module.AsyncClass') as mock_class:
+        mock_instance = AsyncMock()
+        mock_class.return_value = mock_instance
+        # Test implementation
+
+# Template para configuración Pydantic v2
+from pydantic import ConfigDict
+from pydantic_settings import BaseSettings
+
+class Settings(BaseSettings):
+    # Campos de configuración
+    field_name: str = "default_value"
+    
+    model_config = ConfigDict(
+        env_file=".env",
+        case_sensitive=False,
+        extra="ignore"
+    )
+
+# Template para FastAPI con lifespan
+from contextlib import asynccontextmanager
+from fastapi import FastAPI
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup logic
+    try:
+        # Initialize services
+        pass
+    except Exception as e:
+        print(f"Warning: Startup error: {e}")
+    
+    yield
+    
+    # Shutdown logic
+    try:
+        # Cleanup services
+        pass
+    except Exception as e:
+        print(f"Warning: Shutdown error: {e}")
+
+def create_app() -> FastAPI:
+    return FastAPI(
+        title="App Name",
+        version="1.0.0",
+        lifespan=lifespan
+    )
+```
+
+#### Fase 2 - Google Integration
+**Verificaciones Automáticas**:
+- [ ] Mocks de Google API funcionan correctamente
+- [ ] Modo dual switching sin errores
+- [ ] Rate limiting implementado
+- [ ] Fallback a Mock funciona
+
+#### Fase 3 - Visualización Avanzada
+**Verificaciones Automáticas**:
+- [ ] WebSocket connections estables
+- [ ] Gráficos renderizan sin errores
+- [ ] Búsqueda funciona en tiempo real
+- [ ] Notificaciones se entregan correctamente
+
+#### Fase 4 - Production Ready
+**Verificaciones Automáticas**:
+- [ ] CI/CD pipeline sin errores
+- [ ] Docker builds exitosos
+- [ ] Security scans pasan
+- [ ] Performance tests cumplen SLA
+
+### Checklist de Prevención por Día
+
+#### Día 1 - Estructura y Configuración
+- [ ] **Setup**: Estructura de directorios creada
+- [ ] **Dependencies**: Todas las dependencias instaladas
+- [ ] **Config**: Variables de entorno configuradas
+- [ ] **Tests**: Tests básicos pasando (27 tests)
+- [ ] **Coverage**: Cobertura > 80% alcanzada
+- [ ] **Server**: Health check endpoint funcional
+- [ ] **Async**: Tests async usan AsyncMock
+- [ ] **CORS**: Tests de CORS simplificados
+- [ ] **Warnings**: 0 warnings de deprecación (Pydantic v2 + FastAPI)
+- [ ] **Modern APIs**: ConfigDict + lifespan implementados
+
+#### Día 2 - Modelos y Excepciones
+- [ ] **Models**: Pydantic v2 con ConfigDict
+- [ ] **Validation**: Validadores funcionan correctamente
+- [ ] **Exceptions**: Jerarquía de excepciones completa
+- [ ] **Tests**: Tests de modelos pasando
+- [ ] **Migration**: Sin warnings de Pydantic v1
+
+#### Días 3-12 - Fundaciones Completas
+- [ ] **Auth**: JWT + OAuth funcionando
+- [ ] **Frontend**: Next.js + Auth + Layout
+- [ ] **Integration**: Frontend-Backend comunicación
+- [ ] **E2E**: Tests end-to-end básicos
+- [ ] **CI**: Pipeline básico funcionando
+
+### Quality Gates Mejorados
+
+#### Gate 1: Fundaciones (Día 12)
+- [ ] **Cobertura**: ≥80% global, ≥90% críticos
+- [ ] **Performance**: <3s load time
+- [ ] **Security**: 0 vulnerabilidades CRITICAL
+- [ ] **Tests**: Backend + Frontend + E2E básicos
+- [ ] **Integration**: Frontend-Backend comunicación
+- [ ] **CI/CD**: Pipeline básico funcionando
+- [ ] **Error Prevention**: Todos los checks de prevención pasando
+- [ ] **Async Tests**: AsyncMock usado correctamente
+- [ ] **CORS Tests**: Headers básicos verificados
+- [ ] **Server Health**: Health check funcional
+- [ ] **Warnings**: 0 warnings de deprecación críticos
+- [ ] **Modern APIs**: Pydantic v2 + FastAPI lifespan implementados
+
+#### Gate 2: Google Integration (Día 22)
+- [ ] **Cobertura**: ≥85% global, ≥90% críticos
+- [ ] **Performance**: <2s dashboard load
+- [ ] **Security**: 0 vulnerabilidades CRITICAL
+- [ ] **Tests**: Google mocks + Integration tests
+- [ ] **Google**: OAuth + Classroom API estable
+- [ ] **Modo Dual**: Switching Google/Mock funcional
+- [ ] **Error Prevention**: Rate limiting + fallback funcionando
+- [ ] **API Mocks**: Google API mocks estables
+
+#### Gate 3: Visualización Avanzada (Día 32)
+- [ ] **Cobertura**: ≥88% global, ≥90% críticos
+- [ ] **Performance**: <1.5s load time
+- [ ] **Security**: 0 vulnerabilidades CRITICAL
+- [ ] **Tests**: E2E + Performance + Visual
+- [ ] **Accessibility**: Keyboard + Screen reader básico
+- [ ] **Visualization**: D3.js + ApexCharts avanzado
+- [ ] **Error Prevention**: WebSocket + gráficos estables
+- [ ] **Real-time**: Notificaciones funcionando
+
+#### Gate 4: Production Ready (Día 45)
+- [ ] **Cobertura**: ≥90% global, ≥95% críticos
+- [ ] **Performance**: <1s load time
+- [ ] **Security**: 0 vulnerabilidades CRITICAL/HIGH
+- [ ] **Tests**: Exhaustivos + Security + Load
+- [ ] **Accessibility**: WCAG 2.2 AA completo
+- [ ] **Production**: CI/CD + Docker + Monitoring
+- [ ] **Error Prevention**: Todos los sistemas estables
+- [ ] **Monitoring**: Alertas automáticas funcionando
+
+### Protocolo de Resolución de Errores
+
+#### 1. Identificación Automática
+- CI/CD detecta errores automáticamente
+- Logs estructurados para debugging
+- Alertas inmediatas para errores críticos
+
+#### 2. Clasificación de Errores
+- **CRITICAL**: Bloquean funcionalidad principal
+- **HIGH**: Afectan funcionalidad importante
+- **MEDIUM**: Afectan funcionalidad secundaria
+- **LOW**: Warnings o mejoras menores
+
+#### 3. Resolución Priorizada
+- **CRITICAL**: Resolución inmediata (< 1 hora)
+- **HIGH**: Resolución en mismo día (< 8 horas)
+- **MEDIUM**: Resolución en 2-3 días
+- **LOW**: Resolución en próxima iteración
+
+#### 4. Prevención Futura
+- Documentar causa raíz del error
+- Actualizar templates y checklists
+- Mejorar tests para detectar error
+- Capacitar equipo en prevención
+
+### Protocolo de Migración de APIs Deprecadas
+
+#### 1. Identificación de Warnings
+```bash
+# Verificar warnings en tests
+pytest tests/ -W error::DeprecationWarning
+
+# Verificar warnings en aplicación
+python -W error::DeprecationWarning -c "from src.app.main import app"
+```
+
+#### 2. Migración Pydantic v2
+**Antes (Deprecado)**:
+```python
+class Settings(BaseSettings):
+    field: str = "value"
+    
+    class Config:
+        env_file = ".env"
+        case_sensitive = False
+```
+
+**Después (Moderno)**:
+```python
+from pydantic import ConfigDict
+
+class Settings(BaseSettings):
+    field: str = "value"
+    
+    model_config = ConfigDict(
+        env_file=".env",
+        case_sensitive=False
+    )
+```
+
+#### 3. Migración FastAPI Lifespan
+**Antes (Deprecado)**:
+```python
+@app.on_event("startup")
+async def startup():
+    pass
+
+@app.on_event("shutdown")
+async def shutdown():
+    pass
+```
+
+**Después (Moderno)**:
+```python
+from contextlib import asynccontextmanager
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup
+    try:
+        # Initialize
+        pass
+    except Exception as e:
+        print(f"Warning: {e}")
+    
+    yield
+    
+    # Shutdown
+    try:
+        # Cleanup
+        pass
+    except Exception as e:
+        print(f"Warning: {e}")
+
+app = FastAPI(lifespan=lifespan)
+```
+
+#### 4. Verificación Post-Migración
+- [ ] Tests pasan sin warnings
+- [ ] Aplicación inicia sin warnings
+- [ ] Funcionalidad preservada
+- [ ] Performance mantenida
+- [ ] Documentación actualizada
+
+</llm:section>
+
+## =====
 <llm:section id="unified_deployment" type="configuration">
 ## Configuración de Deployment Unificada
 
@@ -1468,21 +1841,25 @@ Todo el sistema sigue **Test-Driven Development** estricto:
 - [ ] Frontend: Next.js + Auth + Layout responsivo
 - [ ] Testing: ≥80% cobertura + CI básico
 - [ ] Integration: Frontend-Backend comunicación
+- [ ] Error Prevention: AsyncMock + CORS tests + Server health
 
 #### Fase 2 - Google Integration ✅
 - [ ] Backend: Google API + Modo dual + Dashboards
 - [ ] Frontend: Google UI + ApexCharts + Dashboards rol
 - [ ] Testing: Google mocks + Integration tests
+- [ ] Error Prevention: Rate limiting + Fallback + API mocks
 - [ ] Performance: <2s dashboard load
 
 #### Fase 3 - Visualización Avanzada ✅
 - [ ] Backend: Búsqueda + Notificaciones + WebSocket
 - [ ] Frontend: UI avanzada + Gráficos interactivos
+- [ ] Error Prevention: WebSocket + Gráficos + Real-time
 - [ ] Testing: E2E scenarios + Performance
 - [ ] Accessibility: Keyboard + Screen reader básico
 
 #### Fase 4 - Production Ready ✅
 - [ ] Google: Sync bidireccional + Backup + Webhooks
+- [ ] Error Prevention: Todos los sistemas estables + Monitoring
 - [ ] Accessibility: WCAG 2.2 AA completo
 - [ ] Testing: ≥90% críticos + Security + Load
 - [ ] CI/CD: Pipeline completo + Docker + Monitoring

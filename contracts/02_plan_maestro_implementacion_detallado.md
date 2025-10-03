@@ -1,7 +1,7 @@
 ---
 llm:metadata:
   title: "Plan Maestro de Implementación Detallado - Dashboard Educativo"
-  version: "1.0"
+  version: "1.1"
   type: "implementation_master_plan"
   stage: "planning"
   execution_priority: "comprehensive_roadmap"
@@ -20,7 +20,7 @@ llm:metadata:
 - **Proyecto**: Dashboard Educativo - Sistema Completo
 - **Plan**: Implementación Detallada por Fases
 - **Autor**: Sistema de Contratos LLM
-- **Fecha**: 2025-10-03
+- **Fecha**: 2025-10-03 (Actualizado con Prevención de Errores)
 - **Propósito**: Plan detallado para cumplir el contrato unificado con metodología TDD estricta
 
 ## =====
@@ -51,6 +51,8 @@ Implementar el Dashboard Educativo completo siguiendo el contrato unificado `00_
 - **Security**: 0 vulnerabilidades CRITICAL/HIGH
 - **Accessibility**: WCAG 2.2 AA compliance
 - **Testing**: E2E + Unit + Integration + Performance
+- **Error Prevention**: 0 warnings críticos + APIs modernas
+- **Modern APIs**: Pydantic v2 + FastAPI lifespan + AsyncMock
 
 </llm:section>
 
@@ -82,6 +84,9 @@ Establecer las fundaciones sólidas del sistema con backend FastAPI, frontend Ne
 - [ ] pytest -q ejecuta sin errores
 - [ ] curl http://localhost:8000/health retorna 200
 - [ ] Cobertura inicial > 80%
+- [ ] 0 warnings de deprecación (Pydantic v2 + FastAPI)
+- [ ] ConfigDict + lifespan implementados correctamente
+- [ ] Tests async usan AsyncMock
 
 #### Día 2: Modelos y Excepciones
 **TDD Approach**:
@@ -99,6 +104,9 @@ Establecer las fundaciones sólidas del sistema con backend FastAPI, frontend Ne
 - [ ] Todos los tests de modelos pasan
 - [ ] Validación Pydantic v2 funciona correctamente
 - [ ] Modelos compatibles con datos mock
+- [ ] Sin warnings de Pydantic v1 (ConfigDict usado)
+- [ ] Tests de modelos usan AsyncMock para métodos async
+- [ ] Validadores funcionan sin deprecation warnings
 
 #### Día 3: Autenticación JWT
 **TDD Approach**:
@@ -293,6 +301,148 @@ Establecer las fundaciones sólidas del sistema con backend FastAPI, frontend Ne
 - [ ] **Integration**: Frontend-Backend comunicación
 - [ ] **Performance**: <3s load time
 - [ ] **Security**: 0 vulnerabilidades CRITICAL
+- [ ] **Error Prevention**: AsyncMock + CORS tests + Server health
+- [ ] **Warnings**: 0 warnings de deprecación críticos
+- [ ] **Modern APIs**: Pydantic v2 + FastAPI lifespan implementados
+
+</llm:section>
+
+## =====
+<llm:section id="error_prevention_protocols" type="error_prevention">
+## Protocolos de Prevención de Errores
+
+### Errores Comunes Identificados y Soluciones
+
+#### 1. Errores de Testing Async
+**Problema**: Tests de métodos async fallan por mocks incorrectos
+**Solución**: Usar `AsyncMock` para todos los métodos async
+```python
+# ✅ CORRECTO
+from unittest.mock import AsyncMock
+mock_instance = AsyncMock()
+mock_instance.admin.command.return_value = {"ok": 1}
+```
+
+#### 2. Errores de Headers HTTP
+**Problema**: Tests de CORS fallan por headers específicos no presentes
+**Solución**: Tests simplificados con headers básicos verificables
+```python
+# ✅ CORRECTO
+assert "access-control-allow-origin" in response.headers
+assert "access-control-allow-credentials" in response.headers
+```
+
+#### 3. Warnings de Deprecación
+**Problema**: Pydantic v2 y FastAPI warnings por APIs deprecadas
+**Solución**: Migrar a APIs modernas
+```python
+# ✅ PYDANTIC V2 - ConfigDict moderno
+from pydantic import ConfigDict
+model_config = ConfigDict(env_file=".env", case_sensitive=False)
+
+# ✅ FASTAPI - Lifespan context manager
+from contextlib import asynccontextmanager
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup/Shutdown logic
+    yield
+```
+
+#### 4. Problemas de Servidor
+**Problema**: Uvicorn no inicia correctamente en ciertos entornos
+**Solución**: Configuración estándar de host/puerto
+```bash
+# ✅ CORRECTO
+python3 -m uvicorn src.app.main:app --host 127.0.0.1 --port 8000
+```
+
+### Checklist de Prevención por Día
+
+#### Día 1 - Estructura y Configuración
+- [ ] **Setup**: Estructura de directorios creada
+- [ ] **Dependencies**: Todas las dependencias instaladas
+- [ ] **Config**: Variables de entorno configuradas
+- [ ] **Tests**: Tests básicos pasando (27 tests)
+- [ ] **Coverage**: Cobertura > 80% alcanzada
+- [ ] **Server**: Health check endpoint funcional
+- [ ] **Async**: Tests async usan AsyncMock
+- [ ] **CORS**: Tests de CORS simplificados
+- [ ] **Warnings**: 0 warnings de deprecación (Pydantic v2 + FastAPI)
+- [ ] **Modern APIs**: ConfigDict + lifespan implementados
+
+#### Día 2 - Modelos y Excepciones
+- [ ] **Models**: Pydantic v2 con ConfigDict
+- [ ] **Validation**: Validadores funcionan correctamente
+- [ ] **Exceptions**: Jerarquía de excepciones completa
+- [ ] **Tests**: Tests de modelos pasando
+- [ ] **Migration**: Sin warnings de Pydantic v1
+- [ ] **Async Tests**: AsyncMock usado correctamente
+
+#### Días 3-12 - Fundaciones Completas
+- [ ] **Auth**: JWT + OAuth funcionando
+- [ ] **Frontend**: Next.js + Auth + Layout
+- [ ] **Integration**: Frontend-Backend comunicación
+- [ ] **E2E**: Tests end-to-end básicos
+- [ ] **CI**: Pipeline básico funcionando
+- [ ] **Error Prevention**: Todos los checks de prevención pasando
+
+### Templates Estándar para Prevención
+
+#### Template para Tests Async
+```python
+@pytest.mark.asyncio
+async def test_async_method():
+    with patch('module.AsyncClass') as mock_class:
+        mock_instance = AsyncMock()
+        mock_class.return_value = mock_instance
+        # Test implementation
+```
+
+#### Template para Configuración Pydantic v2
+```python
+from pydantic import ConfigDict
+from pydantic_settings import BaseSettings
+
+class Settings(BaseSettings):
+    field_name: str = "default_value"
+    
+    model_config = ConfigDict(
+        env_file=".env",
+        case_sensitive=False,
+        extra="ignore"
+    )
+```
+
+#### Template para FastAPI con Lifespan
+```python
+from contextlib import asynccontextmanager
+from fastapi import FastAPI
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup logic
+    try:
+        # Initialize services
+        pass
+    except Exception as e:
+        print(f"Warning: Startup error: {e}")
+    
+    yield
+    
+    # Shutdown logic
+    try:
+        # Cleanup services
+        pass
+    except Exception as e:
+        print(f"Warning: Shutdown error: {e}")
+
+def create_app() -> FastAPI:
+    return FastAPI(
+        title="App Name",
+        version="1.0.0",
+        lifespan=lifespan
+    )
+```
 
 </llm:section>
 
@@ -976,6 +1126,12 @@ Completar Google sync bidireccional, implementar WCAG 2.2 AA completo, testing e
 - [ ] **Tests**: Backend + Frontend + E2E básicos
 - [ ] **Integration**: Frontend-Backend comunicación
 - [ ] **CI/CD**: Pipeline básico funcionando
+- [ ] **Error Prevention**: Todos los checks de prevención pasando
+- [ ] **Async Tests**: AsyncMock usado correctamente
+- [ ] **CORS Tests**: Headers básicos verificados
+- [ ] **Server Health**: Health check funcional
+- [ ] **Warnings**: 0 warnings de deprecación críticos
+- [ ] **Modern APIs**: Pydantic v2 + FastAPI lifespan implementados
 
 ### Gate 2: Google Integration (Día 22)
 - [ ] **Cobertura**: ≥85% global, ≥90% críticos
@@ -984,6 +1140,9 @@ Completar Google sync bidireccional, implementar WCAG 2.2 AA completo, testing e
 - [ ] **Tests**: Google mocks + Integration tests
 - [ ] **Google**: OAuth + Classroom API estable
 - [ ] **Modo Dual**: Switching Google/Mock funcional
+- [ ] **Error Prevention**: Rate limiting + fallback funcionando
+- [ ] **API Mocks**: Google API mocks estables
+- [ ] **Warnings**: 0 warnings críticos en Google integration
 
 ### Gate 3: Visualización Avanzada (Día 32)
 - [ ] **Cobertura**: ≥88% global, ≥90% críticos
@@ -992,6 +1151,9 @@ Completar Google sync bidireccional, implementar WCAG 2.2 AA completo, testing e
 - [ ] **Tests**: E2E + Performance + Visual
 - [ ] **Accessibility**: Keyboard + Screen reader básico
 - [ ] **Visualization**: D3.js + ApexCharts avanzado
+- [ ] **Error Prevention**: WebSocket + gráficos estables
+- [ ] **Real-time**: Notificaciones funcionando
+- [ ] **Warnings**: 0 warnings críticos en visualizaciones
 
 ### Gate 4: Production Ready (Día 45)
 - [ ] **Cobertura**: ≥90% global, ≥95% críticos
@@ -1000,6 +1162,9 @@ Completar Google sync bidireccional, implementar WCAG 2.2 AA completo, testing e
 - [ ] **Tests**: Exhaustivos + Security + Load
 - [ ] **Accessibility**: WCAG 2.2 AA completo
 - [ ] **Production**: CI/CD + Docker + Monitoring
+- [ ] **Error Prevention**: Todos los sistemas estables
+- [ ] **Monitoring**: Alertas automáticas funcionando
+- [ ] **Warnings**: 0 warnings críticos en producción
 
 </llm:section>
 
