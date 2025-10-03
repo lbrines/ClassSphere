@@ -13,6 +13,7 @@ llm:metadata:
     - comprehensive_testing_strategy
     - coverage_100_protocols
     - error_prevention_protocols
+    - test_error_resolution_protocols
     - infrastructure_error_prevention
     - production_deployment_roadmap
 ---
@@ -23,7 +24,7 @@ llm:metadata:
 - **Proyecto**: Dashboard Educativo - Sistema Completo Unificado
 - **Plan**: Implementación Detallada por Fases Unificadas
 - **Autor**: Sistema de Contratos LLM
-- **Fecha**: 2025-10-03 (Actualizado con Especificación Unificada Completa + Prevención de Errores + Cobertura 100% + Infraestructura)
+- **Fecha**: 2025-10-03 (Actualizado con Especificación Unificada Completa + Prevención de Errores + Cobertura 100% + Infraestructura + Test Error Resolution Protocols)
 - **Propósito**: Plan detallado para cumplir el contrato unificado completo con metodología TDD estricta y arquitectura resiliente
 
 ## =====
@@ -119,6 +120,7 @@ Establecer las fundaciones sólidas del sistema unificado con backend FastAPI + 
 - [ ] 0 warnings de deprecación (Pydantic v2 + FastAPI)
 - [ ] ConfigDict + lifespan implementados correctamente
 - [ ] Tests async usan AsyncMock
+- [ ] Test Error Resolution Protocols aplicados y verificados
 
 #### Día 2: Modelos y Excepciones Unificadas
 **TDD Approach**:
@@ -345,7 +347,7 @@ Establecer las fundaciones sólidas del sistema unificado con backend FastAPI + 
 - [ ] **Integration**: Frontend-Backend comunicación + OAuth flow completo
 - [ ] **Performance**: <3s load time + Puerto 8000 fijo
 - [ ] **Security**: 0 vulnerabilidades CRITICAL + CORS configurado
-- [ ] **Error Prevention**: AsyncMock + CORS tests + Server health + Limpieza automática
+- [ ] **Error Prevention**: AsyncMock + CORS tests + Server health + Limpieza automática + Test Error Resolution Protocols
 - [ ] **Warnings**: 0 warnings de deprecación críticos + Migración automática
 - [ ] **Modern APIs**: Pydantic v2 + FastAPI lifespan + ConfigDict implementados
 - [ ] **Arquitectura**: Servicios resilientes + Verificación automática + Puerto fijo
@@ -488,6 +490,239 @@ def create_app() -> FastAPI:
         lifespan=lifespan
     )
 ```
+
+### Protocolos de Resolución de Errores de Tests
+
+#### 1. Categorización de Errores de Testing
+**Errores de Mock (Prioridad Alta):**
+- Database connection mocks incorrectos
+- Redis client mocks mal configurados
+- AsyncMock no awaited correctamente
+- Context manager mocks fallando
+
+**Errores de Lifespan (Prioridad Media):**
+- Cleanup functions no interceptadas
+- Shutdown mocks no llamados
+- Startup/shutdown sequence incorrecta
+
+**Errores de CORS/HTTP (Prioridad Baja):**
+- OPTIONS method no soportado
+- Headers CORS incorrectos
+- Status codes inesperados
+
+#### 2. Templates de Resolución por Categoría
+
+**Template para Database Mock Errors:**
+```python
+@pytest.fixture
+def mock_mongodb_fixed():
+    """Mock MongoDB con configuración correcta"""
+    mock_client = AsyncMock()
+    mock_client.admin.command = AsyncMock(return_value={"ok": 1})
+    mock_client.server_info = AsyncMock(return_value={"version": "6.0.0"})
+    
+    # Mock database y collections
+    mock_db = AsyncMock()
+    mock_collection = AsyncMock()
+    mock_collection.find_one = AsyncMock(return_value=None)
+    mock_collection.insert_one = AsyncMock(return_value=AsyncMock(inserted_id="test_id"))
+    mock_db.users = mock_collection
+    mock_db.courses = mock_collection
+    mock_db.metrics = mock_collection
+    mock_client.dashboard_educativo = mock_db
+    
+    return mock_client
+
+@pytest.fixture
+def mock_redis_fixed():
+    """Mock Redis con configuración correcta"""
+    mock_redis = AsyncMock()
+    mock_redis.ping = AsyncMock(return_value=True)
+    mock_redis.get = AsyncMock(return_value=None)
+    mock_redis.set = AsyncMock(return_value=True)
+    mock_redis.delete = AsyncMock(return_value=1)
+    mock_redis.exists = AsyncMock(return_value=False)
+    mock_redis.close = AsyncMock()
+    mock_redis.aclose = AsyncMock()  # Para Redis moderno
+    return mock_redis
+```
+
+**Template para Lifespan Errors:**
+```python
+@pytest.mark.asyncio
+async def test_lifespan_shutdown_fixed(mock_mongodb_fixed, mock_redis_fixed):
+    """Test lifespan shutdown con mocks correctos"""
+    with patch('src.app.core.database.get_database') as mock_get_db, \
+         patch('src.app.core.database.get_redis_client') as mock_get_redis, \
+         patch('src.app.core.database.cleanup_database') as mock_cleanup_db, \
+         patch('src.app.core.database.cleanup_redis') as mock_cleanup_redis:
+        
+        mock_get_db.return_value = mock_mongodb_fixed
+        mock_get_redis.return_value = mock_redis_fixed
+        
+        # Test lifespan shutdown
+        async with lifespan(app):
+            pass
+        
+        mock_cleanup_db.assert_called_once()
+        mock_cleanup_redis.assert_called_once()
+```
+
+**Template para CORS Errors:**
+```python
+def test_cors_headers_fixed(test_client):
+    """Test CORS headers con método correcto"""
+    # Usar GET en lugar de OPTIONS para health endpoint
+    response = test_client.get("/health")
+    
+    assert response.status_code == 200
+    # Verificar headers CORS en respuesta
+    headers_lower = {k.lower(): v for k, v in response.headers.items()}
+    assert "access-control-allow-origin" in headers_lower
+    assert "access-control-allow-credentials" in headers_lower
+```
+
+#### 3. Checklist de Resolución de Errores
+
+**Database Tests:**
+- [ ] Mock MongoDB configurado con AsyncMock correcto
+- [ ] Mock Redis configurado con AsyncMock correcto
+- [ ] Health check mocks retornan valores correctos
+- [ ] Cleanup mocks son llamados correctamente
+- [ ] Context manager usa mocks en lugar de conexiones reales
+- [ ] Connection error tests usan side_effect correctamente
+- [ ] Redis moderno usa aclose() en lugar de close()
+
+**Main App Tests:**
+- [ ] Lifespan startup mocks configurados
+- [ ] Lifespan shutdown mocks interceptados
+- [ ] CORS headers verificados con método correcto
+- [ ] Error handling tests cubren casos edge
+- [ ] Cleanup functions mockeadas correctamente
+
+**Warnings Resolution:**
+- [ ] AsyncMock methods properly awaited
+- [ ] Redis close() replaced with aclose()
+- [ ] Deprecation warnings eliminated
+- [ ] Runtime warnings de coroutines resueltos
+
+#### 4. Scripts de Verificación de Errores
+
+**Script de Diagnóstico de Tests:**
+```bash
+#!/bin/bash
+echo "🔍 Diagnóstico de Errores de Tests..."
+
+# Verificar errores específicos
+echo "📊 Database Tests:"
+pytest tests/unit/test_database.py -v --tb=short | grep -E "(FAILED|ERROR)"
+
+echo "📊 Main App Tests:"
+pytest tests/unit/test_main.py -v --tb=short | grep -E "(FAILED|ERROR)"
+
+echo "📊 Config Tests:"
+pytest tests/unit/test_config.py -v --tb=short | grep -E "(FAILED|ERROR)"
+
+echo "📊 Warnings:"
+pytest tests/ -v | grep -E "(Warning|Deprecation)"
+
+# Verificar cobertura específica
+echo "📊 Cobertura por módulo:"
+pytest tests/unit/test_config.py --cov=src/app/core/config --cov-report=term-missing
+pytest tests/unit/test_database.py --cov=src/app/core/database --cov-report=term-missing
+pytest tests/unit/test_main.py --cov=src/app/main --cov-report=term-missing
+
+# Verificar servidor
+echo "📊 Health Check:"
+curl -f http://127.0.0.1:8000/health || echo "⚠️ Servidor no disponible"
+```
+
+**Script de Resolución Automática:**
+```bash
+#!/bin/bash
+echo "🔧 Resolución Automática de Errores de Tests..."
+
+# Aplicar fixes automáticos
+echo "📝 Aplicando fixes de AsyncMock..."
+# Reemplazar close() por aclose() en Redis
+find backend/src -name "*.py" -exec sed -i 's/_redis_client\.close()/_redis_client.aclose()/g' {} \;
+
+echo "📝 Verificando mocks de database..."
+# Verificar que los mocks estén configurados correctamente
+python3 -c "
+import sys
+sys.path.append('backend/src')
+from tests.conftest import mock_mongodb, mock_redis
+print('✅ Mocks configurados correctamente')
+"
+
+echo "📝 Ejecutando tests corregidos..."
+cd backend && python3 -m pytest tests/unit/test_config.py -v
+cd backend && python3 -m pytest tests/unit/test_database.py -v
+cd backend && python3 -m pytest tests/unit/test_main.py -v
+
+echo "✅ Resolución automática completada"
+```
+
+#### 5. Integración con Quality Gates
+
+**Quality Gate Actualizado para Day 1:**
+- [ ] **Database Tests**: 100% pasando con mocks correctos
+- [ ] **Main App Tests**: 100% pasando con lifespan correcto
+- [ ] **CORS Tests**: 100% pasando con headers correctos
+- [ ] **Warnings**: 0 warnings críticos de AsyncMock/Redis
+- [ ] **Coverage**: 100% en módulos críticos con tests corregidos
+- [ ] **Connection Errors**: Todos los casos de error mockeados correctamente
+- [ ] **Cleanup Errors**: Todos los casos de cleanup testeados
+- [ ] **Context Managers**: Todos los context managers funcionando
+
+**Quality Gate por Fase:**
+- **Fase 1**: Todos los errores de Day 1 resueltos
+- **Fase 2**: Errores de Google API mocks resueltos
+- **Fase 3**: Errores de WebSocket mocks resueltos
+- **Fase 4**: Errores de sync/backup mocks resueltos
+
+#### 6. Metodología de Resolución
+
+**Enfoque TDD para Resolución:**
+1. **Identificar**: Categorizar error específico (Mock/Lifespan/CORS)
+2. **Analizar**: Determinar causa raíz del mock/test
+3. **Corregir**: Aplicar template de resolución correspondiente
+4. **Verificar**: Confirmar que test pasa
+5. **Documentar**: Actualizar templates si es necesario
+6. **Prevenir**: Agregar a checklist para futuros desarrollos
+
+**Priorización:**
+1. **Alta**: Database/Redis mock errors (afectan funcionalidad core)
+2. **Media**: Lifespan errors (afectan startup/shutdown)
+3. **Baja**: CORS/HTTP errors (afectan headers específicos)
+
+**Herramientas de Resolución:**
+- Templates específicos por tipo de error
+- Scripts de diagnóstico automático
+- Checklists de verificación
+- Integración con Quality Gates existentes
+
+#### 7. Prevención de Errores Futuros
+
+**Protocolos de Prevención:**
+- Usar siempre AsyncMock para métodos async
+- Configurar mocks completos desde el inicio
+- Verificar que cleanup functions sean mockeadas
+- Usar aclose() para Redis moderno
+- Verificar headers CORS con métodos correctos
+
+**Templates de Prevención:**
+- Mock setup estándar en conftest.py
+- Lifespan test templates
+- CORS test templates
+- Error handling test templates
+
+**Monitoreo Continuo:**
+- Scripts de diagnóstico en CI/CD
+- Quality gates automáticos
+- Reportes de errores de tests
+- Métricas de cobertura por módulo
 
 ### Protocolo de Cobertura 100%
 
@@ -908,6 +1143,7 @@ Integrar Google Classroom API completa con modo dual (Google/Mock), implementar 
 - [ ] **Modo Dual**: Switching Google/Mock estable + Fallback automático
 - [ ] **Visualizaciones**: ApexCharts avanzados + Export + Responsive
 - [ ] **Cache**: Redis implementado + Invalidación inteligente
+- [ ] **Error Prevention**: Google API Test Resolution + Rate limiting + Fallback + API mocks
 
 </llm:section>
 
@@ -1116,6 +1352,7 @@ Implementar búsqueda avanzada, notificaciones WebSocket en tiempo real, visuali
 - [ ] **Performance**: <1.5s load time + Optimización de gráficos
 - [ ] **Visualization**: D3.js completo + ApexCharts avanzado + Export + Responsive
 - [ ] **Real-time**: WebSocket estable + Fallback polling + Multi-channel delivery
+- [ ] **Error Prevention**: WebSocket Test Resolution + Gráficos + Real-time
 
 </llm:section>
 
@@ -1378,6 +1615,7 @@ Completar Google sync bidireccional, implementar WCAG 2.2 AA completo, testing e
 - [ ] **Documentation**: Completa + Runbooks + Training + API docs
 - [ ] **Performance**: <1s load time + Optimización completa + Bundle optimization
 - [ ] **Security**: 0 vulnerabilidades CRITICAL/HIGH + OWASP compliance
+- [ ] **Error Prevention**: Complete Test Error Resolution + Todos los sistemas estables + Monitoring
 
 </llm:section>
 
@@ -1392,7 +1630,7 @@ Completar Google sync bidireccional, implementar WCAG 2.2 AA completo, testing e
 - [ ] **Tests**: Backend + Frontend + E2E básicos + AsyncMock
 - [ ] **Integration**: Frontend-Backend comunicación + OAuth flow completo
 - [ ] **CI/CD**: Pipeline básico funcionando + Quality gates
-- [ ] **Error Prevention**: Todos los checks de prevención pasando + Limpieza automática
+- [ ] **Error Prevention**: Todos los checks de prevención pasando + Limpieza automática + Test Error Resolution Protocols
 - [ ] **Context Managers**: Tests completos para lifespan + AsyncMock
 - [ ] **Error Paths**: Todos los try/except cubiertos + Migración automática
 - [ ] **Modern APIs**: Pydantic v2 + FastAPI lifespan + ConfigDict implementados
@@ -1405,7 +1643,7 @@ Completar Google sync bidireccional, implementar WCAG 2.2 AA completo, testing e
 - [ ] **Tests**: Google mocks + Integration tests + Chart tests
 - [ ] **Google**: OAuth + Classroom API + Rate limiting estable
 - [ ] **Modo Dual**: Switching Google/Mock + Fallback automático funcional
-- [ ] **Error Prevention**: Rate limiting + fallback + Cache Redis funcionando
+- [ ] **Error Prevention**: Rate limiting + fallback + Cache Redis funcionando + Google API Test Resolution
 - [ ] **API Integration**: Tests para todos los endpoints + Métricas educativas
 - [ ] **Visualizaciones**: ApexCharts v5.3.5 + Export + Responsive
 - [ ] **Cache**: Redis implementado + Invalidación inteligente
@@ -1419,6 +1657,7 @@ Completar Google sync bidireccional, implementar WCAG 2.2 AA completo, testing e
 - [ ] **Visualization**: D3.js completo + ApexCharts avanzado + Export + Responsive
 - [ ] **WebSocket**: Tests para conexiones real-time + Fallback polling
 - [ ] **Real-time**: Notificaciones WebSocket + Multi-channel delivery funcionando
+- [ ] **Error Prevention**: WebSocket Test Resolution + Gráficos + Real-time
 - [ ] **Widgets**: Sistema de widgets personalizables + Drag & drop
 - [ ] **Búsqueda**: Búsqueda avanzada + Filtros + Resultados contextuales
 
@@ -1434,6 +1673,7 @@ Completar Google sync bidireccional, implementar WCAG 2.2 AA completo, testing e
 - [ ] **Production**: CI/CD + Docker + Monitoring 24/7 + Alertas automáticas
 - [ ] **Google**: Sync bidireccional + Backup + Webhooks + Conflict resolution
 - [ ] **Documentation**: Completa + Runbooks + Training + API docs
+- [ ] **Error Prevention**: Complete Test Error Resolution + Todos los sistemas estables + Monitoring
 
 </llm:section>
 
