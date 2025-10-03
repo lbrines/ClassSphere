@@ -1,1 +1,1 @@
-# Business logic services package
+# Business logic services

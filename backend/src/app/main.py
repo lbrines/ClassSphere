@@ -1,74 +1,60 @@
-from fastapi import FastAPI, Request, Response, status
+"""
+Main FastAPI application
+"""
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
-from starlette.middleware.trustedhost import TrustedHostMiddleware
-import time
 from src.app.core.config import settings
+from src.app.core.database import database
 
-app = FastAPI(
-    title="Dashboard Educativo API",
-    version="1.0.0",
-    description="API para el Dashboard Educativo Full-Stack",
-    docs_url="/docs",
-    redoc_url="/redoc",
-    openapi_url="/openapi.json"
-)
 
-# CORS Middleware
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=settings.CORS_ORIGINS,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-# Trusted Host Middleware (deshabilitado para testing con curl si TRUSTED_HOST_ENABLED es False)
-if settings.TRUSTED_HOST_ENABLED:
+def create_app() -> FastAPI:
+    """Create and configure FastAPI application"""
+    app = FastAPI(
+        title=settings.app_name,
+        version=settings.app_version,
+        debug=settings.debug,
+        description="Dashboard Educativo Backend API"
+    )
+    
+    # CORS middleware
     app.add_middleware(
-        TrustedHostMiddleware,
-        allowed_hosts=settings.TRUSTED_HOST_ALLOWED
+        CORSMiddleware,
+        allow_origins=["*"],  # Configure properly for production
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
     )
-
-@app.middleware("http")
-async def add_process_time_header(request: Request, call_next):
-    """
-    Middleware para añadir el tiempo de procesamiento a las respuestas.
-    """
-    start_time = time.time()
-    response = await call_next(request)
-    process_time = time.time() - start_time
-    response.headers["X-Process-Time"] = str(process_time)
-    return response
-
-@app.get("/", summary="Root endpoint", response_description="Root message and API info")
-async def read_root():
-    """
-    Root endpoint of the API.
-    Returns a welcome message and basic API information.
-    """
-    return JSONResponse(
-        status_code=status.HTTP_200_OK,
-        content={
-            "message": "Dashboard Educativo API",
-            "version": app.version,
-            "docs": app.docs_url,
-            "health": "/health"
-        }
-    )
-
-@app.get("/health", summary="Health check endpoint", response_description="API health status")
-async def health_check():
-    """
-    Health check endpoint to verify API status.
-    Returns a healthy status with current timestamp and environment.
-    """
-    return JSONResponse(
-        status_code=status.HTTP_200_OK,
-        content={
+    
+    # Startup event
+    @app.on_event("startup")
+    async def startup_event():
+        """Initialize services on startup"""
+        try:
+            await database.connect_to_mongodb()
+            database.connect_to_redis()
+        except Exception as e:
+            print(f"Warning: Could not connect to databases: {e}")
+    
+    # Shutdown event
+    @app.on_event("shutdown")
+    async def shutdown_event():
+        """Cleanup on shutdown"""
+        await database.close_mongodb_connection()
+        database.close_redis_connection()
+    
+    # Health check endpoint
+    @app.get("/health")
+    async def health_check():
+        """Health check endpoint"""
+        return {
             "status": "healthy",
-            "timestamp": time.time(),
-            "environment": settings.ENVIRONMENT,
-            "version": app.version
+            "app_name": settings.app_name,
+            "version": settings.app_version,
+            "environment": settings.environment
         }
-    )
+    
+    return app
+
+
+# Create app instance
+app = create_app()

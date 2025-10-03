@@ -1,95 +1,80 @@
+"""
+Tests for configuration module
+"""
 import pytest
-from src.app.core.config import Settings
+from src.app.core.config import Settings, settings
+
 
 class TestSettings:
-    """
-    Test suite for the Settings class to ensure correct configuration loading and parsing.
-    """
-
-    def test_settings_creation(self):
-        """
-        Test that Settings object can be created and essential fields are present.
-        """
-        settings = Settings()
-        assert settings is not None
-        assert isinstance(settings.JWT_SECRET, str)
-        assert isinstance(settings.GOOGLE_CLIENT_ID, str)
-        assert isinstance(settings.GOOGLE_CLIENT_SECRET, str)
-
+    """Test Settings class"""
+    
     def test_default_values(self):
-        """
-        Test that default values are correctly applied when not overridden by environment variables.
-        """
-        settings = Settings()
-        assert settings.ENVIRONMENT == "development"
-        assert settings.PORT == 8000
-        assert settings.JWT_ALGORITHM == "HS256"
-        assert settings.JWT_ACCESS_TOKEN_EXPIRE_MINUTES == 30
-        assert settings.DEFAULT_MODE == "MOCK"
-        assert settings.TRUSTED_HOST_ENABLED is False
+        """Test default configuration values"""
+        test_settings = Settings()
+        
+        assert test_settings.app_name == "Dashboard Educativo"
+        assert test_settings.app_version == "0.1.0"
+        assert test_settings.debug is False
+        assert test_settings.environment == "development"
+        assert test_settings.secret_key == "your-secret-key-here"
+        assert test_settings.access_token_expire_minutes == 30
+        assert test_settings.refresh_token_expire_days == 7
+    
+    def test_mongodb_url_default(self):
+        """Test MongoDB URL default value"""
+        test_settings = Settings()
+        assert test_settings.mongodb_url == "mongodb://localhost:27017/dashboard_educativo"
+    
+    def test_redis_url_default(self):
+        """Test Redis URL default value"""
+        test_settings = Settings()
+        assert test_settings.redis_url == "redis://localhost:6379/0"
+    
+    def test_google_redirect_uri_default(self):
+        """Test Google redirect URI default value"""
+        test_settings = Settings()
+        assert test_settings.google_redirect_uri == "http://localhost:8000/auth/google/callback"
+    
+    def test_upload_dir_default(self):
+        """Test upload directory default value"""
+        test_settings = Settings()
+        assert test_settings.upload_dir == "uploads"
+    
+    def test_max_file_size_default(self):
+        """Test max file size default value"""
+        test_settings = Settings()
+        assert test_settings.max_file_size == 10485760  # 10MB
+    
+    def test_log_level_default(self):
+        """Test log level default value"""
+        test_settings = Settings()
+        assert test_settings.log_level == "INFO"
+    
+    def test_log_file_default(self):
+        """Test log file default value"""
+        test_settings = Settings()
+        assert test_settings.log_file == "logs/app.log"
+    
+    def test_smtp_port_default(self):
+        """Test SMTP port default value"""
+        test_settings = Settings()
+        assert test_settings.smtp_port == 587
+    
+    def test_smtp_tls_default(self):
+        """Test SMTP TLS default value"""
+        test_settings = Settings()
+        assert test_settings.smtp_tls is True
 
-    def test_cors_origins_parsing(self):
-        """
-        Test that CORS_ORIGINS are parsed correctly as a list of strings.
-        """
-        settings = Settings()
-        assert isinstance(settings.CORS_ORIGINS, list)
-        assert "http://localhost:3000" in settings.CORS_ORIGINS
-        assert "http://127.0.0.1:3000" in settings.CORS_ORIGINS
 
-    def test_trusted_hosts_parsing(self):
-        """
-        Test that TRUSTED_HOST_ALLOWED are parsed correctly as a list of strings.
-        """
-        settings = Settings()
-        assert isinstance(settings.TRUSTED_HOST_ALLOWED, list)
-        assert "localhost" in settings.TRUSTED_HOST_ALLOWED
-        assert "127.0.0.1" in settings.TRUSTED_HOST_ALLOWED
-
-    def test_google_scopes_parsing(self):
-        """
-        Test that GOOGLE_API_SCOPES are parsed correctly as a list of strings.
-        """
-        settings = Settings()
-        assert isinstance(settings.GOOGLE_API_SCOPES, list)
-        assert "https://www.googleapis.com/auth/classroom.courses" in settings.GOOGLE_API_SCOPES
-
-    def test_jwt_configuration(self):
-        """
-        Test specific JWT configuration fields.
-        """
-        settings = Settings()
-        assert settings.JWT_SUBJECT_FIELD == "email"
-        assert settings.JWT_INCLUDE_EMAIL is True
-        assert settings.JWT_INCLUDE_ROLE is True
-
-    def test_oauth_configuration(self):
-        """
-        Test specific OAuth configuration fields.
-        """
-        settings = Settings()
-        assert settings.GOOGLE_REDIRECT_URI == "http://localhost:8000/api/v1/oauth/google/callback"
-
-    def test_database_configuration(self):
-        """
-        Test database connection URLs.
-        """
-        settings = Settings()
-        assert "mongodb://" in settings.MONGODB_URL
-        assert "redis://" in settings.REDIS_URL
-
-    def test_security_configuration(self):
-        """
-        Test security-related configuration fields.
-        """
-        settings = Settings()
-        assert settings.ERROR_SANITIZE_SENSITIVE_DATA is True
-        assert settings.ERROR_FRIENDLY_MESSAGES is True
-
-    def test_testing_configuration(self):
-        """
-        Test testing-related configuration fields.
-        """
-        settings = Settings()
-        assert settings.TEST_COVERAGE_THRESHOLD_CRITICAL == 90
-        assert settings.TEST_COVERAGE_THRESHOLD_GLOBAL == 80
+class TestGlobalSettings:
+    """Test global settings instance"""
+    
+    def test_global_settings_instance(self):
+        """Test that global settings instance exists"""
+        assert settings is not None
+        assert isinstance(settings, Settings)
+    
+    def test_global_settings_values(self):
+        """Test global settings values"""
+        assert settings.app_name == "Dashboard Educativo"
+        assert settings.app_version == "0.1.0"
