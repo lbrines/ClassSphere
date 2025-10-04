@@ -29,6 +29,56 @@ from .oauth import (
     OAuthTokenRevoke
 )
 
+from .course import (
+    CourseStatus,
+    CourseLevel,
+    CourseBase,
+    CourseCreate,
+    CourseUpdate,
+    CourseResponse,
+    CourseList,
+    CourseSearch,
+    CourseStats
+)
+
+from .assignment import (
+    AssignmentType,
+    AssignmentStatus,
+    AssignmentBase,
+    AssignmentCreate,
+    AssignmentUpdate,
+    AssignmentResponse,
+    AssignmentList,
+    AssignmentSearch,
+    AssignmentStats
+)
+
+from .enrollment import (
+    EnrollmentStatus,
+    EnrollmentRole,
+    EnrollmentBase,
+    EnrollmentCreate,
+    EnrollmentUpdate,
+    EnrollmentResponse,
+    EnrollmentList,
+    EnrollmentSearch,
+    EnrollmentStats,
+    BulkEnrollment
+)
+
+from .submission import (
+    SubmissionStatus,
+    SubmissionType,
+    SubmissionBase,
+    SubmissionCreate,
+    SubmissionUpdate,
+    SubmissionResponse,
+    SubmissionList,
+    SubmissionSearch,
+    SubmissionStats,
+    BulkSubmission
+)
+
 __all__ = [
     # User models
     "UserRole",
@@ -54,5 +104,51 @@ __all__ = [
     "OAuthAuthorization",
     "OAuthTokenExchange",
     "OAuthTokenValidation",
-    "OAuthTokenRevoke"
+    "OAuthTokenRevoke",
+    
+    # Course models
+    "CourseStatus",
+    "CourseLevel",
+    "CourseBase",
+    "CourseCreate",
+    "CourseUpdate",
+    "CourseResponse",
+    "CourseList",
+    "CourseSearch",
+    "CourseStats",
+    
+    # Assignment models
+    "AssignmentType",
+    "AssignmentStatus",
+    "AssignmentBase",
+    "AssignmentCreate",
+    "AssignmentUpdate",
+    "AssignmentResponse",
+    "AssignmentList",
+    "AssignmentSearch",
+    "AssignmentStats",
+    
+    # Enrollment models
+    "EnrollmentStatus",
+    "EnrollmentRole",
+    "EnrollmentBase",
+    "EnrollmentCreate",
+    "EnrollmentUpdate",
+    "EnrollmentResponse",
+    "EnrollmentList",
+    "EnrollmentSearch",
+    "EnrollmentStats",
+    "BulkEnrollment",
+    
+    # Submission models
+    "SubmissionStatus",
+    "SubmissionType",
+    "SubmissionBase",
+    "SubmissionCreate",
+    "SubmissionUpdate",
+    "SubmissionResponse",
+    "SubmissionList",
+    "SubmissionSearch",
+    "SubmissionStats",
+    "BulkSubmission"
 ]
