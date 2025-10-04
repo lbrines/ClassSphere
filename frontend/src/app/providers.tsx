@@ -7,7 +7,7 @@
 
 import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { logComponentContext } from '@/utils/context-logger';
+import { contextLogger } from '@/utils/context-logger';
 
 // Create a client
 const queryClient = new QueryClient({
@@ -22,7 +22,7 @@ const queryClient = new QueryClient({
 
 export const Providers: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   React.useEffect(() => {
-    logComponentContext('providers-init-001', 'CRITICAL', 'started', 'Providers initialized', 'frontend', 'providers_init');
+    contextLogger.logContextStatus('providers-init-001', 'CRITICAL', 'started', 'middle', 'Providers initialized', 'frontend', 'providers_init');
   }, []);
 
   return (

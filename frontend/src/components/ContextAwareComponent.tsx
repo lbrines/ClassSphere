@@ -1,34 +1,45 @@
-/**
- * Dashboard Educativo - Context Aware Component
- * Context-Aware Implementation - Day 5-7 High Priority
- */
+"use client";
 
-import React, { useEffect } from 'react';
-import { ContextAwareComponentProps } from '@/types';
-import { logComponentContext } from '@/utils/context-logger';
+import { useEffect } from 'react';
+import { contextLogger } from '@/utils/context-logger';
 
-export const ContextAwareComponent: React.FC<ContextAwareComponentProps> = ({
-  contextId,
-  priority,
-  children
-}) => {
+interface ContextAwareComponentProps {
+  children: React.ReactNode;
+  contextId?: string;
+  componentName?: string;
+}
+
+export default function ContextAwareComponent({ 
+  children, 
+  contextId = 'default-context',
+  componentName = 'ContextAwareComponent'
+}: ContextAwareComponentProps) {
+  
   useEffect(() => {
-    // Log component context when mounted
-    logComponentContext(contextId, priority, 'started', 'Component mounted', 'frontend', 'component_mount');
-    
-    return () => {
-      // Log component context when unmounted
-      logComponentContext(contextId, priority, 'completed', 'Component unmounted', 'frontend', 'component_unmount');
-    };
-  }, [contextId, priority]);
+    // Log component mount
+    contextLogger.logContextStatus(
+      contextId,
+      'MEDIUM',
+      'started',
+      'middle',
+      `${componentName} mounted`,
+      'frontend',
+      'component_mount'
+    );
 
-  return (
-    <div 
-      data-context-id={contextId}
-      data-context-priority={priority}
-      className="context-aware-component"
-    >
-      {children}
-    </div>
-  );
-};
+    // Log component unmount
+    return () => {
+      contextLogger.logContextStatus(
+        contextId,
+        'MEDIUM',
+        'completed',
+        'middle',
+        `${componentName} unmounted`,
+        'frontend',
+        'component_unmount'
+      );
+    };
+  }, [contextId, componentName]);
+
+  return <>{children}</>;
+}

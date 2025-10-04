@@ -1,21 +1,19 @@
 /**
- * Dashboard Educativo - Types
- * Context-Aware Implementation - Day 5-7 High Priority
+ * TypeScript Types for Dashboard Educativo
+ * Context-Aware Implementation
  */
 
 export interface ContextAwareComponentProps {
-  contextId: string;
-  priority: 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
-  children?: React.ReactNode;
+  children: React.ReactNode;
+  contextId?: string;
+  componentName?: string;
 }
 
 export interface User {
   user_id: string;
   username: string;
   email: string;
-  name?: string;
-  picture?: string;
-  role: 'admin' | 'coordinator' | 'teacher' | 'student';
+  role: string;
 }
 
 export interface AuthTokens {
@@ -38,26 +36,25 @@ export interface GoogleOAuthData {
 
 export interface GoogleTokens {
   access_token: string;
-  refresh_token?: string;
+  refresh_token: string;
+  token_type: string;
   expires_in: number;
 }
 
 export interface AuthContextType {
   user: User | null;
-  tokens: AuthTokens | null;
   isLoading: boolean;
-  isAuthenticated: boolean;
-  login: (credentials: LoginCredentials) => Promise<void>;
-  loginWithGoogle: () => Promise<void>;
+  login: (credentials: LoginCredentials) => void;
+  loginWithGoogle: () => void;
   logout: () => void;
-  refreshToken: () => Promise<void>;
+  isLoginLoading: boolean;
+  isGoogleLoginLoading: boolean;
 }
 
 export interface ApiResponse<T = any> {
-  data?: T;
-  error?: string;
+  data: T;
   message?: string;
-  context_id?: string;
+  status: string;
 }
 
 export interface ContextLog {
@@ -72,25 +69,24 @@ export interface ContextLog {
   };
   phase?: string;
   task?: string;
-  message?: string;
+  dependencies?: string[];
+  next_action?: string;
+  coherence_check: {
+    context_continuity: boolean;
+    priority_consistency: boolean;
+  };
 }
 
 export interface HealthStatus {
   status: string;
   timestamp: string;
   app_name: string;
-  app_version: string;
+  version: string;
   context_management: {
     context_log_path: string;
     context_health: {
-      status: string;
       healthy: boolean;
-      coherence_score?: string;
-      total_entries?: number;
+      last_log: string | null;
     };
-  };
-  server: {
-    host: string;
-    port: number;
   };
 }

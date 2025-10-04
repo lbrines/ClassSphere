@@ -1,182 +1,124 @@
-/**
- * Dashboard Educativo - useAuth Hook
- * Context-Aware Implementation - Day 5-7 High Priority
- */
+"use client";
 
-import { useState, useEffect, useCallback } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { User, AuthTokens, LoginCredentials, GoogleOAuthData } from '@/types';
-import { api } from '@/utils/api';
-import { logComponentContext } from '@/utils/context-logger';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useRouter } from 'next/navigation';
+import { contextLogger } from '@/utils/context-logger';
+import api from '@/utils/api';
 
-export const useAuth = () => {
-  const [user, setUser] = useState<User | null>(null);
-  const [tokens, setTokens] = useState<AuthTokens | null>(null);
+interface LoginCredentials {
+  username: string;
+  password: string;
+}
+
+interface User {
+  user_id: string;
+  username: string;
+  email: string;
+  role: string;
+}
+
+interface AuthTokens {
+  access_token: string;
+  refresh_token: string;
+  token_type: string;
+  expires_in: number;
+}
+
+export function useAuth() {
   const queryClient = useQueryClient();
+  const router = useRouter();
 
-  // Log auth hook initialization
-  useEffect(() => {
-    logComponentContext('auth-hook-001', 'CRITICAL', 'started', 'Auth hook initialized', 'frontend', 'useAuth_init');
-  }, []);
+  // Get current user
+  const { data: user, isLoading } = useQuery({
+    queryKey: ['user'],
+    queryFn: async (): Promise<User | null> => {
+      const token = localStorage.getItem('access_token');
+      if (!token) return null;
 
-  // Check if user is authenticated
-  const isAuthenticated = !!user && !!tokens;
+      try {
+        const response = await api.get('/auth/me');
+        return response.data;
+      } catch (error) {
+        localStorage.removeItem('access_token');
+        localStorage.removeItem('refresh_token');
+        return null;
+      }
+    },
+    retry: false,
+  });
 
   // Login mutation
   const loginMutation = useMutation({
-    mutationFn: async (credentials: LoginCredentials) => {
-      logComponentContext('auth-login-002', 'CRITICAL', 'started', 'Login attempt initiated', 'frontend', 'login');
-      
+    mutationFn: async (credentials: LoginCredentials): Promise<AuthTokens> => {
       const response = await api.post('/auth/login', credentials);
+      const tokens = response.data;
       
-      if (response.data) {
-        const { access_token, refresh_token, token_type, expires_in, user: userData } = response.data;
-        
-        setTokens({ access_token, refresh_token, token_type, expires_in });
-        setUser(userData);
-        
-        // Store tokens in localStorage
-        localStorage.setItem('access_token', access_token);
-        localStorage.setItem('refresh_token', refresh_token);
-        
-        logComponentContext('auth-login-002', 'CRITICAL', 'completed', 'Login successful', 'frontend', 'login');
-        
-        return response.data;
-      }
+      localStorage.setItem('access_token', tokens.access_token);
+      localStorage.setItem('refresh_token', tokens.refresh_token);
       
-      throw new Error('Login failed');
+      return tokens;
+    },
+    onSuccess: (tokens) => {
+      // User data will be fetched separately
+      router.push('/dashboard');
     },
     onError: (error) => {
-      logComponentContext('auth-login-002', 'CRITICAL', 'failed', `Login failed: ${error}`, 'frontend', 'login');
-    }
+      contextLogger.logContextStatus(
+        'auth-login-error',
+        'HIGH',
+        'error',
+        'middle',
+        'Login failed: ' + (error as Error).message,
+        'frontend',
+        'login_error'
+      );
+    },
   });
 
-  // Google OAuth login mutation
+  // Google login mutation
   const googleLoginMutation = useMutation({
-    mutationFn: async () => {
-      logComponentContext('auth-google-login-003', 'CRITICAL', 'started', 'Google OAuth login initiated', 'frontend', 'google_login');
-      
+    mutationFn: async (): Promise<void> => {
       const response = await api.get('/auth/google/authorize');
-      
-      if (response.data) {
-        const { authorization_url } = response.data;
-        
-        // Redirect to Google OAuth
-        window.location.href = authorization_url;
-        
-        logComponentContext('auth-google-login-003', 'CRITICAL', 'completed', 'Redirected to Google OAuth', 'frontend', 'google_login');
-        
-        return response.data;
-      }
-      
-      throw new Error('Google OAuth failed');
+      window.location.href = response.data.authorization_url;
     },
     onError: (error) => {
-      logComponentContext('auth-google-login-003', 'CRITICAL', 'failed', `Google OAuth failed: ${error}`, 'frontend', 'google_login');
-    }
-  });
-
-  // Refresh token mutation
-  const refreshTokenMutation = useMutation({
-    mutationFn: async () => {
-      logComponentContext('auth-refresh-004', 'HIGH', 'started', 'Token refresh initiated', 'frontend', 'refresh_token');
-      
-      const refreshToken = localStorage.getItem('refresh_token');
-      
-      if (!refreshToken) {
-        throw new Error('No refresh token available');
-      }
-      
-      const response = await api.post('/auth/refresh', { refresh_token: refreshToken });
-      
-      if (response.data) {
-        const { access_token, expires_in } = response.data;
-        
-        setTokens(prev => prev ? { ...prev, access_token, expires_in } : null);
-        localStorage.setItem('access_token', access_token);
-        
-        logComponentContext('auth-refresh-004', 'HIGH', 'completed', 'Token refreshed successfully', 'frontend', 'refresh_token');
-        
-        return response.data;
-      }
-      
-      throw new Error('Token refresh failed');
+      contextLogger.logContextStatus(
+        'google-login-error',
+        'HIGH',
+        'error',
+        'middle',
+        'Google login failed: ' + (error as Error).message,
+        'frontend',
+        'google_login_error'
+      );
     },
-    onError: (error) => {
-      logComponentContext('auth-refresh-004', 'HIGH', 'failed', `Token refresh failed: ${error}`, 'frontend', 'refresh_token');
-      
-      // If refresh fails, logout user
-      logout();
-    }
   });
 
   // Logout function
-  const logout = useCallback(() => {
-    logComponentContext('auth-logout-005', 'HIGH', 'started', 'Logout initiated', 'frontend', 'logout');
-    
-    setUser(null);
-    setTokens(null);
-    
-    // Clear tokens from localStorage
+  const logout = () => {
     localStorage.removeItem('access_token');
     localStorage.removeItem('refresh_token');
-    
-    // Clear all queries
     queryClient.clear();
+    router.push('/login');
     
-    logComponentContext('auth-logout-005', 'HIGH', 'completed', 'Logout completed', 'frontend', 'logout');
-  }, [queryClient]);
-
-  // Check authentication status on mount
-  useEffect(() => {
-    const checkAuthStatus = async () => {
-      const accessToken = localStorage.getItem('access_token');
-      const refreshToken = localStorage.getItem('refresh_token');
-      
-      if (accessToken && refreshToken) {
-        try {
-          logComponentContext('auth-check-006', 'MEDIUM', 'started', 'Checking auth status', 'frontend', 'check_auth');
-          
-          const response = await api.get('/auth/me', {
-            headers: { Authorization: `Bearer ${accessToken}` }
-          });
-          
-          if (response.data) {
-            setUser(response.data);
-            setTokens({
-              access_token: accessToken,
-              refresh_token: refreshToken,
-              token_type: 'bearer',
-              expires_in: 1800
-            });
-            
-            logComponentContext('auth-check-006', 'MEDIUM', 'completed', 'Auth status verified', 'frontend', 'check_auth');
-          }
-        } catch (error) {
-          logComponentContext('auth-check-006', 'MEDIUM', 'failed', `Auth check failed: ${error}`, 'frontend', 'check_auth');
-          
-          // Try to refresh token
-          try {
-            await refreshTokenMutation.mutateAsync();
-          } catch (refreshError) {
-            // If refresh also fails, logout
-            logout();
-          }
-        }
-      }
-    };
-    
-    checkAuthStatus();
-  }, [refreshTokenMutation, logout]);
+    contextLogger.logContextStatus(
+      'auth-logout',
+      'HIGH',
+      'completed',
+      'middle',
+      'User logged out',
+      'frontend',
+      'logout'
+    );
+  };
 
   return {
     user,
-    tokens,
-    isLoading: loginMutation.isLoading || googleLoginMutation.isLoading || refreshTokenMutation.isLoading,
-    isAuthenticated,
-    login: loginMutation.mutateAsync,
-    loginWithGoogle: googleLoginMutation.mutateAsync,
+    isLoading,
+    login: loginMutation.mutate,
+    loginWithGoogle: googleLoginMutation.mutate,
     logout,
-    refreshToken: refreshTokenMutation.mutateAsync
+    isLoginLoading: loginMutation.isLoading,
+    isGoogleLoginLoading: googleLoginMutation.isLoading,
   };
-};
+}

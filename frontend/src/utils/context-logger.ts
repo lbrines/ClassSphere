@@ -1,109 +1,98 @@
 /**
- * Dashboard Educativo - Context Logger Utility
- * Context-Aware Implementation - Day 5-7 High Priority
+ * Frontend Context Logger
+ * Context-Aware Implementation
  */
 
-import { ContextLog } from '@/types';
+interface ContextLogEntry {
+  timestamp: string;
+  context_id: string;
+  token_count: number;
+  context_priority: string;
+  status: string;
+  memory_management: {
+    chunk_position: string;
+    lost_in_middle_risk: string;
+  };
+  phase?: string;
+  task?: string;
+  dependencies?: string[];
+  next_action?: string;
+  coherence_check: {
+    context_continuity: boolean;
+    priority_consistency: boolean;
+  };
+}
 
-export class ContextLogger {
+class ContextLogger {
   private static instance: ContextLogger;
-  private logs: ContextLog[] = [];
+  private contextLogPath = '/tmp/dashboard_context_status.json';
 
   private constructor() {}
 
-  public static getInstance(): ContextLogger {
+  static getInstance(): ContextLogger {
     if (!ContextLogger.instance) {
       ContextLogger.instance = new ContextLogger();
     }
     return ContextLogger.instance;
   }
 
-  public logContext(
+  async logContextStatus(
     contextId: string,
-    priority: 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW',
-    status: 'started' | 'in_progress' | 'completed' | 'failed' | 'blocked',
-    message: string = '',
+    priority: string,
+    status: string,
+    position: string = "middle",
+    message: string = "",
     phase?: string,
-    task?: string
-  ): void {
-    const log: ContextLog = {
+    task?: string,
+    dependencies?: string[],
+    nextAction?: string
+  ): Promise<void> {
+    const contextEntry: ContextLogEntry = {
       timestamp: new Date().toISOString(),
       context_id: contextId,
       token_count: message.length,
       context_priority: priority,
-      status,
+      status: status,
       memory_management: {
-        chunk_position: this.getChunkPosition(priority),
-        lost_in_middle_risk: this.getLostInMiddleRisk(priority)
+        chunk_position: position,
+        lost_in_middle_risk: position === "beginning" || position === "end" ? "low" : "medium"
       },
-      phase,
-      task,
-      message
+      phase: phase,
+      task: task,
+      dependencies: dependencies,
+      next_action: nextAction,
+      coherence_check: {
+        context_continuity: true,
+        priority_consistency: ["CRITICAL", "HIGH", "MEDIUM", "LOW"].includes(priority)
+      }
     };
 
-    this.logs.push(log);
-    
-    // Log to console in development
-    if (process.env.NODE_ENV === 'development') {
-      console.log(`[CONTEXT-${priority}] ${contextId}: ${message}`, log);
+    try {
+      // In browser environment, we can't write to /tmp directly
+      // So we'll log to console and potentially send to backend
+      console.log('[CONTEXT-LOG]', JSON.stringify(contextEntry));
+      
+      // In a real implementation, you might send this to your backend
+      // await fetch('/api/context-log', { method: 'POST', body: JSON.stringify(contextEntry) });
+    } catch (error) {
+      console.error('Failed to log context:', error);
     }
   }
 
-  private getChunkPosition(priority: string): string {
-    switch (priority) {
-      case 'CRITICAL':
-        return 'beginning';
-      case 'HIGH':
-        return 'beginning-middle';
-      case 'MEDIUM':
-        return 'middle';
-      case 'LOW':
-        return 'end';
-      default:
-        return 'middle';
-    }
+  getLogs(): ContextLogEntry[] {
+    // In browser environment, we can't read from /tmp directly
+    // This would typically fetch from your backend
+    return [];
   }
 
-  private getLostInMiddleRisk(priority: string): string {
-    switch (priority) {
-      case 'CRITICAL':
-      case 'LOW':
-        return 'low';
-      case 'HIGH':
-      case 'MEDIUM':
-        return 'medium';
-      default:
-        return 'medium';
-    }
-  }
-
-  public getLogs(): ContextLog[] {
-    return [...this.logs];
-  }
-
-  public getLogsByContextId(contextId: string): ContextLog[] {
-    return this.logs.filter(log => log.context_id === contextId);
-  }
-
-  public getLogsByPriority(priority: string): ContextLog[] {
-    return this.logs.filter(log => log.context_priority === priority);
-  }
-
-  public clearLogs(): void {
-    this.logs = [];
+  getContextHealth(): { healthy: boolean; last_log: string | null } {
+    // In browser environment, we can't check /tmp directly
+    // This would typically fetch from your backend
+    return {
+      healthy: true,
+      last_log: new Date().toISOString()
+    };
   }
 }
 
 export const contextLogger = ContextLogger.getInstance();
-
-// Convenience functions
-export const logComponentContext = (
-  contextId: string,
-  priority: 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW',
-  status: 'started' | 'in_progress' | 'completed' | 'failed' | 'blocked',
-  message: string = '',
-  phase?: string,
-  task?: string
-) => {
-  contextLogger.logContext(contextId, priority, status, message, phase, task);
-};

@@ -1,6 +1,6 @@
 ---
 llm:metadata:
-  title: "Contrato Unificado Completo: Dashboard Educativo Full-Stack"
+  title: "Contrato Unificado Completo: ClassSphere Full-Stack"
   version: "2.6"
   type: "unified_implementation_contract"
   stage: "unified"
@@ -24,14 +24,14 @@ llm:metadata:
     - google_classroom_mock_implementation
 ---
 
-# Contrato Unificado Completo: Dashboard Educativo Full-Stack
+# Contrato Unificado Completo: ClassSphere Full-Stack
 
 ## Información del Proyecto
-- **Proyecto**: Dashboard Educativo - Sistema Completo
+- **Proyecto**: ClassSphere - Sistema Completo
 - **Fase**: Implementación Unificada - Todas las Funcionalidades
 - **Autor**: Sistema de Contratos LLM
 - **Fecha**: 2025-10-03 (Actualizado con Coherencia Semántica + Glosario Técnico Unificado + Prevención de Errores + Corrección de Warnings + Cobertura 100% + Infraestructura + Template Method Pattern + Implementación Google Classroom con Mocks)
-- **Propósito**: Implementar sistema completo de dashboard educativo con coherencia semántica optimizada y todas las funcionalidades consolidadas
+- **Propósito**: Implementar sistema completo de ClassSphere con coherencia semántica optimizada y todas las funcionalidades consolidadas
 
 ## =====
 <llm:section id="technical_glossary" type="glossary">
@@ -139,15 +139,38 @@ API Layer (Backend): Inglés obligatorio
 ├── UserRole, CourseStatus, AssignmentType
 └── API endpoints, response schemas, error codes
 
-UI Layer (Frontend): Español con términos técnicos en inglés
-├── Usuario, Curso, Tarea, Calificación, Notificación
-├── UserRole (término técnico), CourseStatus (término técnico)
-└── Componentes, hooks, servicios
+UI Layer (Frontend): Inglés estandarizado
+├── User, Course, Assignment, Grade, Notification
+├── UserRole, CourseStatus, AssignmentType
+└── Components, hooks, services
 
-Documentación: Español con glosario técnico
-├── Usuario: Entidad que representa a una persona en el sistema
-├── UserRole: Enum que define los tipos de usuario (admin, teacher, student)
+Documentación: Español con términos técnicos en inglés
+├── User: Entidad que representa a una persona en el sistema
+├── UserRole: Enum que define los tipos de usuario (Admin, Teacher, Student)
 └── Referencias cruzadas a implementaciones técnicas
+```
+
+#### **Estados con Prefijos Semánticos**
+```
+Sincronización:
+├── SYNC_COMPLETE: Sincronización completada exitosamente
+├── SYNC_PENDING: Sincronización en proceso o pendiente
+└── SYNC_ERROR: Error durante la sincronización
+
+Autenticación:
+├── AUTH_SUCCESS: Autenticación exitosa
+├── AUTH_PENDING: Autenticación en proceso
+└── AUTH_FAILED: Error de autenticación
+
+Cursos:
+├── COURSE_ACTIVE: Curso activo y disponible
+├── COURSE_INACTIVE: Curso inactivo temporalmente
+└── COURSE_ARCHIVED: Curso archivado (histórico)
+
+Notificaciones:
+├── NOTIF_SENT: Notificación enviada
+├── NOTIF_DELIVERED: Notificación entregada
+└── NOTIF_READ: Notificación leída por el usuario
 ```
 
 #### **Roles del Sistema**
@@ -248,8 +271,8 @@ Stage 1 (Fundaciones) → Stage 2 (Google Integration) → Stage 3 (Visualizaci�
 Referenciando el [Glosario Técnico](#glosario-técnico-unificado) y las [Work Plan Development Rules (LLM 2024-2025)](#work-plan-development-rules-llm-2024-2025):
 
 **Autenticación**: Siguiendo [modos de operación](#modos-de-operación)
-- **JWT**: Token estático para desarrollo y fallback
-- **OAuth 2.0**: Flujo dinámico para producción con Google
+- **JWT**: Token estático para desarrollo y fallback (estado: AUTH_SUCCESS, AUTH_PENDING, AUTH_FAILED)
+- **OAuth 2.0**: Flujo dinámico para producción con Google (estado: AUTH_SUCCESS, AUTH_PENDING, AUTH_FAILED)
 - **Dual Mode**: Capacidad de alternar entre ambos sistemas
 
 **Datos**: Siguiendo [modos de operación](#modos-de-operación)
@@ -263,6 +286,11 @@ Referenciando el [Glosario Técnico](#glosario-técnico-unificado) y las [Work P
 - **Coordinator**: Supervisión de múltiples cursos y teachers
 - **Admin**: Control total del sistema, usuarios y configuraciones
 
+**Estados de Sincronización**: Siguiendo [estados con prefijos semánticos](#estados-con-prefijos-semánticos)
+- **SYNC_COMPLETE**: Sincronización completada exitosamente
+- **SYNC_PENDING**: Sincronización en proceso o pendiente
+- **SYNC_ERROR**: Error durante la sincronización
+
 #### Consistencia de Terminología
 Siguiendo el [Estándar por Capa](#estándar-por-capa) definido en el Glosario Técnico:
 
@@ -270,9 +298,9 @@ Siguiendo el [Estándar por Capa](#estándar-por-capa) definido en el Glosario T
 - User, Course, Assignment, Grade, Notification
 - UserRole, CourseStatus, AssignmentType
 
-**UI Layer (Frontend)**: Español con términos técnicos en inglés
-- Usuario, Curso, Tarea, Calificación, Notificación
-- UserRole (término técnico), CourseStatus (término técnico)
+**UI Layer (Frontend)**: Inglés estandarizado
+- User, Course, Assignment, Grade, Notification
+- UserRole, CourseStatus, AssignmentType
 
 **Documentación**: Español con glosario técnico
 - Referencias cruzadas a [conceptos fundamentales](#conceptos-fundamentales)
@@ -474,7 +502,7 @@ class ContextAwareService:
         }
 
         # Log a archivo temporal para tracking LLM
-        with open("/tmp/dashboard_context_status.json", "a") as f:
+        with open("/tmp/classsphere_context_status.json", "a") as f:
             f.write(json.dumps(log_entry) + "\n")
 ```
 
@@ -807,7 +835,7 @@ async def lifespan(app: FastAPI):
 
 def create_app() -> FastAPI:
     return FastAPI(
-        title="Dashboard Educativo",
+        title="ClassSphere",
         version="1.0.0",
         lifespan=lifespan
     )
@@ -1060,7 +1088,7 @@ class ResourceService:
 - **Admin Panel**: Control total + Diagnósticos + Monitoreo
 
 ### 3. Dashboards Avanzados por Rol (Stage 2 + 3)
-**Dashboard Administrador**:
+**Admin Dashboard**:
 - Vista general del sistema + KPIs institucionales
 - Gestión de usuarios + permisos + configuración
 - Análisis de tendencias + comparativas entre programas
@@ -1068,21 +1096,21 @@ class ResourceService:
 - Panel de administración Google + sincronización
 - Herramientas de backup + diagnóstico
 
-**Dashboard Coordinador**:
+**Coordinator Dashboard**:
 - Métricas de programas asignados + análisis comparativo
 - Seguimiento de teachers + evaluación de rendimiento
 - Análisis de cohortes + predicción de resultados
 - Reportes automáticos + exportación
 - Gestión de cursos por programa
 
-**Dashboard Teacher**:
+**Teacher Dashboard**:
 - Análisis detallado de cursos propios
-- Identificación automática de estudiantes en riesgo
+- Identificación automática de students en riesgo
 - Herramientas de seguimiento + intervención
-- Gestión de tareas + calificaciones sincronizadas
+- Gestión de assignments + grades sincronizadas
 - Analytics de participación + engagement
 
-**Dashboard Estudiante**:
+**Student Dashboard**:
 - Progreso personalizado + metas individuales
 - Calendario integrado + recordatorios
 - Comparativas anónimas + gamificación
@@ -1238,11 +1266,11 @@ DELETE /api/v1/google/assignments/:id  # Delete assignment
 
 ### Sincronización y Backup (Stage 4)
 ```
-GET  /api/v1/sync/status               # Sync status
-POST /api/v1/sync/start                # Start sync
-POST /api/v1/sync/stop                 # Stop sync
+GET  /api/v1/sync/status               # Status (SYNC_IDLE|SYNC_RUNNING|SYNC_COMPLETE|SYNC_ERROR)
+POST /api/v1/sync/start                # Start sync process
+POST /api/v1/sync/stop                 # Stop sync process
 GET  /api/v1/sync/logs                 # Sync logs
-GET  /api/v1/sync/conflicts            # List conflicts
+GET  /api/v1/sync/conflicts            # List conflicts (CONFLICT_PENDING|CONFLICT_RESOLVED)
 POST /api/v1/sync/conflicts/:id/resolve # Resolve conflict
 GET  /api/v1/backup                    # List backups
 POST /api/v1/backup/create             # Create backup
@@ -1275,11 +1303,12 @@ GET /api/v1/monitoring/performance     # Performance metrics
 ```json
 {
   "id": "user-001",
-  "email": "user@educational.dashboard",
-  "role": "admin|coordinator|teacher|student",
+  "email": "user@classsphere.edu",
+  "role": "Admin|Coordinator|Teacher|Student",
   "name": "Full Name",
   "active": true,
   "lastLogin": "2025-10-03T10:00:00Z",
+  "authStatus": "AUTH_SUCCESS",
   "preferences": {
     "language": "en",
     "timezone": "UTC",
@@ -1298,7 +1327,8 @@ GET /api/v1/monitoring/performance     # Performance metrics
     "google": {
       "connected": true,
       "scopes": ["classroom.courses", "classroom.rosters"],
-      "lastSync": "2025-10-03T09:00:00Z"
+      "lastSync": "2025-10-03T09:00:00Z",
+      "status": "AUTH_SUCCESS"
     }
   }
 }
@@ -1313,7 +1343,7 @@ GET /api/v1/monitoring/performance     # Performance metrics
   "section": "Section A",
   "description": "Complete eCommerce course",
   "ownerId": "teacher-001",
-  "status": "active|inactive|archived",
+  "status": "COURSE_ACTIVE|COURSE_INACTIVE|COURSE_ARCHIVED",
   "enrollmentCode": "abc123",
   "students": ["student-001", "student-002"],
   "metrics": {
@@ -1325,7 +1355,7 @@ GET /api/v1/monitoring/performance     # Performance metrics
   },
   "syncStatus": {
     "lastSync": "2025-10-03T09:00:00Z",
-    "status": "synced|pending|error",
+    "status": "SYNC_COMPLETE|SYNC_PENDING|SYNC_ERROR",
     "conflicts": []
   },
   "createdAt": "2025-08-15T10:00:00Z",
@@ -1393,8 +1423,8 @@ GET /api/v1/monitoring/performance     # Performance metrics
       "action": "sendMessage"
     }
   ],
-  "read": false,
-  "delivered": true,
+  "status": "NOTIF_READ|NOTIF_UNREAD",
+  "deliveryStatus": "NOTIF_DELIVERED|NOTIF_FAILED",
   "createdAt": "2025-10-03T10:00:00Z",
   "expiresAt": "2025-10-10T10:00:00Z"
 }
@@ -1404,7 +1434,7 @@ GET /api/v1/monitoring/performance     # Performance metrics
 ```json
 {
   "id": "sync-001",
-  "status": "idle|running|completed|error",
+  "status": "SYNC_IDLE|SYNC_RUNNING|SYNC_COMPLETE|SYNC_ERROR",
   "type": "manual|scheduled|webhook",
   "startedAt": "2025-10-03T09:00:00Z",
   "completedAt": "2025-10-03T09:15:00Z",
@@ -1427,7 +1457,7 @@ GET /api/v1/monitoring/performance     # Performance metrics
       "field": "dueDate",
       "sourceValue": "2025-10-15T23:59:59Z",
       "targetValue": "2025-10-20T23:59:59Z",
-      "status": "pending|resolved"
+      "status": "CONFLICT_PENDING|CONFLICT_RESOLVED"
     }
   ],
   "errors": [
@@ -1976,12 +2006,12 @@ echo "🔧 TDD con Context Management: Configurando..."
 
 # Inicializar sistema de context logging
 init_context_logging() {
-    mkdir -p /tmp/dashboard_context
-    touch /tmp/dashboard_context_status.json
-    touch /tmp/dashboard_tmux_status.log
+    mkdir -p /tmp/classsphere_context
+    touch /tmp/classsphere_context_status.json
+    touch /tmp/classsphere_tmux_status.log
 
     # Log inicial con contexto CRITICAL
-    cat > /tmp/dashboard_context_status.json << EOF
+    cat > /tmp/classsphere_context_status.json << EOF
 {
   "timestamp": "$(date -Iseconds)",
   "context_id": "tdd-init-$(date +%s)",
@@ -2009,31 +2039,31 @@ if ! tmux has-session -t $SESSION_NAME 2>/dev/null; then
     tmux new-session -d -s $SESSION_NAME
 
     # Log creación de sesión
-    echo "$(date -Iseconds) [CONTEXT-CREATE] Session $SESSION_NAME created with ID $CONTEXT_ID" >> /tmp/dashboard_tmux_status.log
+    echo "$(date -Iseconds) [CONTEXT-CREATE] Session $SESSION_NAME created with ID $CONTEXT_ID" >> /tmp/classsphere_tmux_status.log
 fi
 
 # Limpiar procesos anteriores en sesión TDD con context logging
 tmux send-keys -t $SESSION_NAME "echo '🧹 [CONTEXT-CLEAN] Limpieza TDD: procesos anteriores...'" Enter
-tmux send-keys -t $SESSION_NAME "echo '$(date -Iseconds) [CONTEXT-LOG] Cleaning previous processes' >> /tmp/dashboard_tmux_status.log" Enter
+tmux send-keys -t $SESSION_NAME "echo '$(date -Iseconds) [CONTEXT-LOG] Cleaning previous processes' >> /tmp/classsphere_tmux_status.log" Enter
 tmux send-keys -t $SESSION_NAME "pkill -f uvicorn" Enter
 tmux send-keys -t $SESSION_NAME "sleep 2" Enter
 
 # Verificar puerto 8000 en sesión TDD con context awareness
 tmux send-keys -t $SESSION_NAME "echo '🔍 [CONTEXT-CHECK] Verificación TDD: puerto 8000...'" Enter
-tmux send-keys -t $SESSION_NAME "if lsof -Pi :8000 -sTCP:LISTEN -t >/dev/null ; then echo '⚠️  [CONTEXT-WARNING] Puerto ocupado. Limpieza TDD...'; echo '$(date -Iseconds) [CONTEXT-WARNING] Port 8000 occupied' >> /tmp/dashboard_tmux_status.log; pkill -f 'port 8000'; sleep 2; fi" Enter
+tmux send-keys -t $SESSION_NAME "if lsof -Pi :8000 -sTCP:LISTEN -t >/dev/null ; then echo '⚠️  [CONTEXT-WARNING] Puerto ocupado. Limpieza TDD...'; echo '$(date -Iseconds) [CONTEXT-WARNING] Port 8000 occupied' >> /tmp/classsphere_tmux_status.log; pkill -f 'port 8000'; sleep 2; fi" Enter
 
 # Iniciar servidor TDD en sesión tmux con context tracking
 tmux send-keys -t $SESSION_NAME "echo '🚀 [CONTEXT-START] Inicio TDD: servidor en puerto 8000 (terminal externo)...'" Enter
-tmux send-keys -t $SESSION_NAME "echo '$(date -Iseconds) [CONTEXT-START] Server starting on port 8000' >> /tmp/dashboard_tmux_status.log" Enter
+tmux send-keys -t $SESSION_NAME "echo '$(date -Iseconds) [CONTEXT-START] Server starting on port 8000' >> /tmp/classsphere_tmux_status.log" Enter
 tmux send-keys -t $SESSION_NAME "python3 -m uvicorn src.app.main:app --host 127.0.0.1 --port 8000" Enter
 
 # Crear ventana adicional para context monitoring
 tmux new-window -t $SESSION_NAME -n "context-monitor"
 tmux send-keys -t $SESSION_NAME:context-monitor "echo '📊 [CONTEXT-MONITOR] Sistema de monitoreo de contexto activo'" Enter
-tmux send-keys -t $SESSION_NAME:context-monitor "tail -f /tmp/dashboard_tmux_status.log" Enter
+tmux send-keys -t $SESSION_NAME:context-monitor "tail -f /tmp/classsphere_tmux_status.log" Enter
 
 # Log completion con contexto LOW (final del proceso)
-cat >> /tmp/dashboard_context_status.json << EOF
+cat >> /tmp/classsphere_context_status.json << EOF
 {
   "timestamp": "$(date -Iseconds)",
   "context_id": "$CONTEXT_ID",
@@ -2051,8 +2081,8 @@ EOF
 
 echo "✅ [CONTEXT-SUCCESS] TDD iniciado en sesión tmux con context tracking"
 echo "📋 [CONTEXT-INFO] Conectar con: tmux attach-session -t $SESSION_NAME"
-echo "📊 [CONTEXT-INFO] Logs de contexto en: /tmp/dashboard_context_status.json"
-echo "📈 [CONTEXT-INFO] Monitoreo tmux en: /tmp/dashboard_tmux_status.log"
+echo "📊 [CONTEXT-INFO] Logs de contexto en: /tmp/classsphere_context_status.json"
+echo "📈 [CONTEXT-INFO] Monitoreo tmux en: /tmp/classsphere_tmux_status.log"
 ```
 
 #### Template TDD Frontend Testing con Tmux Context-Aware (2024)
@@ -2062,7 +2092,7 @@ echo "📈 [CONTEXT-INFO] Monitoreo tmux en: /tmp/dashboard_tmux_status.log"
 # Basado en mejores prácticas 2024 para CI/CD frontend
 set -e
 
-SESSION_NAME="edu-dashboard-frontend"
+SESSION_NAME="classsphere-frontend"
 BACKEND_WINDOW="backend-api"
 FRONTEND_WINDOW="frontend-dev"
 TESTING_WINDOW="frontend-tests"
@@ -2075,7 +2105,7 @@ log_frontend_context() {
     local chunk_position=$3
     local message=$4
 
-    cat >> /tmp/dashboard_frontend_context.json << EOF
+    cat >> /tmp/classsphere_frontend_context.json << EOF
 {
   "timestamp": "$(date -Iseconds)",
   "context_id": "frontend-$(date +%s)",
@@ -2141,7 +2171,7 @@ tmux send-keys -t $SESSION_NAME:$TESTING_WINDOW "echo 'LOW tests (a11y, admin): 
 # Ventana 4: Context Logs de Status
 tmux new-window -t $SESSION_NAME -n $CONTEXT_WINDOW
 tmux send-keys -t $SESSION_NAME:$CONTEXT_WINDOW "echo '📊 [FRONTEND-CONTEXT-LOGS] Sistema de logs de contexto activado'" Enter
-tmux send-keys -t $SESSION_NAME:$CONTEXT_WINDOW "tail -f /tmp/dashboard_frontend_context.json" Enter
+tmux send-keys -t $SESSION_NAME:$CONTEXT_WINDOW "tail -f /tmp/classsphere_frontend_context.json" Enter
 
 # REGLA 4: Health check automatizado con context verification
 sleep 5
@@ -2172,7 +2202,7 @@ fi
 log_frontend_context "LOW" "completed" "end" "Frontend tmux session ready with context management"
 
 echo "🎉 [FRONTEND-CONTEXT-READY] Sesión tmux lista: tmux attach-session -t $SESSION_NAME"
-echo "📊 [FRONTEND-CONTEXT-INFO] Context logs: /tmp/dashboard_frontend_context.json"
+echo "📊 [FRONTEND-CONTEXT-INFO] Context logs: /tmp/classsphere_frontend_context.json"
 echo "🔍 [FRONTEND-CONTEXT-INFO] Windows: $BACKEND_WINDOW, $FRONTEND_WINDOW, $TESTING_WINDOW, $CONTEXT_WINDOW"
 ```
 
@@ -2644,7 +2674,7 @@ echo "✅ Resolución automática completada"
 - [ ] **Connection Errors**: Todos los casos de error mockeados correctamente
 - [ ] **Cleanup Errors**: Todos los casos de cleanup testeados
 - [ ] **Context Managers**: Todos los context managers funcionando
-- [ ] **Status Logging**: Archivo `/tmp/dashboard_educativo_status.json` creado y actualizado correctamente
+- [ ] **Status Logging**: Archivo `/tmp/classsphere_status.json` creado y actualizado correctamente
 
 **Quality Gate por Fase:**
 - **Fase 1**: Todos los errores de Day 1 resueltos
@@ -3228,15 +3258,15 @@ Todo el sistema sigue **Test-Driven Development** estricto:
 #### Sistema de Logging de Control de Status con Context Management (LLM 2024-2025)
 - **Archivo de Log Obligatorio**: Crear archivo de log de control de status en directorio temporal del sistema
 - **Formato LLM-Friendly**: Log en formato JSON estructurado para fácil lectura por LLM con gestión de contexto
-- **Ubicación**: `/tmp/dashboard_educativo_status.json` (Linux/macOS) o `%TEMP%\dashboard_educativo_status.json` (Windows)
+- **Ubicación**: `/tmp/classsphere_status.json` (Linux/macOS) o `%TEMP%\classsphere_status.json` (Windows)
 - **Context Awareness Files**: Archivos adicionales para gestión de contexto según Work Plan Development Rules:
-  - `/tmp/dashboard_context_status.json` - Context chunks y token management
-  - `/tmp/dashboard_tmux_status.log` - Logs de tmux con context tracking
-  - `/tmp/dashboard_frontend_context.json` - Context específico de frontend
+  - `/tmp/classsphere_context_status.json` - Context chunks y token management
+  - `/tmp/classsphere_tmux_status.log` - Logs de tmux con context tracking
+  - `/tmp/classsphere_frontend_context.json` - Context específico de frontend
 - **Contenido Requerido con Context Management**:
   ```json
   {
-    "project": "Dashboard Educativo",
+    "project": "ClassSphere",
     "version": "2.6",
     "phase": "fase_actual",
     "day": "dia_actual",
@@ -3264,7 +3294,7 @@ Todo el sistema sigue **Test-Driven Development** estricto:
       "anti_lost_middle_structure": "applied"
     },
     "tmux_sessions": {
-      "active_sessions": ["tdd-dev", "edu-dashboard-frontend"],
+      "active_sessions": ["tdd-dev", "classsphere-frontend"],
       "context_monitoring": true,
       "health_checks": ["backend:8000", "frontend:3000"]
     }
@@ -3560,7 +3590,7 @@ if ! command -v tmux &> /dev/null; then
 fi
 
 # Crear sesión tmux para desarrollo
-SESSION_NAME="dashboard-dev"
+SESSION_NAME="classsphere-dev"
 
 # Cargar funciones de logging específicas para Cursor
 source <(cat << 'EOF'
@@ -3584,7 +3614,7 @@ if tmux has-session -t $SESSION_NAME 2>/dev/null; then
 else
     echo "🚀 Creando nueva sesión $SESSION_NAME..."
     tmux new-session -d -s $SESSION_NAME
-    tmux send-keys -t $SESSION_NAME "cd /home/lbrines/projects/AI/dashboard\ classroom" Enter
+    tmux send-keys -t $SESSION_NAME "cd /home/lbrines/projects/AI/classsphere" Enter
     tmux send-keys -t $SESSION_NAME "echo '🔧 Terminal externo configurado para evitar conflictos con Cursor'" Enter
     log_cursor_mitigation "TERMINAL_HANG" "create_tmux_session" "success" "$SESSION_NAME"
     tmux attach-session -t $SESSION_NAME
@@ -3600,7 +3630,7 @@ set -e
 echo "🔧 Desarrollo con Terminal Externo: Configurando..."
 
 # Verificar sesión tmux
-SESSION_NAME="dashboard-dev"
+SESSION_NAME="classsphere-dev"
 
 if ! tmux has-session -t $SESSION_NAME 2>/dev/null; then
     echo "⚠️  Sesión tmux no existe. Creando..."
@@ -3664,7 +3694,7 @@ if ! tmux has-session -t $SESSION_NAME 2>/dev/null; then
 fi
 
 # Configurar entorno de testing en sesión tmux
-tmux send-keys -t $SESSION_NAME "cd /home/lbrines/projects/AI/dashboard\ classroom/frontend" Enter
+tmux send-keys -t $SESSION_NAME "cd /home/lbrines/projects/AI/classsphere/frontend" Enter
 tmux send-keys -t $SESSION_NAME "echo '🔧 Terminal externo configurado para testing'" Enter
 
 # Tests unitarios con terminal externo
@@ -3699,7 +3729,7 @@ if ! tmux has-session -t $SESSION_NAME 2>/dev/null; then
 fi
 
 # Configurar entorno de testing backend en sesión tmux
-tmux send-keys -t $SESSION_NAME "cd /home/lbrines/projects/AI/dashboard\ classroom/backend" Enter
+tmux send-keys -t $SESSION_NAME "cd /home/lbrines/projects/AI/classsphere/backend" Enter
 tmux send-keys -t $SESSION_NAME "echo '🔧 Terminal externo configurado para testing backend'" Enter
 
 # Tests unitarios backend con terminal externo
@@ -3788,7 +3818,7 @@ list_sessions() {
 
 # Función para crear sesión de desarrollo
 create_dev_session() {
-    SESSION_NAME="dashboard-dev"
+    SESSION_NAME="classsphere-dev"
     echo "🚀 Creando sesión de desarrollo: $SESSION_NAME"
     
     if tmux has-session -t $SESSION_NAME 2>/dev/null; then
@@ -3796,7 +3826,7 @@ create_dev_session() {
         tmux attach-session -t $SESSION_NAME
     else
         tmux new-session -d -s $SESSION_NAME
-        tmux send-keys -t $SESSION_NAME "cd /home/lbrines/projects/AI/dashboard\ classroom" Enter
+        tmux send-keys -t $SESSION_NAME "cd /home/lbrines/projects/AI/classsphere" Enter
         tmux send-keys -t $SESSION_NAME "echo '🔧 Sesión de desarrollo creada'" Enter
         tmux attach-session -t $SESSION_NAME
     fi
@@ -3805,7 +3835,7 @@ create_dev_session() {
 # Función para limpiar sesiones
 cleanup_sessions() {
     echo "🧹 Limpiando sesiones tmux..."
-    tmux kill-session -t dashboard-dev 2>/dev/null || echo "Sesión dashboard-dev no existe"
+    tmux kill-session -t classsphere-dev 2>/dev/null || echo "Sesión classsphere-dev no existe"
     tmux kill-session -t tdd-dev 2>/dev/null || echo "Sesión tdd-dev no existe"
     tmux kill-session -t frontend-tests 2>/dev/null || echo "Sesión frontend-tests no existe"
     tmux kill-session -t backend-tests 2>/dev/null || echo "Sesión backend-tests no existe"
@@ -4169,7 +4199,7 @@ echo "🎉 Toda la Fase 1 tiene 100% de cobertura"
 # Script de deployment estándar con resolución automática
 set -e
 
-echo "🚀 Deployment: Iniciando Dashboard Educativo..."
+echo "🚀 Deployment: Iniciando ClassSphere..."
 
 # Función de limpieza
 cleanup() {
@@ -4216,7 +4246,7 @@ echo "🔍 Deployment: Verificando servicios externos..."
 curl -s -o /dev/null -w "%{http_code}" https://classroom.googleapis.com/v1/courses?key=TEST_KEY | grep -q "200\|401" && echo "✅ Deployment: Google Classroom API disponible (instalación nueva)" || echo "⚠️  Deployment: Google Classroom API no disponible"
 pgrep redis-server && echo "✅ Deployment: Redis disponible" || echo "⚠️  Deployment: Redis no disponible"
 
-echo "🎉 Deployment: Dashboard Educativo iniciado correctamente"
+echo "🎉 Deployment: ClassSphere iniciado correctamente"
 echo "📊 Deployment: PID del servidor: $SERVER_PID"
 echo "🌐 Deployment: Servidor disponible en http://127.0.0.1:8000"
 
@@ -4378,7 +4408,7 @@ async def lifespan(app: FastAPI):
 
 def create_app() -> FastAPI:
     return FastAPI(
-        title="Dashboard Educativo",
+        title="ClassSphere",
         version="1.0.0",
         lifespan=lifespan
     )
@@ -4625,7 +4655,7 @@ class ResilientService:
 # Script de deployment estándar con resolución automática
 set -e
 
-echo "🚀 Deployment: Iniciando Dashboard Educativo..."
+echo "🚀 Deployment: Iniciando ClassSphere..."
 
 # Función de limpieza
 cleanup() {
@@ -4672,7 +4702,7 @@ echo "🔍 Deployment: Verificando servicios externos..."
 curl -s -o /dev/null -w "%{http_code}" https://classroom.googleapis.com/v1/courses?key=TEST_KEY | grep -q "200\|401" && echo "✅ Deployment: Google Classroom API disponible (instalación nueva)" || echo "⚠️  Deployment: Google Classroom API no disponible"
 pgrep redis-server && echo "✅ Deployment: Redis disponible" || echo "⚠️  Deployment: Redis no disponible"
 
-echo "🎉 Deployment: Dashboard Educativo iniciado correctamente"
+echo "🎉 Deployment: ClassSphere iniciado correctamente"
 echo "📊 Deployment: PID del servidor: $SERVER_PID"
 echo "🌐 Deployment: Servidor disponible en http://127.0.0.1:8000"
 
@@ -5547,7 +5577,7 @@ La implementación de mejoras de coherencia semántica ha elevado la calidad del
 ## Conclusión del Contrato Unificado
 
 ### Resumen Ejecutivo
-Este contrato unificado consolida las mejores prácticas y funcionalidades de los 4 stages originales en un sistema integral de dashboard educativo. El enfoque TDD garantiza alta calidad, mantenibilidad y robustez desde el primer día.
+Este contrato unificado consolida las mejores prácticas y funcionalidades de los 4 stages originales en un sistema integral de ClassSphere. El enfoque TDD garantiza alta calidad, mantenibilidad y robustez desde el primer día.
 
 ### Beneficios del Enfoque Unificado
 1. **Coherencia Arquitectónica**: Diseño consistente en todo el sistema
@@ -5575,6 +5605,6 @@ Este contrato unificado consolida las mejores prácticas y funcionalidades de lo
 3. **Deployment**: Production ready con CI/CD completo
 4. **Operación**: Monitoring + Support + Continuous improvement
 
-**Este contrato representa la implementación más robusta y completa del Dashboard Educativo, integrando todas las funcionalidades requeridas con las mejores prácticas de la industria.**
+**Este contrato representa la implementación más robusta y completa del ClassSphere, integrando todas las funcionalidades requeridas con las mejores prácticas de la industria.**
 
 </llm:section>
