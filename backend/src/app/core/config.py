@@ -49,6 +49,9 @@ class Settings(BaseSettings):
     # CORS
     cors_origins: list[str] = Field(default=["http://127.0.0.1:3000", "http://localhost:3000"], description="CORS allowed origins")
     
+    # Security
+    allowed_hosts: list[str] = Field(default=["127.0.0.1", "localhost", "testserver", "*.classsphere.com"], description="Allowed hosts for TrustedHostMiddleware")
+    
     # Rate Limiting
     rate_limit_requests: int = Field(default=100, description="Rate limit requests per minute")
     rate_limit_window: int = Field(default=60, description="Rate limit window in seconds")
