@@ -24,6 +24,8 @@ from typing import Dict, Any
 from src.app.core.config import get_settings
 from src.app.core.cache import get_cache, close_cache
 from src.app.api.auth import router as auth_router
+from src.app.api.roles import router as roles_router
+from src.app.middleware.security_middleware import setup_security_middleware
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -76,8 +78,12 @@ app.add_middleware(
     allowed_hosts=["127.0.0.1", "localhost", "testserver", "*.classsphere.com"]
 )
 
+# Setup security middleware
+setup_security_middleware(app)
+
 # Include routers
 app.include_router(auth_router)
+app.include_router(roles_router)
 
 @app.get("/", response_model=Dict[str, Any])
 async def root():

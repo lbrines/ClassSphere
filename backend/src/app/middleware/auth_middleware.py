@@ -27,10 +27,32 @@ logger = logging.getLogger(__name__)
 security = HTTPBearer(auto_error=False)
 
 class AuthMiddleware:
-    """JWT Authentication middleware"""
+    """JWT Authentication middleware with role management"""
     
     def __init__(self):
         self.auth_service = AuthService()
+        # Role hierarchy: admin > coordinator > teacher > student
+        self.role_hierarchy = {
+            "admin": 4,
+            "coordinator": 3,
+            "teacher": 2,
+            "student": 1
+        }
+    
+    def get_role_level(self, role: str) -> int:
+        """Get numeric level for a role"""
+        return self.role_hierarchy.get(role, 0)
+    
+    def has_permission(self, user_role: str, required_role: str) -> bool:
+        """Check if user role has permission for required role"""
+        user_level = self.get_role_level(user_role)
+        required_level = self.get_role_level(required_role)
+        
+        # If required role is invalid (level 0), only admin can access it
+        if required_level == 0:
+            return user_level == 4  # Only admin can access invalid roles
+        
+        return user_level >= required_level
     
     async def get_current_user(self, credentials: Optional[HTTPAuthorizationCredentials] = Depends(security)) -> Dict[str, Any]:
         """Get current user from JWT token"""
@@ -119,18 +141,8 @@ class AuthMiddleware:
                     detail="User role not found"
                 )
             
-            # Role hierarchy: admin > coordinator > teacher > student
-            role_hierarchy = {
-                "admin": 4,
-                "coordinator": 3,
-                "teacher": 2,
-                "student": 1
-            }
-            
-            user_level = role_hierarchy.get(user_role, 0)
-            required_level = role_hierarchy.get(required_role, 0)
-            
-            if user_level < required_level:
+            # Check if user has permission for required role
+            if not self.has_permission(user_role, required_role):
                 raise HTTPException(
                     status_code=status.HTTP_403_FORBIDDEN,
                     detail=f"Insufficient permissions. Required: {required_role}, Current: {user_role}"
@@ -174,3 +186,9 @@ async def require_teacher(current_user: Dict[str, Any] = Depends(get_current_use
 async def require_student(current_user: Dict[str, Any] = Depends(get_current_user)) -> Dict[str, Any]:
     """Require student role or higher"""
     return await auth_middleware.require_role("student", current_user)
+
+def require_role(required_role: str):
+    """Require specific role or higher - returns a dependency function"""
+    async def _require_role_dependency(current_user: Dict[str, Any] = Depends(get_current_user)) -> Dict[str, Any]:
+        return await auth_middleware.require_role(required_role, current_user)
+    return _require_role_dependency
