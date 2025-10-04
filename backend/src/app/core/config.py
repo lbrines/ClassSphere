@@ -49,7 +49,7 @@ class Settings(BaseSettings):
     GOOGLE_CLIENT_ID: Optional[str] = Field(default=None, description="Google client ID")
     GOOGLE_CLIENT_SECRET: Optional[str] = Field(default=None, description="Google client secret")
     GOOGLE_REDIRECT_URI: str = Field(default="http://localhost:3000/auth/google/callback", description="Google redirect URI")
-    GOOGLE_SCOPES: List[str] = Field(default=["https://www.googleapis.com/auth/classroom.courses.readonly"], description="Google scopes")
+    GOOGLE_SCOPE: str = Field(default="openid email profile https://www.googleapis.com/auth/classroom.courses.readonly", description="Google scope")
     
     # Security Settings
     SECRET_KEY: str = Field(default="your-super-secret-key-change-this-in-production", description="Secret key")

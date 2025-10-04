@@ -87,8 +87,8 @@ class TestSettings:
         """Test Google API configuration."""
         settings = Settings()
         
-        assert isinstance(settings.GOOGLE_SCOPES, list)
-        assert "https://www.googleapis.com/auth/classroom.courses.readonly" in settings.GOOGLE_SCOPES
+        assert isinstance(settings.GOOGLE_SCOPE, str)
+        assert "https://www.googleapis.com/auth/classroom.courses.readonly" in settings.GOOGLE_SCOPE
         assert settings.GOOGLE_REDIRECT_URI == "http://localhost:3000/auth/google/callback"
     
     def test_settings_model_config(self):
