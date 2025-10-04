@@ -19,6 +19,52 @@ class BaseAPIException(Exception):
         self.status_code = status_code
         self.details = details or {}
         super().__init__(self.message)
+    
+    def _build_message(self, custom_message: str, default_message: str, **kwargs) -> str:
+        """Template method para construcción de mensajes."""
+        if custom_message and custom_message != default_message:
+            # Si hay mensaje personalizado, agregar parámetros adicionales si están disponibles
+            resource_id = kwargs.get('resource_id')
+            retry_after = kwargs.get('retry_after')
+            table = kwargs.get('table')
+            key = kwargs.get('key')
+            endpoint = kwargs.get('endpoint')
+            status_code = kwargs.get('status_code')
+            alternative_endpoint = kwargs.get('alternative_endpoint')
+            deprecation_date = kwargs.get('deprecation_date')
+            removal_date = kwargs.get('removal_date')
+            
+            if resource_id:
+                return f"{custom_message}: {resource_id}"
+            elif retry_after:
+                return f"{custom_message}, retry after {retry_after} seconds"
+            elif table:
+                return f"{custom_message} on table '{table}'"
+            elif key:
+                return f"{custom_message} for key '{key}'"
+            elif alternative_endpoint or deprecation_date or removal_date:
+                # Para DeprecatedAPIError con mensaje personalizado
+                message = custom_message
+                if deprecation_date:
+                    message = f"{message} (deprecated since {deprecation_date})"
+                if alternative_endpoint:
+                    message = f"{message}, use '{alternative_endpoint}' instead"
+                if removal_date:
+                    message = f"{message}, will be removed on {removal_date}"
+                return message
+            elif endpoint and status_code:
+                return f"{custom_message} at {endpoint} (status: {status_code})"
+            elif endpoint:
+                return f"{custom_message} at {endpoint}"
+            elif status_code:
+                return f"{custom_message} (status: {status_code})"
+            
+            return custom_message
+        return self._construct_automatic_message(default_message, **kwargs)
+    
+    def _construct_automatic_message(self, default_message: str, **kwargs) -> str:
+        """Hook method para construcción automática de mensajes."""
+        return default_message
 
 
 class ValidationError(BaseAPIException):
@@ -54,11 +100,28 @@ class NotFoundError(BaseAPIException):
     ):
         self.resource_type = resource_type
         self.resource_id = resource_id
+        final_message = self._build_message(
+            custom_message=message,
+            default_message="Resource not found",
+            resource_type=resource_type,
+            resource_id=resource_id
+        )
+        super().__init__(final_message, error_code, 404, details)
+    
+    def _construct_automatic_message(self, default_message: str, **kwargs) -> str:
+        """Construye mensaje automático basado en resource_type y resource_id."""
+        resource_type = kwargs.get('resource_type')
+        resource_id = kwargs.get('resource_id')
+        
         if resource_type:
             message = f"{resource_type} not found"
+        else:
+            message = default_message
+            
         if resource_id:
             message = f"{message}: {resource_id}"
-        super().__init__(message, error_code, 404, details)
+            
+        return message
 
 
 class ConflictError(BaseAPIException):
@@ -74,11 +137,28 @@ class ConflictError(BaseAPIException):
     ):
         self.resource_type = resource_type
         self.resource_id = resource_id
+        final_message = self._build_message(
+            custom_message=message,
+            default_message="Resource conflict",
+            resource_type=resource_type,
+            resource_id=resource_id
+        )
+        super().__init__(final_message, error_code, 409, details)
+    
+    def _construct_automatic_message(self, default_message: str, **kwargs) -> str:
+        """Construye mensaje automático basado en resource_type y resource_id."""
+        resource_type = kwargs.get('resource_type')
+        resource_id = kwargs.get('resource_id')
+        
         if resource_type:
             message = f"{resource_type} conflict"
+        else:
+            message = default_message
+            
         if resource_id:
             message = f"{message}: {resource_id}"
-        super().__init__(message, error_code, 409, details)
+            
+        return message
 
 
 class UnauthorizedError(BaseAPIException):
@@ -146,11 +226,28 @@ class ServiceUnavailableError(BaseAPIException):
     ):
         self.service_name = service_name
         self.retry_after = retry_after
+        final_message = self._build_message(
+            custom_message=message,
+            default_message="Service unavailable",
+            service_name=service_name,
+            retry_after=retry_after
+        )
+        super().__init__(final_message, error_code, 503, details)
+    
+    def _construct_automatic_message(self, default_message: str, **kwargs) -> str:
+        """Construye mensaje automático basado en service_name y retry_after."""
+        service_name = kwargs.get('service_name')
+        retry_after = kwargs.get('retry_after')
+        
         if service_name:
             message = f"{service_name} service unavailable"
+        else:
+            message = default_message
+            
         if retry_after:
             message = f"{message}, retry after {retry_after} seconds"
-        super().__init__(message, error_code, 503, details)
+            
+        return message
 
 
 class DatabaseError(BaseAPIException):
@@ -166,11 +263,28 @@ class DatabaseError(BaseAPIException):
     ):
         self.operation = operation
         self.table = table
+        final_message = self._build_message(
+            custom_message=message,
+            default_message="Database error",
+            operation=operation,
+            table=table
+        )
+        super().__init__(final_message, error_code, 500, details)
+    
+    def _construct_automatic_message(self, default_message: str, **kwargs) -> str:
+        """Construye mensaje automático basado en operation y table."""
+        operation = kwargs.get('operation')
+        table = kwargs.get('table')
+        
         if operation:
             message = f"Database {operation} error"
+        else:
+            message = default_message
+            
         if table:
             message = f"{message} on table '{table}'"
-        super().__init__(message, error_code, 500, details)
+            
+        return message
 
 
 class CacheError(BaseAPIException):
@@ -186,11 +300,28 @@ class CacheError(BaseAPIException):
     ):
         self.operation = operation
         self.key = key
+        final_message = self._build_message(
+            custom_message=message,
+            default_message="Cache error",
+            operation=operation,
+            key=key
+        )
+        super().__init__(final_message, error_code, 500, details)
+    
+    def _construct_automatic_message(self, default_message: str, **kwargs) -> str:
+        """Construye mensaje automático basado en operation y key."""
+        operation = kwargs.get('operation')
+        key = kwargs.get('key')
+        
         if operation:
             message = f"Cache {operation} error"
+        else:
+            message = default_message
+            
         if key:
             message = f"{message} for key '{key}'"
-        super().__init__(message, error_code, 500, details)
+            
+        return message
 
 
 class ExternalServiceError(BaseAPIException):
@@ -208,13 +339,35 @@ class ExternalServiceError(BaseAPIException):
         self.service_name = service_name
         self.endpoint = endpoint
         self.status_code = status_code
+        final_message = self._build_message(
+            custom_message=message,
+            default_message="External service error",
+            service_name=service_name,
+            endpoint=endpoint,
+            status_code=status_code
+        )
+        # Usar el status_code proporcionado si está disponible, sino usar 502
+        http_status_code = status_code if status_code else 502
+        super().__init__(final_message, error_code, http_status_code, details)
+    
+    def _construct_automatic_message(self, default_message: str, **kwargs) -> str:
+        """Construye mensaje automático basado en service_name, endpoint y status_code."""
+        service_name = kwargs.get('service_name')
+        endpoint = kwargs.get('endpoint')
+        status_code = kwargs.get('status_code')
+        
         if service_name:
             message = f"{service_name} service error"
+        else:
+            message = default_message
+            
         if endpoint:
             message = f"{message} at {endpoint}"
+            
         if status_code:
             message = f"{message} (status: {status_code})"
-        super().__init__(message, error_code, 502, details)
+            
+        return message
 
 
 class ConfigurationError(BaseAPIException):
@@ -272,12 +425,35 @@ class DeprecatedAPIError(BaseAPIException):
         self.alternative_endpoint = alternative_endpoint
         self.deprecation_date = deprecation_date
         self.removal_date = removal_date
+        final_message = self._build_message(
+            custom_message=message,
+            default_message="API endpoint is deprecated",
+            endpoint=endpoint,
+            alternative_endpoint=alternative_endpoint,
+            deprecation_date=deprecation_date,
+            removal_date=removal_date
+        )
+        super().__init__(final_message, error_code, 410, details)
+    
+    def _construct_automatic_message(self, default_message: str, **kwargs) -> str:
+        """Construye mensaje automático basado en endpoint, alternative_endpoint, deprecation_date y removal_date."""
+        endpoint = kwargs.get('endpoint')
+        alternative_endpoint = kwargs.get('alternative_endpoint')
+        deprecation_date = kwargs.get('deprecation_date')
+        removal_date = kwargs.get('removal_date')
+        
         if endpoint:
             message = f"API endpoint '{endpoint}' is deprecated"
-        if alternative_endpoint:
-            message = f"{message}, use '{alternative_endpoint}' instead"
+        else:
+            message = default_message
+            
         if deprecation_date:
             message = f"{message} (deprecated since {deprecation_date})"
+            
+        if alternative_endpoint:
+            message = f"{message}, use '{alternative_endpoint}' instead"
+            
         if removal_date:
             message = f"{message}, will be removed on {removal_date}"
-        super().__init__(message, error_code, 410, details)
+            
+        return message

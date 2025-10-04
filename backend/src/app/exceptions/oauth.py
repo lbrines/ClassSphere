@@ -263,6 +263,7 @@ class GoogleClassroomError(GoogleAPIError):
         details: Optional[Dict[str, Any]] = None
     ):
         self.classroom_resource = classroom_resource
+        # Modificar el mensaje si classroom_resource está presente
         if classroom_resource:
             message = f"{message}: {classroom_resource}"
         super().__init__(message, error_code, "classroom.googleapis.com", None, details)
@@ -281,7 +282,9 @@ class GoogleClassroomCourseError(GoogleClassroomError):
         self.course_id = course_id
         if course_id:
             message = f"{message}: {course_id}"
-        super().__init__(message, error_code, "courses", details)
+        super().__init__(message, error_code, None, details)
+        # Establecer classroom_resource después de la inicialización
+        self.classroom_resource = "courses"
 
 
 class GoogleClassroomStudentError(GoogleClassroomError):
@@ -301,7 +304,8 @@ class GoogleClassroomStudentError(GoogleClassroomError):
             message = f"{message}: {student_id}"
         if course_id:
             message = f"{message} in course {course_id}"
-        super().__init__(message, error_code, "students", details)
+        super().__init__(message, error_code, None, details)
+        self.classroom_resource = "students"
 
 
 class GoogleClassroomAssignmentError(GoogleClassroomError):
@@ -321,4 +325,6 @@ class GoogleClassroomAssignmentError(GoogleClassroomError):
             message = f"{message}: {assignment_id}"
         if course_id:
             message = f"{message} in course {course_id}"
-        super().__init__(message, error_code, "assignments", details)
+        super().__init__(message, error_code, None, details)
+        # Establecer classroom_resource después de la inicialización
+        self.classroom_resource = "assignments"
