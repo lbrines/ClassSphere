@@ -1,0 +1,25 @@
+{
+  "title": "Dashboard Educativo",
+  "description": "Sistema completo de dashboard educativo",
+  "navigation": {
+    "home": "Inicio",
+    "dashboard": "Dashboard",
+    "courses": "Cursos",
+    "students": "Estudiantes",
+    "teachers": "Profesores",
+    "settings": "Configuración"
+  },
+  "auth": {
+    "login": "Iniciar Sesión",
+    "logout": "Cerrar Sesión",
+    "email": "Correo Electrónico",
+    "password": "Contraseña",
+    "loginWithGoogle": "Iniciar con Google"
+  },
+  "roles": {
+    "admin": "Administrador",
+    "coordinator": "Coordinador",
+    "teacher": "Profesor",
+    "student": "Estudiante"
+  }
+}
