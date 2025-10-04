@@ -154,7 +154,7 @@ class AuthService:
     def decode_token(self, token: str) -> Optional[Dict[str, Any]]:
         """Decode token without verification (for debugging)"""
         try:
-            return jwt.decode(token, options={"verify_signature": False})
+            return jwt.decode(token, self.secret_key, algorithms=[self.algorithm], options={"verify_signature": False})
         except Exception as e:
             logger.error(f"Token decode error: {e}")
             return None

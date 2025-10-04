@@ -23,6 +23,7 @@ from typing import Dict, Any
 
 from src.app.core.config import get_settings
 from src.app.core.cache import get_cache, close_cache
+from src.app.api.auth import router as auth_router
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -74,6 +75,9 @@ app.add_middleware(
     TrustedHostMiddleware,
     allowed_hosts=["127.0.0.1", "localhost", "testserver", "*.classsphere.com"]
 )
+
+# Include routers
+app.include_router(auth_router)
 
 @app.get("/", response_model=Dict[str, Any])
 async def root():
