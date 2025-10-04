@@ -1,7 +1,7 @@
 ---
 llm:metadata:
   title: "Plan Maestro de Implementación Detallado - Dashboard Educativo"
-  version: "2.4"
+  version: "2.6"
   type: "implementation_master_plan"
   stage: "unified_implementation"
   execution_priority: "complete_system_roadmap"
@@ -17,6 +17,7 @@ llm:metadata:
     - test_error_resolution_protocols
     - infrastructure_error_prevention
     - production_deployment_roadmap
+    - google_classroom_new_installation_approach
 ---
 
 # Plan Maestro de Implementación Detallado - Dashboard Educativo
@@ -25,8 +26,8 @@ llm:metadata:
 - **Proyecto**: Dashboard Educativo - Sistema Completo Unificado
 - **Plan**: Implementación Detallada por Fases Unificadas
 - **Autor**: Sistema de Contratos LLM
-- **Fecha**: 2025-10-03 (Actualizado con Especificación Unificada Completa + Prevención de Errores + Cobertura 100% + Infraestructura + Test Error Resolution Protocols + Template Method Pattern)
-- **Propósito**: Plan detallado para cumplir el contrato unificado completo con metodología TDD estricta y arquitectura resiliente
+- **Fecha**: 2025-10-03 (Actualizado con Especificación Unificada Completa + Prevención de Errores + Cobertura 100% + Infraestructura + Test Error Resolution Protocols + Template Method Pattern + Instalación Nueva Google Classroom con Mocks)
+- **Propósito**: Plan detallado para cumplir el contrato unificado completo con metodología TDD estricta, arquitectura resiliente e instalación nueva de Google Classroom con mocks
 
 ## =====
 <llm:section id="plan_overview" type="overview">
@@ -55,8 +56,8 @@ Implementar el Dashboard Educativo completo siguiendo el contrato unificado `00_
 # Backend Unificado
 - Python 3.11.4 (pyenv)
 - FastAPI 0.104.1 + Pydantic v2 (validación estricta)
-- Google Classroom API + WebSockets (notificaciones)
-- MongoDB + Redis (cache y sesiones)
+- Google Classroom API + Instalación Nueva con Mocks + WebSockets (notificaciones)
+- Redis (cache y sesiones) - Sin MongoDB
 - pytest (testing exhaustivo)
 
 # Frontend Unificado
@@ -105,7 +106,7 @@ Establecer las fundaciones sólidas del sistema unificado con backend FastAPI + 
 - [ ] Escribir tests fallidos para configuración base + arquitectura resiliente
 
 **Implementación**:
-- [ ] Instalar dependencias: FastAPI 0.104.1, Pydantic v2, pydantic-settings, MongoDB, Redis
+- [ ] Instalar dependencias: FastAPI 0.104.1, Pydantic v2, pydantic-settings, Redis (sin MongoDB)
 - [ ] Configurar settings con BaseSettings + ConfigDict (Pydantic v2)
 - [ ] Crear main.py con FastAPI app + lifespan context manager
 - [ ] Implementar health check endpoint + verificación de servicios
@@ -558,8 +559,8 @@ def create_app() -> FastAPI:
 **Template para Database Mock Errors:**
 ```python
 @pytest.fixture
-def mock_mongodb_fixed():
-    """Mock MongoDB con configuración correcta"""
+def mock_database_fixed():
+    """Mock Database con configuración correcta (sin MongoDB)"""
     mock_client = AsyncMock()
     mock_client.admin.command = AsyncMock(return_value={"ok": 1})
     mock_client.server_info = AsyncMock(return_value={"version": "6.0.0"})
@@ -593,14 +594,14 @@ def mock_redis_fixed():
 **Template para Lifespan Errors:**
 ```python
 @pytest.mark.asyncio
-async def test_lifespan_shutdown_fixed(mock_mongodb_fixed, mock_redis_fixed):
+async def test_lifespan_shutdown_fixed(mock_database_fixed, mock_redis_fixed):
     """Test lifespan shutdown con mocks correctos"""
     with patch('src.app.core.database.get_database') as mock_get_db, \
          patch('src.app.core.database.get_redis_client') as mock_get_redis, \
          patch('src.app.core.database.cleanup_database') as mock_cleanup_db, \
          patch('src.app.core.database.cleanup_redis') as mock_cleanup_redis:
         
-        mock_get_db.return_value = mock_mongodb_fixed
+        mock_get_db.return_value = mock_database_fixed
         mock_get_redis.return_value = mock_redis_fixed
         
         # Test lifespan shutdown
@@ -628,7 +629,7 @@ def test_cors_headers_fixed(test_client):
 #### 3. Checklist de Resolución de Errores
 
 **Database Tests:**
-- [ ] Mock MongoDB configurado con AsyncMock correcto
+- [ ] Mock Database configurado con AsyncMock correcto (sin MongoDB)
 - [ ] Mock Redis configurado con AsyncMock correcto
 - [ ] Health check mocks retornan valores correctos
 - [ ] Cleanup mocks son llamados correctamente
@@ -695,7 +696,7 @@ echo "📝 Verificando mocks de database..."
 python3 -c "
 import sys
 sys.path.append('backend/src')
-from tests.conftest import mock_mongodb, mock_redis
+from tests.conftest import mock_redis
 print('✅ Mocks configurados correctamente')
 "
 
@@ -984,42 +985,42 @@ echo "🎉 Todos los módulos críticos tienen 100% de cobertura"
 ## Fase 2: Google Integration Completa (Días 13-22)
 
 ### Objetivo de la Fase
-Integrar Google Classroom API completa con modo dual (Google/Mock), implementar dashboards avanzados por rol, métricas educativas, visualizaciones ApexCharts y sistema de cache Redis.
+Integrar Google Classroom API con instalación nueva y modo dual (Google/Mock), implementar dashboards avanzados por rol, métricas educativas, visualizaciones ApexCharts y sistema de cache Redis.
 
 ### Días 13-15: Backend Google
 
-#### Día 13: Google Classroom API Completa
+#### Día 13: Google Classroom API con Instalación Nueva
 **TDD Approach**:
-- [ ] Tests para GoogleService + GoogleClassroomService
-- [ ] Tests para ClassroomService + MetricsService
+- [ ] Tests para GoogleService + GoogleClassroomService con instalación nueva
+- [ ] Tests para ClassroomService + MetricsService con mocks preconfigurados
 - [ ] Tests para autenticación OAuth + Google API authentication
-- [ ] Tests para rate limiting + error handling + fallback
+- [ ] Tests para rate limiting + error handling + fallback automático
 
 **Implementación**:
-- [ ] Implementar GoogleService con API v1 + todas las funcionalidades
-- [ ] Crear ClassroomService para lógica de negocio + métricas educativas
+- [ ] Implementar GoogleService con API v1 + instalación nueva + todas las funcionalidades
+- [ ] Crear ClassroomService para lógica de negocio + métricas educativas con mocks desde el inicio
 - [ ] Configurar OAuth 2.0 con Google + PKCE + scopes limitados
 - [ ] Manejo de tokens de acceso + refresh + expiration
-- [ ] Rate limiting (100 requests/100 seconds) + error handling + fallback automático
-- [ ] Implementar cache Redis para datos de Google API
+- [ ] Rate limiting (100 requests/100 seconds) + error handling + fallback automático a mocks
+- [ ] Implementar cache Redis para datos de Google API (sin dependencias de MongoDB)
 
 **Quality Gate**:
 - [ ] Google API se conecta correctamente
 - [ ] OAuth funciona end-to-end
 - [ ] Rate limiting implementado
 
-#### Día 14: Modo Dual
+#### Día 14: Modo Dual con Instalación Nueva
 **TDD Approach**:
-- [ ] Tests para modo Google vs Mock
-- [ ] Tests para switching de modos
-- [ ] Tests para fallback automático
+- [ ] Tests para modo Google vs Mock con instalación nueva
+- [ ] Tests para switching de modos desde instalación inicial
+- [ ] Tests para fallback automático a mocks preconfigurados
 
 **Implementación**:
-- [ ] Implementar modo dual (Google/Mock)
-- [ ] Service factory para switching
-- [ ] Fallback automático a Mock
-- [ ] Configuración por environment
-- [ ] Logging de modo activo
+- [ ] Implementar modo dual (Google/Mock) con instalación nueva
+- [ ] Service factory para switching desde el inicio
+- [ ] Fallback automático a Mock con mocks preconfigurados
+- [ ] Configuración por environment desde instalación inicial
+- [ ] Logging de modo activo y estado de instalación
 
 **Quality Gate**:
 - [ ] Modo dual funciona correctamente
@@ -1178,15 +1179,15 @@ Integrar Google Classroom API completa con modo dual (Google/Mock), implementar 
 - [ ] Cobertura > 85%
 
 ### Criterios de Finalización Fase 2
-- [ ] **Backend**: Google API completa + Modo dual + Dashboards + Métricas educativas
+- [ ] **Backend**: Google API completa + Instalación Nueva + Modo dual + Dashboards + Métricas educativas
 - [ ] **Frontend**: Google UI + ApexCharts v5.3.5 + Dashboards por rol + Cache Redis
-- [ ] **Testing**: Google mocks + Integration tests + Chart tests
+- [ ] **Testing**: Google mocks + Integration tests + Chart tests + Instalación Nueva
 - [ ] **Performance**: <2s dashboard load + Cache optimizado
-- [ ] **Google**: OAuth + Classroom API + Rate limiting funcionando
-- [ ] **Modo Dual**: Switching Google/Mock estable + Fallback automático
+- [ ] **Google**: OAuth + Classroom API + Instalación Nueva + Rate limiting funcionando
+- [ ] **Modo Dual**: Switching Google/Mock estable + Fallback automático + Instalación Nueva
 - [ ] **Visualizaciones**: ApexCharts avanzados + Export + Responsive
-- [ ] **Cache**: Redis implementado + Invalidación inteligente
-- [ ] **Error Prevention**: Google API Test Resolution + Rate limiting + Fallback + API mocks + Template Method Pattern
+- [ ] **Cache**: Redis implementado + Invalidación inteligente (sin MongoDB)
+- [ ] **Error Prevention**: Google API Test Resolution + Rate limiting + Fallback + API mocks + Template Method Pattern + Instalación Nueva
 
 </llm:section>
 
@@ -1683,13 +1684,13 @@ Completar Google sync bidireccional, implementar WCAG 2.2 AA completo, testing e
 - [ ] **Cobertura**: ≥100% servicios críticos (auth, google, models, metrics)
 - [ ] **Performance**: <2s dashboard load + Cache Redis optimizado
 - [ ] **Security**: 0 vulnerabilidades CRITICAL + Rate limiting
-- [ ] **Tests**: Google mocks + Integration tests + Chart tests
-- [ ] **Google**: OAuth + Classroom API + Rate limiting estable
-- [ ] **Modo Dual**: Switching Google/Mock + Fallback automático funcional
-- [ ] **Error Prevention**: Rate limiting + fallback + Cache Redis funcionando + Google API Test Resolution + Template Method Pattern
+- [ ] **Tests**: Google mocks + Integration tests + Chart tests + Instalación Nueva
+- [ ] **Google**: OAuth + Classroom API + Instalación Nueva + Rate limiting estable
+- [ ] **Modo Dual**: Switching Google/Mock + Fallback automático funcional + Instalación Nueva
+- [ ] **Error Prevention**: Rate limiting + fallback + Cache Redis funcionando + Google API Test Resolution + Template Method Pattern + Instalación Nueva
 - [ ] **API Integration**: Tests para todos los endpoints + Métricas educativas
 - [ ] **Visualizaciones**: ApexCharts v5.3.5 + Export + Responsive
-- [ ] **Cache**: Redis implementado + Invalidación inteligente
+- [ ] **Cache**: Redis implementado + Invalidación inteligente (sin MongoDB)
 
 ### Gate 3: Visualización Avanzada + Notificaciones (Día 32)
 - [ ] **Cobertura**: ≥100% componentes de visualización + WebSocket
@@ -1793,7 +1794,7 @@ Completar Google sync bidireccional, implementar WCAG 2.2 AA completo, testing e
 ## Conclusión del Plan Maestro
 
 ### Resumen Ejecutivo
-Este plan maestro detalla la implementación completa del Dashboard Educativo siguiendo el contrato unificado completo con metodología TDD estricta, arquitectura resiliente y prevención de errores. El plan garantiza calidad, performance, accessibility WCAG 2.2 AA y producción ready desde el primer día.
+Este plan maestro detalla la implementación completa del Dashboard Educativo siguiendo el contrato unificado completo con metodología TDD estricta, arquitectura resiliente, prevención de errores e instalación nueva de Google Classroom con mocks. El plan garantiza calidad, performance, accessibility WCAG 2.2 AA y producción ready desde el primer día.
 
 ### Beneficios del Plan Unificado
 1. **Calidad Garantizada**: TDD + Quality Gates + Arquitectura resiliente aseguran alta calidad
@@ -1811,6 +1812,6 @@ Este plan maestro detalla la implementación completa del Dashboard Educativo si
 4. **Monitoring**: Seguir métricas de éxito
 5. **Delivery**: Entregar sistema completo en 45 días
 
-**Este plan garantiza la implementación exitosa del Dashboard Educativo más robusto y completo, cumpliendo todos los requisitos del contrato unificado completo con la más alta calidad, arquitectura resiliente, prevención de errores y accessibility WCAG 2.2 AA.**
+**Este plan garantiza la implementación exitosa del Dashboard Educativo más robusto y completo, cumpliendo todos los requisitos del contrato unificado completo con la más alta calidad, arquitectura resiliente, prevención de errores, instalación nueva de Google Classroom con mocks y accessibility WCAG 2.2 AA.**
 
 </llm:section>

@@ -1,7 +1,7 @@
 ---
 llm:metadata:
   title: "Contrato Unificado Completo: Dashboard Educativo Full-Stack"
-  version: "2.5"
+  version: "2.6"
   type: "unified_implementation_contract"
   stage: "unified"
   execution_priority: "complete_system"
@@ -19,7 +19,7 @@ llm:metadata:
     - infrastructure_error_prevention
     - ci_cd_pipeline
     - production_deployment
-    - mongodb_to_google_classroom_migration
+    - google_classroom_mock_implementation
 ---
 
 # Contrato Unificado Completo: Dashboard Educativo Full-Stack
@@ -28,7 +28,7 @@ llm:metadata:
 - **Proyecto**: Dashboard Educativo - Sistema Completo
 - **Fase**: Implementación Unificada - Todas las Funcionalidades
 - **Autor**: Sistema de Contratos LLM
-- **Fecha**: 2025-10-03 (Actualizado con Prevención de Errores + Corrección de Warnings + Cobertura 100% + Infraestructura + Template Method Pattern + Migración MongoDB a Google Classroom API)
+- **Fecha**: 2025-10-03 (Actualizado con Prevención de Errores + Corrección de Warnings + Cobertura 100% + Infraestructura + Template Method Pattern + Implementación Google Classroom con Mocks)
 - **Propósito**: Implementar sistema completo de dashboard educativo con todas las funcionalidades consolidadas
 
 ## =====
@@ -172,7 +172,7 @@ Backend: Notification → Frontend: Notificación
 
 ### Backend - Sistema Completo
 - **Fundaciones (Stage 1)**: FastAPI + JWT + OAuth 2.0 + MockService
-- **Google Integration (Stage 2)**: Google Classroom API + Modo Dual + Métricas Básicas
+- **Google Integration (Stage 2)**: Google Classroom API + Instalación Nueva + Modo Dual + Métricas Básicas
 - **Visualización Avanzada (Stage 3)**: Insights + Búsqueda + Notificaciones WebSocket
 - **Integración Completa (Stage 4)**: Sincronización Bidireccional + Backup + Testing
 
@@ -184,7 +184,7 @@ Backend: Notification → Frontend: Notificación
 
 ### Características Integradas
 - **Autenticación Dual**: JWT + OAuth 2.0 con Google
-- **Modo Dual**: Google Classroom (producción) + Mock (desarrollo)
+- **Modo Dual**: Google Classroom (producción) + Mock (desarrollo) - Instalación nueva
 - **Dashboards por Rol**: Admin, Coordinador, Teacher, Estudiante
 - **Visualizaciones**: ApexCharts v5.3.5 + D3.js + Gráficos Interactivos
 - **Notificaciones**: WebSocket + Email + Telegram (mock)
@@ -226,34 +226,33 @@ Backend: Notification → Frontend: Notificación
 - pnpm 8.x+
 ```
 
-### Migración de MongoDB a Google Classroom API
+### Instalación Nueva Google Classroom con Mocks
 
-#### Arquitectura Simplificada - Sin Duplicación de Datos
-**Objetivo**: Eliminar MongoDB como dependencia crítica y usar Google Classroom API como fuente única de verdad.
+#### Arquitectura Simplificada - Instalación Nueva con Mocks
+**Objetivo**: Instalar Google Classroom API desde cero con sistema de mocks para desarrollo y testing.
 
-**Beneficios de la Migración:**
-- ✅ **Eliminación de duplicación**: Datos siempre actualizados desde la fuente
-- ✅ **Simplificación arquitectónica**: Menos componentes de infraestructura
-- ✅ **Coherencia garantizada**: Sin sincronización entre sistemas
-- ✅ **Reducción de costos**: Menos recursos de base de datos
-- ✅ **Mantenimiento simplificado**: Menos puntos de falla
+**Beneficios de la Instalación Nueva:**
+- ✅ **Instalación limpia**: Sin dependencias de sistemas anteriores
+- ✅ **Testing robusto**: Mocks controlados para pruebas unitarias
+- ✅ **Despliegue flexible**: Alternancia entre mocks y API real
+- ✅ **Configuración rápida**: Instalación directa con mocks preconfigurados
+- ✅ **Debugging simplificado**: Datos de prueba predecibles
 
-**Componentes Eliminados:**
-- MongoDB como base de datos principal
-- Motor (driver asíncrono de MongoDB)
-- Servicios de sincronización de datos
-- Scripts de migración de datos
-- Tests de integración con MongoDB
+**Componentes de la Instalación Nueva:**
+- Google Classroom API service con instalación nueva y mocks
+- Sistema de alternancia mock/real desde el inicio
+- Tests unitarios con mocks controlados
+- Configuración flexible para diferentes entornos
 
-**Componentes Modificados:**
-- Lifespan de aplicación (eliminación de conexión MongoDB)
-- Servicios de datos (consumo directo de Google Classroom API)
+**Componentes de la Arquitectura Nueva:**
+- Servicios de Google Classroom con instalación nueva y mocks
 - Tests unitarios (mocks de Google Classroom API)
-- Scripts de verificación (eliminación de checks de MongoDB)
+- Scripts de verificación (checks de Google Classroom API)
+- Configuración de entorno (mock vs real) desde instalación inicial
 
-**Componentes Mantenidos:**
+**Componentes de la Instalación Nueva:**
 - Redis exclusivamente para caché y sesiones
-- Google Classroom API como fuente de datos
+- Google Classroom API como fuente de datos (instalación nueva)
 - FastAPI como framework principal
 - Pydantic para validación de datos
 
@@ -353,42 +352,42 @@ echo "🚀 Arquitectura: Inicio en puerto 8000..."
 python3 -m uvicorn src.app.main:app --host 127.0.0.1 --port 8000
 ```
 
-#### 3. Migración de APIs como Arquitectura Evolutiva
-**Metodología**: Migración de APIs como parte del ciclo de vida arquitectónico
+#### 3. Implementación de APIs como Arquitectura Evolutiva
+**Metodología**: Implementación de APIs como parte del ciclo de vida arquitectónico
 
-**Arquitectura de Migración Automática:**
+**Arquitectura de Implementación Automática:**
 ```python
-# ✅ ARQUITECTURA ESTÁNDAR - Migración automática
+# ✅ ARQUITECTURA ESTÁNDAR - Implementación automática
 import warnings
 from typing import Any, Dict
 
-def migrate_pydantic_v1_to_v2(data: Dict[str, Any]) -> Dict[str, Any]:
-    """Migración automática de Pydantic v1 a v2"""
+def implement_pydantic_v2_config(data: Dict[str, Any]) -> Dict[str, Any]:
+    """Implementación automática de Pydantic v2"""
     warnings.filterwarnings("ignore", category=DeprecationWarning)
     
-    # Migración automática de campos
+    # Implementación automática de campos
     if "Config" in data:
         data["model_config"] = data.pop("Config")
     
     return data
 
-def migrate_fastapi_lifespan(old_lifespan: Any) -> Any:
-    """Migración automática de FastAPI lifespan"""
+def implement_fastapi_lifespan(lifespan_config: Any) -> Any:
+    """Implementación automática de FastAPI lifespan"""
     warnings.filterwarnings("ignore", category=DeprecationWarning)
     
-    # Migración automática de lifespan
-    if hasattr(old_lifespan, 'on_startup'):
+    # Implementación automática de lifespan
+    if hasattr(lifespan_config, 'on_startup'):
         # Convertir a nuevo formato
         pass
     
-    return old_lifespan
+    return lifespan_config
 ```
 
-**Arquitectura de Verificación Post-Migración:**
+**Arquitectura de Verificación Post-Implementación:**
 ```python
-# ✅ ARQUITECTURA ESTÁNDAR - Verificación post-migración
-def verify_migration_success():
-    """Verificación arquitectónica de migración exitosa"""
+# ✅ ARQUITECTURA ESTÁNDAR - Verificación post-implementación
+def verify_implementation_success():
+    """Verificación arquitectónica de implementación exitosa"""
     try:
         # Verificar Pydantic v2
         from pydantic import ConfigDict
@@ -398,10 +397,10 @@ def verify_migration_success():
         from contextlib import asynccontextmanager
         assert asynccontextmanager is not None
         
-        print("✅ Arquitectura: Migración exitosa")
+        print("✅ Arquitectura: Implementación exitosa")
         return True
     except Exception as e:
-        print(f"❌ Arquitectura: Error en migración: {e}")
+        print(f"❌ Arquitectura: Error en implementación: {e}")
         return False
 ```
 
@@ -640,7 +639,7 @@ from contextlib import asynccontextmanager
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Startup - servicios externos opcionales
+    # Startup - servicios externos opcionales (instalación nueva)
     try:
         # Google Classroom API (verificación)
         await verify_google_api_access()
@@ -702,31 +701,31 @@ export class ApiService {
 }
 ```
 
-#### 2. Servicios con Migración Automática
-**Metodología**: Servicios migran automáticamente APIs deprecadas
+#### 2. Servicios con Instalación Automática
+**Metodología**: Servicios se instalan automáticamente con configuración de mocks
 
-**Arquitectura de Migración de Servicios:**
+**Arquitectura de Instalación de Servicios:**
 ```python
-# ✅ ARQUITECTURA ESTÁNDAR - Migración automática de servicios
+# ✅ ARQUITECTURA ESTÁNDAR - Instalación automática de servicios
 import warnings
 from typing import Any, Dict, Optional
 
-class ServiceMigrator:
-    """Migrador automático de servicios"""
+class ServiceImplementer:
+    """Implementador automático de servicios"""
     
     @staticmethod
-    def migrate_pydantic_config(old_config: Dict[str, Any]) -> Dict[str, Any]:
-        """Migración automática de configuración Pydantic"""
+    def implement_pydantic_config(config: Dict[str, Any]) -> Dict[str, Any]:
+        """Implementación automática de configuración Pydantic"""
         warnings.filterwarnings("ignore", category=DeprecationWarning)
         
-        if "Config" in old_config:
-            old_config["model_config"] = old_config.pop("Config")
+        if "Config" in config:
+            config["model_config"] = config.pop("Config")
         
-        return old_config
+        return config
     
     @staticmethod
-    def migrate_fastapi_lifespan(old_lifespan: Any) -> Any:
-        """Migración automática de lifespan FastAPI"""
+    def implement_fastapi_lifespan(lifespan_config: Any) -> Any:
+        """Implementación automática de lifespan FastAPI"""
         warnings.filterwarnings("ignore", category=DeprecationWarning)
         
         if hasattr(old_lifespan, 'on_startup'):
@@ -736,11 +735,11 @@ class ServiceMigrator:
         return old_lifespan
 
 class ResilientService:
-    """Servicio resiliente con migración automática"""
+    """Servicio resiliente con instalación automática"""
     
     def __init__(self, config: Dict[str, Any]):
-        self.config = ServiceMigrator.migrate_pydantic_config(config)
-        self.lifespan = ServiceMigrator.migrate_fastapi_lifespan(config.get('lifespan'))
+        self.config = ServiceInstaller.install_pydantic_config(config)
+        self.lifespan = ServiceInstaller.install_fastapi_lifespan(config.get('lifespan'))
     
     async def start(self):
         """Inicio resiliente del servicio"""
@@ -907,7 +906,7 @@ class ResourceService:
 - **Session Management**: Persistencia + Auto-logout + Multi-device
 
 ### 2. Google Classroom Integration Completa (Stage 2 + 4)
-- **Modo Dual**: Google (producción) + Mock (desarrollo)
+- **Modo Dual**: Google (producción) + Mock (desarrollo) - Instalación nueva
 - **API Integration**: Courses + Students + Assignments + Grades
 - **Sincronización**: Bidireccional + Incremental + Programada
 - **Conflict Resolution**: Automática + Manual + Audit trail
@@ -1949,7 +1948,7 @@ echo "📊 TDD: PID del servidor: $SERVER_PID"
 #### Verificación TDD Estándar
 ```bash
 # Verificación TDD: servicios externos (opcional)
-curl -s -o /dev/null -w "%{http_code}" https://classroom.googleapis.com/v1/courses?key=TEST_KEY | grep -q "200\|401" && echo "✅ TDD: Google Classroom API disponible" || echo "⚠️  TDD: Google Classroom API no disponible"
+curl -s -o /dev/null -w "%{http_code}" https://classroom.googleapis.com/v1/courses?key=TEST_KEY | grep -q "200\|401" && echo "✅ TDD: Google Classroom API disponible (instalación nueva)" || echo "⚠️  TDD: Google Classroom API no disponible"
 pgrep redis-server && echo "✅ TDD: Redis disponible" || echo "⚠️  TDD: Redis no disponible"
 
 # Verificación TDD: aplicación (obligatorio)
@@ -2266,7 +2265,7 @@ echo "📝 Verificando mocks de database..."
 python3 -c "
 import sys
 sys.path.append('backend/src')
-from tests.conftest import mock_mongodb, mock_redis
+from tests.conftest import mock_redis
 print('✅ Mocks configurados correctamente')
 "
 
@@ -2902,7 +2901,7 @@ echo "🔍 Verificando servidor..."
 curl -f http://127.0.0.1:8000/health || exit 1
 
 echo "🔍 Verificando servicios externos..."
-echo "✅ Google Classroom API disponible (sin MongoDB requerido)"
+echo "✅ Google Classroom API disponible (instalación nueva con mocks)"
 pgrep redis-server && echo "✅ Redis disponible" || echo "⚠️  Redis no disponible"
 
 echo "🎉 Verificación completada"
@@ -2955,7 +2954,7 @@ curl --version
 lsof --version
 
 # Verificar servicios externos
-# MongoDB eliminado - usando Google Classroom API
+# Google Classroom API con instalación nueva y mocks
 pgrep redis-server
 ```
 
@@ -3151,7 +3150,7 @@ done
 
 # Verificar servicios externos (opcional)
 echo "🔍 Deployment: Verificando servicios externos..."
-curl -s -o /dev/null -w "%{http_code}" https://classroom.googleapis.com/v1/courses?key=TEST_KEY | grep -q "200\|401" && echo "✅ Deployment: Google Classroom API disponible" || echo "⚠️  Deployment: Google Classroom API no disponible"
+curl -s -o /dev/null -w "%{http_code}" https://classroom.googleapis.com/v1/courses?key=TEST_KEY | grep -q "200\|401" && echo "✅ Deployment: Google Classroom API disponible (instalación nueva)" || echo "⚠️  Deployment: Google Classroom API no disponible"
 pgrep redis-server && echo "✅ Deployment: Redis disponible" || echo "⚠️  Deployment: Redis no disponible"
 
 echo "🎉 Deployment: Dashboard Educativo iniciado correctamente"
@@ -3176,9 +3175,9 @@ wait $SERVER_PID
 #### ✅ Elementos Integrados en Arquitectura del Sistema
 - **Warnings de deprecación** → Arquitectura estándar
 - **Errores de infraestructura** → Arquitectura estándar
-- **Migración de APIs** → Arquitectura evolutiva
+- **Instalación de APIs** → Arquitectura evolutiva
 - **Servicios resilientes** → Con puerto 8000
-- **Servicios con migración automática** → ServiceMigrator
+- **Servicios con instalación automática** → ServiceInstaller
 - **Servicios con verificación automática** → ServiceHealthChecker
 - **Servicios con limpieza automática** → ServiceCleanupManager
 
@@ -3293,7 +3292,7 @@ import uvicorn
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Startup - servicios externos opcionales
+    # Startup - servicios externos opcionales (instalación nueva)
     try:
         # Google Classroom API (verificación)
         await verify_google_api_access()
@@ -3343,7 +3342,7 @@ app = FastAPI()
 async def health_check():
     """Health check resiliente - funciona sin servicios externos"""
     try:
-        # Verificar servicios externos (opcional)
+        # Verificar servicios externos (opcional) - instalación nueva
         external_services = await check_external_services()
         
         return {
@@ -3360,10 +3359,10 @@ async def health_check():
         }
 
 async def check_external_services() -> Dict[str, Any]:
-    """Verificar servicios externos de forma resiliente"""
+    """Verificar servicios externos de forma resiliente (instalación nueva)"""
     services = {}
     
-    # Google Classroom API (opcional)
+    # Google Classroom API (opcional) - instalación nueva
     try:
         # Verificar Google Classroom API
         services["google_classroom_api"] = "available"
@@ -3607,7 +3606,7 @@ done
 
 # Verificar servicios externos (opcional)
 echo "🔍 Deployment: Verificando servicios externos..."
-curl -s -o /dev/null -w "%{http_code}" https://classroom.googleapis.com/v1/courses?key=TEST_KEY | grep -q "200\|401" && echo "✅ Deployment: Google Classroom API disponible" || echo "⚠️  Deployment: Google Classroom API no disponible"
+curl -s -o /dev/null -w "%{http_code}" https://classroom.googleapis.com/v1/courses?key=TEST_KEY | grep -q "200\|401" && echo "✅ Deployment: Google Classroom API disponible (instalación nueva)" || echo "⚠️  Deployment: Google Classroom API no disponible"
 pgrep redis-server && echo "✅ Deployment: Redis disponible" || echo "⚠️  Deployment: Redis no disponible"
 
 echo "🎉 Deployment: Dashboard Educativo iniciado correctamente"
@@ -3887,7 +3886,7 @@ fi
 
 # Verificar servicios externos (opcional)
 echo "🔍 Deployment: Verificando servicios externos..."
-curl -s -o /dev/null -w "%{http_code}" https://classroom.googleapis.com/v1/courses?key=TEST_KEY | grep -q "200\|401" && echo "✅ Deployment: Google Classroom API disponible" || echo "⚠️  Deployment: Google Classroom API no disponible"
+curl -s -o /dev/null -w "%{http_code}" https://classroom.googleapis.com/v1/courses?key=TEST_KEY | grep -q "200\|401" && echo "✅ Deployment: Google Classroom API disponible (instalación nueva)" || echo "⚠️  Deployment: Google Classroom API no disponible"
 pgrep redis-server && echo "✅ Deployment: Redis disponible" || echo "⚠️  Deployment: Redis no disponible"
 
 # Verificar endpoints críticos
@@ -4119,7 +4118,7 @@ fi
 
 # Verificar servicios externos (opcional)
 echo "🔍 Deployment: Verificando servicios externos..."
-curl -s -o /dev/null -w "%{http_code}" https://classroom.googleapis.com/v1/courses?key=TEST_KEY | grep -q "200\|401" && echo "✅ Deployment: Google Classroom API disponible" || echo "⚠️  Deployment: Google Classroom API no disponible"
+curl -s -o /dev/null -w "%{http_code}" https://classroom.googleapis.com/v1/courses?key=TEST_KEY | grep -q "200\|401" && echo "✅ Deployment: Google Classroom API disponible (instalación nueva)" || echo "⚠️  Deployment: Google Classroom API no disponible"
 pgrep redis-server >/dev/null 2>&1 && echo "✅ Deployment: Redis disponible" || echo "⚠️  Deployment: Redis no disponible"
 
 echo "🎉 Deployment: Infraestructura verificada correctamente"
@@ -4133,7 +4132,7 @@ echo "🎉 Deployment: Infraestructura verificada correctamente"
 
 ### Backend Completo ✅
 - [ ] **Stage 1**: FastAPI + JWT + OAuth + MockService funcionando
-- [ ] **Stage 2**: Google Classroom API + Modo Dual + Dashboard endpoints
+- [ ] **Stage 2**: Google Classroom API + Instalación Nueva + Modo Dual + Dashboard endpoints
 - [ ] **Stage 3**: WebSocket + Notificaciones + Búsqueda avanzada + Métricas
 - [ ] **Stage 4**: Sincronización bidireccional + Backup + Webhooks
 - [ ] **Testing**: ≥90% críticos, ≥80% global + Integration + Performance
@@ -4153,7 +4152,7 @@ echo "🎉 Deployment: Infraestructura verificada correctamente"
 
 ### Integración Google Completa ✅
 - [ ] **Conexión**: OAuth 2.0 + PKCE + Scope limitado funcionando
-- [ ] **Modo Dual**: Google (prod) + Mock (dev) independientes
+- [ ] **Modo Dual**: Google (prod) + Mock (dev) independientes - Instalación nueva
 - [ ] **Sincronización**: Bidireccional + Incremental + Programada
 - [ ] **Gestión**: Courses + Students + Assignments + Grades completa
 - [ ] **Conflictos**: Detección + Resolución automática + Manual
