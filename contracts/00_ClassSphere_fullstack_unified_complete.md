@@ -369,10 +369,21 @@ Siguiendo el [Estándar por Capa](#estándar-por-capa) definido en el Glosario T
 - API contract validation
 - End-to-end user flows
 
+**Prevención Crítica de Incompatibilidades:**
+- **FastAPI/Starlette/HTTPX**: Versiones compatibles validadas
+  - `fastapi>=0.104.1,<0.116.0`
+  - `starlette>=0.27.0,<0.42.0`
+  - `httpx>=0.27.0,<0.28.0` (crítico: 0.28.1+ rompe TestClient)
+- **Backup automático**: requirements_backup.txt antes de cambios
+- **Rollback protocol**: `pip install -r requirements_backup.txt`
+- **Error detectado**: `TypeError: Client.__init__() got an unexpected keyword argument 'app'`
+- **Fuentes validadas**: GitHub Starlette #2770, FastAPI #11183, Starlette #2524
+
 #### Matriz de Impacto de Dependencias
 | Dependencia | Tipo | Impacto | Disponibilidad | Mitigación |
 |-------------|------|---------|----------------|------------|
 | Google API | Crítica | Sistema completo | 99.5% | Modo Mock |
+| HTTPX v0.28.1+ | Crítica | Tests rotos | N/A | Downgrade a 0.27.2 |
 | Redis | Media | Performance | 99.0% | Fallback a memoria |
 | WebSocket | Media | Real-time | 95.0% | Polling fallback |
 
@@ -382,6 +393,17 @@ Siguiendo el [Estándar por Capa](#estándar-por-capa) definido en el Glosario T
 3. **Mitigación**: Activación automática de fallbacks
 4. **Recuperación**: Reintento automático con backoff
 5. **Notificación**: Alertas a administradores
+
+**Protocolo Específico FastAPI/HTTPX** (Error resuelto: 2025-10-04):
+```bash
+# Detección automática del error TestClient
+if grep -q "TypeError.*Client.*init.*app" test_output.log; then
+  echo "🚨 HTTPX incompatible detectado"
+  pip uninstall httpx -y
+  pip install "httpx==0.27.2"
+  pytest tests/ --tb=short
+fi
+```
 
 </llm:section>
 
