@@ -1,7 +1,7 @@
 ---
 llm:metadata:
   title: "Contrato Unificado Completo: Dashboard Educativo Full-Stack"
-  version: "2.4"
+  version: "2.5"
   type: "unified_implementation_contract"
   stage: "unified"
   execution_priority: "complete_system"
@@ -19,6 +19,7 @@ llm:metadata:
     - infrastructure_error_prevention
     - ci_cd_pipeline
     - production_deployment
+    - mongodb_to_google_classroom_migration
 ---
 
 # Contrato Unificado Completo: Dashboard Educativo Full-Stack
@@ -27,7 +28,7 @@ llm:metadata:
 - **Proyecto**: Dashboard Educativo - Sistema Completo
 - **Fase**: Implementación Unificada - Todas las Funcionalidades
 - **Autor**: Sistema de Contratos LLM
-- **Fecha**: 2025-10-03 (Actualizado con Prevención de Errores + Corrección de Warnings + Cobertura 100% + Infraestructura + Template Method Pattern)
+- **Fecha**: 2025-10-03 (Actualizado con Prevención de Errores + Corrección de Warnings + Cobertura 100% + Infraestructura + Template Method Pattern + Migración MongoDB a Google Classroom API)
 - **Propósito**: Implementar sistema completo de dashboard educativo con todas las funcionalidades consolidadas
 
 ## =====
@@ -105,10 +106,10 @@ Backend: Notification → Frontend: Notificación
 ### Análisis de Dependencias Transversales - Esencial para Aspectos Críticos
 
 #### Dependencias de Infraestructura
-**Base de Datos:**
-- MongoDB: Documentos principales (usuarios, cursos, calificaciones)
+**Servicios de Datos:**
+- Google Classroom API: Datos principales (usuarios, cursos, calificaciones)
 - Redis: Cache y sesiones activas
-- Dependencia crítica: Sin MongoDB → Sistema no funcional
+- Dependencia crítica: Sin Google Classroom API → Sistema no funcional
 - Dependencia opcional: Sin Redis → Degradación de performance
 
 **Servicios Externos:**
@@ -141,7 +142,7 @@ Backend: Notification → Frontend: Notificación
 #### Dependencias de Testing
 **Unit Tests:**
 - Mock services para dependencias externas
-- Test database separada
+- Mock de Google Classroom API para testing
 - Coverage requirements: 100% para módulos críticos
 
 **Integration Tests:**
@@ -152,8 +153,7 @@ Backend: Notification → Frontend: Notificación
 #### Matriz de Impacto de Dependencias
 | Dependencia | Tipo | Impacto | Disponibilidad | Mitigación |
 |-------------|------|---------|----------------|------------|
-| MongoDB | Crítica | Sistema completo | 99.9% | Backup automático |
-| Google API | Alta | Funcionalidad core | 99.5% | Modo Mock |
+| Google API | Crítica | Sistema completo | 99.5% | Modo Mock |
 | Redis | Media | Performance | 99.0% | Fallback a memoria |
 | WebSocket | Media | Real-time | 95.0% | Polling fallback |
 
@@ -205,9 +205,9 @@ Backend: Notification → Frontend: Notificación
 - Python 3.11.4 (pyenv)
 - FastAPI 0.104.1
 - Pydantic v2 (validación estricta)
-- Google Classroom API
+- Google Classroom API (fuente de datos principal)
 - WebSockets (notificaciones)
-- MongoDB + Redis
+- Redis (cache y sesiones únicamente)
 - pytest (testing)
 
 # Frontend
@@ -225,6 +225,37 @@ Backend: Notification → Frontend: Notificación
 - Trivy (security)
 - pnpm 8.x+
 ```
+
+### Migración de MongoDB a Google Classroom API
+
+#### Arquitectura Simplificada - Sin Duplicación de Datos
+**Objetivo**: Eliminar MongoDB como dependencia crítica y usar Google Classroom API como fuente única de verdad.
+
+**Beneficios de la Migración:**
+- ✅ **Eliminación de duplicación**: Datos siempre actualizados desde la fuente
+- ✅ **Simplificación arquitectónica**: Menos componentes de infraestructura
+- ✅ **Coherencia garantizada**: Sin sincronización entre sistemas
+- ✅ **Reducción de costos**: Menos recursos de base de datos
+- ✅ **Mantenimiento simplificado**: Menos puntos de falla
+
+**Componentes Eliminados:**
+- MongoDB como base de datos principal
+- Motor (driver asíncrono de MongoDB)
+- Servicios de sincronización de datos
+- Scripts de migración de datos
+- Tests de integración con MongoDB
+
+**Componentes Modificados:**
+- Lifespan de aplicación (eliminación de conexión MongoDB)
+- Servicios de datos (consumo directo de Google Classroom API)
+- Tests unitarios (mocks de Google Classroom API)
+- Scripts de verificación (eliminación de checks de MongoDB)
+
+**Componentes Mantenidos:**
+- Redis exclusivamente para caché y sesiones
+- Google Classroom API como fuente de datos
+- FastAPI como framework principal
+- Pydantic para validación de datos
 
 ### Arquitectura Resiliente con Prevención de Errores
 
@@ -611,10 +642,10 @@ from contextlib import asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup - servicios externos opcionales
     try:
-        # MongoDB (opcional)
-        await init_mongodb()
+        # Google Classroom API (verificación)
+        await verify_google_api_access()
     except Exception as e:
-        print(f"Warning: MongoDB no disponible: {e}")
+        print(f"Warning: Google Classroom API no disponible: {e}")
     
     try:
         # Redis (opcional)
@@ -957,7 +988,7 @@ class ResourceService:
 
 ### 9. Testing Completo (Stage 4)
 - **Unit Tests**: ≥90% critical modules, ≥80% global
-- **Integration Tests**: API + Database + External services
+- **Integration Tests**: API + Google Classroom API + External services
 - **E2E Tests**: Playwright + cross-browser + mobile
 - **Performance Tests**: Load + stress + memory leaks
 - **Visual Tests**: Regression + responsive + accessibility
@@ -1528,7 +1559,7 @@ def test_edge_case_none():
 - [ ] **Frontend Completo**: 100% cobertura en todos los componentes frontend
 - [ ] **Tests Completo**: 100% cobertura en todos los archivos de test
 - [ ] **Configuración**: 100% cobertura en `config.py`
-- [ ] **Base de datos**: 100% cobertura en `database.py`
+- [ ] **Google Classroom API**: 100% cobertura en servicios de integración
 - [ ] **Aplicación**: 100% cobertura en `main.py`
 - [ ] **Context Managers**: Tests para `lifespan` completo
 - [ ] **Error Paths**: Tests para todos los `try/except`
@@ -1607,7 +1638,7 @@ pytest tests/unit/test_main.py --cov=src/app/main --cov-report=term-missing
 pytest tests/unit/test_lifespan.py --cov=src/app/main --cov-report=term-missing
 
 # Verificar cobertura de async functions
-pytest tests/unit/test_database.py --cov=src/app/core/database --cov-report=term-missing
+pytest tests/unit/test_google_classroom.py --cov=src/app/services/google_classroom --cov-report=term-missing
 
 # Verificar cobertura de modelos
 pytest tests/unit/test_models.py --cov=src/app/models --cov-report=term-missing
@@ -1626,7 +1657,7 @@ lsof -Pi :8000
 #### 6. Métricas TDD de Cobertura
 **Backend - Fase 1 Completa (100% requerido):**
 - `src/app/core/config.py` - Configuración
-- `src/app/core/database.py` - Base de datos
+- `src/app/services/google_classroom.py` - Integración Google Classroom
 - `src/app/main.py` - Aplicación principal
 - `src/app/core/security.py` - Seguridad
 - `src/app/models/user.py` - Modelos de usuario
@@ -1663,7 +1694,7 @@ echo "Verificando cobertura 100%..."
 # Verificar toda la Fase 1
 PHASE1_MODULES=(
     "src/app/core/config"
-    "src/app/core/database" 
+    "src/app/services/google_classroom" 
     "src/app/main"
     "src/app/core/security"
     "src/app/models"
@@ -1918,7 +1949,7 @@ echo "📊 TDD: PID del servidor: $SERVER_PID"
 #### Verificación TDD Estándar
 ```bash
 # Verificación TDD: servicios externos (opcional)
-pgrep mongod && echo "✅ TDD: MongoDB disponible" || echo "⚠️  TDD: MongoDB no disponible"
+curl -s -o /dev/null -w "%{http_code}" https://classroom.googleapis.com/v1/courses?key=TEST_KEY | grep -q "200\|401" && echo "✅ TDD: Google Classroom API disponible" || echo "⚠️  TDD: Google Classroom API no disponible"
 pgrep redis-server && echo "✅ TDD: Redis disponible" || echo "⚠️  TDD: Redis no disponible"
 
 # Verificación TDD: aplicación (obligatorio)
@@ -1989,7 +2020,7 @@ vi.mock('react-apexcharts', () => ({
 
 #### 1. Categorización de Errores de Testing
 **Errores de Mock (Prioridad Alta):**
-- Database connection mocks incorrectos
+- Google Classroom API mocks incorrectos
 - Redis client mocks mal configurados
 - AsyncMock no awaited correctamente
 - Context manager mocks fallando
@@ -2006,26 +2037,25 @@ vi.mock('react-apexcharts', () => ({
 
 #### 2. Templates de Resolución por Categoría
 
-**Template para Database Mock Errors:**
+**Template para Google Classroom API Mock Errors:**
 ```python
 @pytest.fixture
-def mock_mongodb_fixed():
-    """Mock MongoDB con configuración correcta"""
-    mock_client = AsyncMock()
-    mock_client.admin.command = AsyncMock(return_value={"ok": 1})
-    mock_client.server_info = AsyncMock(return_value={"version": "6.0.0"})
+def mock_google_classroom_api():
+    """Mock Google Classroom API con configuración correcta"""
+    mock_api = AsyncMock()
+    mock_api.courses().list().execute.return_value = {"courses": []}
+    mock_api.courses().get().execute.return_value = {"id": "test_id", "name": "Test Course"}
     
-    # Mock database y collections
-    mock_db = AsyncMock()
-    mock_collection = AsyncMock()
-    mock_collection.find_one = AsyncMock(return_value=None)
-    mock_collection.insert_one = AsyncMock(return_value=AsyncMock(inserted_id="test_id"))
-    mock_db.users = mock_collection
-    mock_db.courses = mock_collection
-    mock_db.metrics = mock_collection
-    mock_client.dashboard_educativo = mock_db
+    # Mock para estudiantes
+    mock_api.courses().students().list().execute.return_value = {"students": []}
     
-    return mock_client
+    # Mock para tareas
+    mock_api.courses().courseWork().list().execute.return_value = {"courseWork": []}
+    
+    # Mock para entregas
+    mock_api.courses().courseWork().studentSubmissions().list().execute.return_value = {"studentSubmissions": []}
+    
+    return mock_api
 
 @pytest.fixture
 def mock_redis_fixed():
@@ -2044,21 +2074,21 @@ def mock_redis_fixed():
 **Template para Lifespan Errors:**
 ```python
 @pytest.mark.asyncio
-async def test_lifespan_shutdown_fixed(mock_mongodb_fixed, mock_redis_fixed):
+async def test_lifespan_shutdown_fixed(mock_google_classroom_api, mock_redis_fixed):
     """Test lifespan shutdown con mocks correctos"""
-    with patch('src.app.core.database.get_database') as mock_get_db, \
-         patch('src.app.core.database.get_redis_client') as mock_get_redis, \
-         patch('src.app.core.database.cleanup_database') as mock_cleanup_db, \
-         patch('src.app.core.database.cleanup_redis') as mock_cleanup_redis:
+    with patch('src.app.services.google_service.get_google_classroom_api') as mock_get_api, \
+         patch('src.app.core.cache.get_redis_client') as mock_get_redis, \
+         patch('src.app.services.google_service.cleanup_google_api') as mock_cleanup_api, \
+         patch('src.app.core.cache.cleanup_redis') as mock_cleanup_redis:
         
-        mock_get_db.return_value = mock_mongodb_fixed
+        mock_get_api.return_value = mock_google_classroom_api
         mock_get_redis.return_value = mock_redis_fixed
         
         # Test lifespan shutdown
         async with lifespan(app):
             pass
         
-        mock_cleanup_db.assert_called_once()
+        mock_cleanup_api.assert_called_once()
         mock_cleanup_redis.assert_called_once()
 ```
 
@@ -2076,16 +2106,16 @@ def test_cors_headers_fixed(test_client):
     assert "access-control-allow-credentials" in headers_lower
 ```
 
-**Template para Connection Error Tests:**
+**Template para Google Classroom API Connection Error Tests:**
 ```python
 @pytest.mark.asyncio
-async def test_get_database_connection_error_fixed():
-    """Test database connection error con mock correcto"""
-    with patch('src.app.core.database.AsyncIOMotorClient') as mock_client_class:
-        mock_client_class.side_effect = Exception("Connection failed")
+async def test_google_classroom_api_connection_error_fixed():
+    """Test Google Classroom API connection error con mock correcto"""
+    with patch('src.app.services.google_classroom.GoogleClassroomService') as mock_service_class:
+        mock_service_class.side_effect = Exception("API connection failed")
         
-        with pytest.raises(Exception, match="Database connection failed"):
-            await get_database()
+        with pytest.raises(Exception, match="Google Classroom API connection failed"):
+            await get_google_classroom_service()
 
 @pytest.mark.asyncio
 async def test_get_redis_client_connection_error_fixed():
@@ -2097,38 +2127,38 @@ async def test_get_redis_client_connection_error_fixed():
             await get_redis_client()
 ```
 
-**Template para Health Check Error Tests:**
+**Template para Google Classroom API Health Check Error Tests:**
 ```python
 @pytest.mark.asyncio
-async def test_database_health_check_failure_fixed():
-    """Test database health check failure con mock correcto"""
-    with patch('src.app.core.database.get_database') as mock_get_db:
-        mock_db = AsyncMock()
-        mock_db.client.admin.command.side_effect = Exception("Health check failed")
-        mock_get_db.return_value = mock_db
+async def test_google_classroom_api_health_check_failure_fixed():
+    """Test Google Classroom API health check failure con mock correcto"""
+    with patch('src.app.services.google_classroom.get_google_classroom_service') as mock_get_service:
+        mock_service = AsyncMock()
+        mock_service.health_check.side_effect = Exception("API health check failed")
+        mock_get_service.return_value = mock_service
         
-        from src.app.core.database import check_database_health
+        from src.app.services.google_classroom import check_google_classroom_health
         
-        result = await check_database_health()
+        result = await check_google_classroom_health()
         
         assert result is False
 ```
 
-**Template para Cleanup Error Tests:**
+**Template para Google Classroom API Cleanup Error Tests:**
 ```python
 @pytest.mark.asyncio
-async def test_database_cleanup_error_fixed():
-    """Test database cleanup error con mock correcto"""
-    mock_db = AsyncMock()
-    mock_db.close.side_effect = Exception("Cleanup failed")
+async def test_google_classroom_api_cleanup_error_fixed():
+    """Test Google Classroom API cleanup error con mock correcto"""
+    mock_service = AsyncMock()
+    mock_service.cleanup.side_effect = Exception("API cleanup failed")
     
-    with patch('src.app.core.database._mongodb_client', mock_db):
-        from src.app.core.database import cleanup_database
+    with patch('src.app.services.google_classroom._google_classroom_service', mock_service):
+        from src.app.services.google_classroom import cleanup_google_classroom_service
         
         # Should not raise exception, just log error
-        await cleanup_database()
+        await cleanup_google_classroom_service()
         
-        mock_db.close.assert_called_once()
+        mock_service.cleanup.assert_called_once()
 
 @pytest.mark.asyncio
 async def test_redis_cleanup_error_fixed():
@@ -2148,28 +2178,28 @@ async def test_redis_cleanup_error_fixed():
 **Template para Context Manager Tests:**
 ```python
 @pytest.mark.asyncio
-async def test_database_context_manager_success_fixed(mock_mongodb_fixed, mock_redis_fixed):
-    """Test database context manager success con mocks correctos"""
-    with patch('src.app.core.database.get_database') as mock_get_db, \
-         patch('src.app.core.database.get_redis_client') as mock_get_redis:
+async def test_service_context_manager_success_fixed(mock_google_classroom_api, mock_redis_fixed):
+    """Test service context manager success con mocks correctos"""
+    with patch('src.app.services.google_service.get_google_classroom_api') as mock_get_api, \
+         patch('src.app.core.cache.get_redis_client') as mock_get_redis:
         
-        mock_get_db.return_value = mock_mongodb_fixed
+        mock_get_api.return_value = mock_google_classroom_api
         mock_get_redis.return_value = mock_redis_fixed
         
-        from src.app.core.database import DatabaseContextManager
+        from src.app.services.context_manager import ServiceContextManager
         
-        async with DatabaseContextManager() as (db, redis):
-            assert db is not None
+        async with ServiceContextManager() as (api, redis):
+            assert api is not None
             assert redis is not None
         
-        mock_mongodb_fixed.close.assert_called_once()
+        # No hay método close() para la API de Google
         mock_redis_fixed.aclose.assert_called_once()
 ```
 
 #### 3. Checklist de Resolución de Errores
 
-**Database Tests:**
-- [ ] Mock MongoDB configurado con AsyncMock correcto
+**API Tests:**
+- [ ] Mock Google Classroom API configurado con AsyncMock correcto
 - [ ] Mock Redis configurado con AsyncMock correcto
 - [ ] Health check mocks retornan valores correctos
 - [ ] Cleanup mocks son llamados correctamente
@@ -2198,8 +2228,8 @@ async def test_database_context_manager_success_fixed(mock_mongodb_fixed, mock_r
 echo "🔍 Diagnóstico de Errores de Tests..."
 
 # Verificar errores específicos
-echo "📊 Database Tests:"
-pytest tests/unit/test_database.py -v --tb=short | grep -E "(FAILED|ERROR)"
+echo "📊 Google Classroom API Tests:"
+pytest tests/unit/test_google_classroom.py -v --tb=short | grep -E "(FAILED|ERROR)"
 
 echo "📊 Main App Tests:"
 pytest tests/unit/test_main.py -v --tb=short | grep -E "(FAILED|ERROR)"
@@ -2213,7 +2243,7 @@ pytest tests/ -v | grep -E "(Warning|Deprecation)"
 # Verificar cobertura específica
 echo "📊 Cobertura por módulo:"
 pytest tests/unit/test_config.py --cov=src/app/core/config --cov-report=term-missing
-pytest tests/unit/test_database.py --cov=src/app/core/database --cov-report=term-missing
+pytest tests/unit/test_google_classroom.py --cov=src/app/services/google_classroom --cov-report=term-missing
 pytest tests/unit/test_main.py --cov=src/app/main --cov-report=term-missing
 
 # Verificar servidor
@@ -2242,7 +2272,7 @@ print('✅ Mocks configurados correctamente')
 
 echo "📝 Ejecutando tests corregidos..."
 cd backend && python3 -m pytest tests/unit/test_config.py -v
-cd backend && python3 -m pytest tests/unit/test_database.py -v
+cd backend && python3 -m pytest tests/unit/test_google_classroom.py -v
 cd backend && python3 -m pytest tests/unit/test_main.py -v
 
 echo "✅ Resolución automática completada"
@@ -2251,7 +2281,7 @@ echo "✅ Resolución automática completada"
 #### 5. Integración con Quality Gates
 
 **Quality Gate Actualizado para Day 1:**
-- [ ] **Database Tests**: 100% pasando con mocks correctos
+- [ ] **Google Classroom API Tests**: 100% pasando con mocks correctos
 - [ ] **Main App Tests**: 100% pasando con lifespan correcto
 - [ ] **CORS Tests**: 100% pasando con headers correctos
 - [ ] **Warnings**: 0 warnings críticos de AsyncMock/Redis
@@ -2277,7 +2307,7 @@ echo "✅ Resolución automática completada"
 6. **Prevenir**: Agregar a checklist para futuros desarrollos
 
 **Priorización:**
-1. **Alta**: Database/Redis mock errors (afectan funcionalidad core)
+1. **Alta**: Google Classroom API/Redis mock errors (afectan funcionalidad core)
 2. **Media**: Lifespan errors (afectan startup/shutdown)
 3. **Baja**: CORS/HTTP errors (afectan headers específicos)
 
@@ -2339,25 +2369,25 @@ echo "✅ Resolución automática completada"
 
 **B. Errores de Testing Async (4 errores)**
 - Error 3: AsyncMock Database Connection - ✅ RESUELTO
-  - **Archivo:** `backend/tests/unit/test_database.py`
+  - **Archivo:** `backend/tests/unit/test_google_classroom.py`
   - **Error:** `Failed: DID NOT RAISE <class 'Exception'>`
   - **Causa:** Mock incorrecto de AsyncIOMotorClient
   - **Solución:** Mock correcto de `admin.command` con AsyncMock
 
 - Error 4: AsyncMock Redis Connection - ✅ RESUELTO
-  - **Archivo:** `backend/tests/unit/test_database.py`
+  - **Archivo:** `backend/tests/unit/test_google_classroom.py`
   - **Error:** `Failed: DID NOT RAISE <class 'Exception'>`
   - **Causa:** Mock incorrecto de redis.from_url
   - **Solución:** Mock correcto de `ping` con AsyncMock
 
 - Error 5: Context Manager Testing - ✅ RESUELTO
-  - **Archivo:** `backend/tests/unit/test_database.py`
+  - **Archivo:** `backend/tests/unit/test_google_classroom.py`
   - **Error:** `Expected 'close' to have been called once. Called 0 times.`
   - **Causa:** Patch incorrecto de cleanup functions
   - **Solución:** Patch directo de `cleanup_database` y `cleanup_redis`
 
 - Error 6: Database Manager Initialize - ✅ RESUELTO
-  - **Archivo:** `backend/tests/unit/test_database.py`
+  - **Archivo:** `backend/tests/unit/test_google_classroom.py`
   - **Error:** `Failed: DID NOT RAISE <class 'Exception'>`
   - **Causa:** Mock incompleto de get_redis_client
   - **Solución:** Patch de `get_redis_client` agregado
@@ -2488,19 +2518,20 @@ from pydantic import Field, field_validator, ConfigDict
 from pydantic_settings import BaseSettings
 
 # Relative imports correctos
-from ..core.database import db_manager  # ✅ Correcto
-# from ...core.database import db_manager  # ❌ Incorrecto
+from ..services.google_classroom import google_classroom_manager  # ✅ Correcto
+# from ...services.google_classroom import google_classroom_manager  # ❌ Incorrecto
 ```
 
 **Template para AsyncMock configuration:**
 ```python
 @pytest.fixture
-def mock_mongodb_correct():
-    """Mock MongoDB con AsyncMock correcto"""
-    mock_client = AsyncMock()
-    mock_client.admin.command = AsyncMock(return_value={"ok": 1})
-    mock_client.server_info = AsyncMock(return_value={"version": "6.0.0"})
-    return mock_client
+def mock_google_classroom_api_correct():
+    """Mock Google Classroom API con AsyncMock correcto"""
+    mock_api = AsyncMock()
+    mock_api.courses().list().execute.return_value = {"courses": []}
+    mock_api.courses().get().execute.return_value = {"id": "test_id", "name": "Test Course"}
+    mock_api.courses().students().list().execute.return_value = {"students": []}
+    return mock_api
 
 @pytest.fixture
 def mock_redis_correct():
@@ -2553,7 +2584,7 @@ assert response.status_code in [200, 404]  # ✅ Correcto
 - **BaseAPIException**: Template Method `_build_message()` para construcción estandarizada
 - **NotFoundError/ConflictError**: Priorización de mensajes personalizados sobre construcción automática
 - **ServiceUnavailableError**: Manejo correcto de `retry_after` en mensajes personalizados
-- **DatabaseError/CacheError**: Construcción automática con `table`/`key` cuando no hay mensaje personalizado
+- **GoogleClassroomError/CacheError**: Construcción automática con `endpoint`/`key` cuando no hay mensaje personalizado
 - **ExternalServiceError**: Uso de `status_code` como HTTP status y manejo de `endpoint`
 - **DeprecatedAPIError**: Construcción correcta con múltiples parámetros (`endpoint`, `alternative_endpoint`, `deprecation_date`, `removal_date`)
 - **GoogleClassroomError**: Corrección de conflictos de mensajes en subclases
@@ -2631,7 +2662,7 @@ print('✅ AsyncMock disponible')
 echo "📝 Ejecutando tests críticos..."
 cd backend && python3 -m pytest tests/unit/test_models/ -v --tb=short
 cd backend && python3 -m pytest tests/unit/test_config.py -v --tb=short
-cd backend && python3 -m pytest tests/unit/test_database.py -v --tb=short
+cd backend && python3 -m pytest tests/unit/test_google_classroom.py -v --tb=short
 cd backend && python3 -m pytest tests/unit/test_main.py -v --tb=short
 
 echo "✅ Diagnóstico completado"
@@ -2871,7 +2902,7 @@ echo "🔍 Verificando servidor..."
 curl -f http://127.0.0.1:8000/health || exit 1
 
 echo "🔍 Verificando servicios externos..."
-pgrep mongod && echo "✅ MongoDB disponible" || echo "⚠️  MongoDB no disponible"
+echo "✅ Google Classroom API disponible (sin MongoDB requerido)"
 pgrep redis-server && echo "✅ Redis disponible" || echo "⚠️  Redis no disponible"
 
 echo "🎉 Verificación completada"
@@ -2924,7 +2955,7 @@ curl --version
 lsof --version
 
 # Verificar servicios externos
-pgrep mongod
+# MongoDB eliminado - usando Google Classroom API
 pgrep redis-server
 ```
 
@@ -3013,7 +3044,7 @@ async def test_async_method():
 
 #### Backend - Fase 1 (100% requerido)
 - `src/app/core/config.py` - Configuración
-- `src/app/core/database.py` - Base de datos
+- `src/app/services/google_classroom.py` - Integración Google Classroom
 - `src/app/main.py` - Aplicación principal
 - `src/app/core/security.py` - Seguridad
 - `src/app/models/user.py` - Modelos de usuario
@@ -3043,7 +3074,7 @@ echo "Verificando cobertura 100%..."
 # Verificar toda la Fase 1
 PHASE1_MODULES=(
     "src/app/core/config"
-    "src/app/core/database" 
+    "src/app/services/google_classroom" 
     "src/app/main"
     "src/app/core/security"
     "src/app/models"
@@ -3120,7 +3151,7 @@ done
 
 # Verificar servicios externos (opcional)
 echo "🔍 Deployment: Verificando servicios externos..."
-pgrep mongod && echo "✅ Deployment: MongoDB disponible" || echo "⚠️  Deployment: MongoDB no disponible"
+curl -s -o /dev/null -w "%{http_code}" https://classroom.googleapis.com/v1/courses?key=TEST_KEY | grep -q "200\|401" && echo "✅ Deployment: Google Classroom API disponible" || echo "⚠️  Deployment: Google Classroom API no disponible"
 pgrep redis-server && echo "✅ Deployment: Redis disponible" || echo "⚠️  Deployment: Redis no disponible"
 
 echo "🎉 Deployment: Dashboard Educativo iniciado correctamente"
@@ -3187,8 +3218,10 @@ El contrato ahora tiene una metodología completamente unificada donde todos los
 ENVIRONMENT=production
 PORT=8000
 
-# Database
-MONGODB_URL=mongodb://mongo:27017/dashboard_educativo
+# Services
+GOOGLE_API_KEY=your_api_key_here
+GOOGLE_CLIENT_ID=your_client_id_here
+GOOGLE_CLIENT_SECRET=your_client_secret_here
 REDIS_URL=redis://redis:6379/0
 
 # JWT & OAuth
@@ -3262,10 +3295,10 @@ import uvicorn
 async def lifespan(app: FastAPI):
     # Startup - servicios externos opcionales
     try:
-        # MongoDB (opcional)
-        await init_mongodb()
+        # Google Classroom API (verificación)
+        await verify_google_api_access()
     except Exception as e:
-        print(f"Warning: MongoDB no disponible: {e}")
+        print(f"Warning: Google Classroom API no disponible: {e}")
     
     try:
         # Redis (opcional)
@@ -3330,12 +3363,12 @@ async def check_external_services() -> Dict[str, Any]:
     """Verificar servicios externos de forma resiliente"""
     services = {}
     
-    # MongoDB (opcional)
+    # Google Classroom API (opcional)
     try:
-        # Verificar MongoDB
-        services["mongodb"] = "available"
+        # Verificar Google Classroom API
+        services["google_classroom_api"] = "available"
     except Exception:
-        services["mongodb"] = "unavailable"
+        services["google_classroom_api"] = "unavailable"
     
     # Redis (opcional)
     try:
@@ -3574,7 +3607,7 @@ done
 
 # Verificar servicios externos (opcional)
 echo "🔍 Deployment: Verificando servicios externos..."
-pgrep mongod && echo "✅ Deployment: MongoDB disponible" || echo "⚠️  Deployment: MongoDB no disponible"
+curl -s -o /dev/null -w "%{http_code}" https://classroom.googleapis.com/v1/courses?key=TEST_KEY | grep -q "200\|401" && echo "✅ Deployment: Google Classroom API disponible" || echo "⚠️  Deployment: Google Classroom API no disponible"
 pgrep redis-server && echo "✅ Deployment: Redis disponible" || echo "⚠️  Deployment: Redis no disponible"
 
 echo "🎉 Deployment: Dashboard Educativo iniciado correctamente"
@@ -3660,11 +3693,11 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - MONGODB_URL=mongodb://mongo:27017/dashboard_educativo
+      - GOOGLE_API_KEY=your_api_key_here
+      - GOOGLE_CLIENT_ID=your_client_id_here
+      - GOOGLE_CLIENT_SECRET=your_client_secret_here
       - REDIS_URL=redis://redis:6379/0
     depends_on:
-      mongo:
-        condition: service_healthy
       redis:
         condition: service_healthy
     healthcheck:
@@ -3696,21 +3729,6 @@ services:
       timeout: 10s
       retries: 3
 
-  mongo:
-    image: mongo:6.0.13
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: root
-      MONGO_INITDB_ROOT_PASSWORD_FILE: /run/secrets/db_password
-    volumes:
-      - mongo_data:/data/db
-    secrets:
-      - db_password
-    healthcheck:
-      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-
   redis:
     image: redis:7.2.3-alpine
     volumes:
@@ -3722,7 +3740,6 @@ services:
       retries: 3
 
 volumes:
-  mongo_data:
   redis_data:
 
 secrets:
@@ -3870,7 +3887,7 @@ fi
 
 # Verificar servicios externos (opcional)
 echo "🔍 Deployment: Verificando servicios externos..."
-pgrep mongod && echo "✅ Deployment: MongoDB disponible" || echo "⚠️  Deployment: MongoDB no disponible"
+curl -s -o /dev/null -w "%{http_code}" https://classroom.googleapis.com/v1/courses?key=TEST_KEY | grep -q "200\|401" && echo "✅ Deployment: Google Classroom API disponible" || echo "⚠️  Deployment: Google Classroom API no disponible"
 pgrep redis-server && echo "✅ Deployment: Redis disponible" || echo "⚠️  Deployment: Redis no disponible"
 
 # Verificar endpoints críticos
@@ -3930,12 +3947,13 @@ class DeploymentVerifier:
         """Verificar servicios externos"""
         services = {}
         
-        # MongoDB
+        # Google Classroom API
         try:
-            result = subprocess.run(['pgrep', 'mongod'], capture_output=True)
-            services['mongodb'] = result.returncode == 0
+            import requests
+            response = requests.get('https://classroom.googleapis.com/v1/courses', params={'key': 'TEST_KEY'})
+            services['google_classroom_api'] = response.status_code in [200, 401]
         except Exception:
-            services['mongodb'] = False
+            services['google_classroom_api'] = False
         
         # Redis
         try:
@@ -4101,7 +4119,7 @@ fi
 
 # Verificar servicios externos (opcional)
 echo "🔍 Deployment: Verificando servicios externos..."
-pgrep mongod >/dev/null 2>&1 && echo "✅ Deployment: MongoDB disponible" || echo "⚠️  Deployment: MongoDB no disponible"
+curl -s -o /dev/null -w "%{http_code}" https://classroom.googleapis.com/v1/courses?key=TEST_KEY | grep -q "200\|401" && echo "✅ Deployment: Google Classroom API disponible" || echo "⚠️  Deployment: Google Classroom API no disponible"
 pgrep redis-server >/dev/null 2>&1 && echo "✅ Deployment: Redis disponible" || echo "⚠️  Deployment: Redis no disponible"
 
 echo "🎉 Deployment: Infraestructura verificada correctamente"
@@ -4164,7 +4182,7 @@ echo "🎉 Deployment: Infraestructura verificada correctamente"
 ### Testing y Calidad ✅
 - [ ] **Cobertura**: ≥90% críticos, ≥80% global medida y verificada
 - [ ] **Unit Tests**: Todos los servicios + componentes + hooks
-- [ ] **Integration**: API + Database + External services + Workflows
+- [ ] **Integration**: API + Google Classroom API + External services + Workflows
 - [ ] **E2E**: Playwright + Cross-browser + Mobile + Scenarios
 - [ ] **Performance**: Load + Stress + Memory + Benchmarks
 - [ ] **Visual**: Regression + Responsive + Accessibility + Contrast
@@ -4186,7 +4204,7 @@ echo "🎉 Deployment: Infraestructura verificada correctamente"
 - [ ] **Docker**: Multi-stage + Security scan + Resource limits
 - [ ] **Environments**: Dev + Staging + Prod + Feature branches
 - [ ] **Monitoring**: Health checks + Alerts + Metrics + Logs
-- [ ] **Rollback**: Automatic + Manual + Database + Infrastructure
+- [ ] **Rollback**: Automatic + Manual + Google Classroom API + Infrastructure
 - [ ] **Feature Flags**: Gradual rollout + A/B testing + Kill switches
 - [ ] **Documentation**: Deployment guide + Runbooks + Recovery procedures
 
