@@ -13,6 +13,7 @@ llm:metadata:
     - comprehensive_testing_strategy
     - coverage_100_protocols
     - error_prevention_protocols
+    - template_method_pattern_implementation
     - test_error_resolution_protocols
     - infrastructure_error_prevention
     - production_deployment_roadmap
@@ -24,7 +25,7 @@ llm:metadata:
 - **Proyecto**: Dashboard Educativo - Sistema Completo Unificado
 - **Plan**: Implementación Detallada por Fases Unificadas
 - **Autor**: Sistema de Contratos LLM
-- **Fecha**: 2025-10-03 (Actualizado con Especificación Unificada Completa + Prevención de Errores + Cobertura 100% + Infraestructura + Test Error Resolution Protocols)
+- **Fecha**: 2025-10-03 (Actualizado con Especificación Unificada Completa + Prevención de Errores + Cobertura 100% + Infraestructura + Test Error Resolution Protocols + Template Method Pattern)
 - **Propósito**: Plan detallado para cumplir el contrato unificado completo con metodología TDD estricta y arquitectura resiliente
 
 ## =====
@@ -78,6 +79,7 @@ Implementar el Dashboard Educativo completo siguiendo el contrato unificado `00_
 - **Accessibility**: WCAG 2.2 AA compliance completo (Fase 4)
 - **Testing**: E2E + Unit + Integration + Performance + Visual
 - **Error Prevention**: 0 warnings críticos + APIs modernas + Puerto 8000 fijo
+- **Template Method Pattern**: Construcción consistente de mensajes de excepción + Priorización de mensajes personalizados
 - **Context Managers**: Tests completos para lifespan + AsyncMock
 - **Error Paths**: Todos los try/except cubiertos + Limpieza automática
 - **Modern APIs**: Pydantic v2 + FastAPI lifespan + Migración automática
@@ -132,6 +134,10 @@ Establecer las fundaciones sólidas del sistema unificado con backend FastAPI + 
 **Implementación**:
 - [ ] Crear modelos User, UserCreate, UserResponse + OAuthToken, OAuthTokenCreate
 - [ ] Implementar excepciones: AuthenticationError, TokenExpiredError, OAuthError, GoogleAPIError
+- [ ] **Template Method Pattern**: Implementar BaseAPIException con _build_message() para construcción estandarizada
+- [ ] **Template Method Pattern**: Refactorizar NotFoundError, ConflictError, ServiceUnavailableError, DatabaseError, CacheError
+- [ ] **Template Method Pattern**: Implementar ExternalServiceError y DeprecatedAPIError con construcción correcta
+- [ ] **Template Method Pattern**: Corregir GoogleClassroomError y subclases para evitar conflictos de mensajes
 - [ ] Configurar json_encoders con model_config (Pydantic v2) + ConfigDict
 - [ ] Campos opcionales para compatibilidad MockService + Google API
 - [ ] Implementar migración automática de Pydantic v1 a v2
@@ -140,6 +146,9 @@ Establecer las fundaciones sólidas del sistema unificado con backend FastAPI + 
 **Quality Gate**:
 - [ ] Todos los tests de modelos pasan
 - [ ] Cobertura 100% en modelos y excepciones
+- [ ] **Template Method Pattern**: Todos los tests de excepciones pasan (160/160)
+- [ ] **Template Method Pattern**: Mensajes personalizados tienen prioridad sobre construcción automática
+- [ ] **Template Method Pattern**: Parámetros adicionales se agregan correctamente a mensajes personalizados
 - [ ] Edge Cases: Tests para valores límite
 - [ ] Serialization: Tests para model_dump() y model_validate()
 - [ ] Validación Pydantic v2 funciona correctamente
@@ -347,7 +356,7 @@ Establecer las fundaciones sólidas del sistema unificado con backend FastAPI + 
 - [ ] **Integration**: Frontend-Backend comunicación + OAuth flow completo
 - [ ] **Performance**: <3s load time + Puerto 8000 fijo
 - [ ] **Security**: 0 vulnerabilidades CRITICAL + CORS configurado
-- [ ] **Error Prevention**: AsyncMock + CORS tests + Server health + Limpieza automática + Test Error Resolution Protocols
+- [ ] **Error Prevention**: AsyncMock + CORS tests + Server health + Limpieza automática + Test Error Resolution Protocols + Template Method Pattern
 - [ ] **Warnings**: 0 warnings de deprecación críticos + Migración automática
 - [ ] **Modern APIs**: Pydantic v2 + FastAPI lifespan + ConfigDict implementados
 - [ ] **Arquitectura**: Servicios resilientes + Verificación automática + Puerto fijo
@@ -395,7 +404,41 @@ async def lifespan(app: FastAPI):
     yield
 ```
 
-#### 4. Problemas de Servidor
+#### 4. Errores de Construcción de Mensajes de Excepción
+**Problema**: Construcción inconsistente de mensajes entre diferentes tipos de excepciones
+**Solución**: Implementar Template Method Pattern para estandarizar construcción de mensajes
+```python
+# ✅ TEMPLATE METHOD PATTERN - BaseAPIException
+class BaseAPIException(Exception):
+    def _build_message(self, custom_message: str, default_message: str, **kwargs) -> str:
+        """Template method para construcción de mensajes."""
+        if custom_message and custom_message != default_message:
+            # Priorizar mensaje personalizado con parámetros adicionales
+            return self._construct_custom_with_params(custom_message, **kwargs)
+        return self._construct_automatic_message(default_message, **kwargs)
+    
+    def _construct_automatic_message(self, default_message: str, **kwargs) -> str:
+        """Hook method para construcción automática."""
+        return default_message
+
+# ✅ IMPLEMENTACIÓN EN SUBCLASES
+class NotFoundError(BaseAPIException):
+    def _construct_automatic_message(self, default_message: str, **kwargs) -> str:
+        resource_type = kwargs.get('resource_type')
+        resource_id = kwargs.get('resource_id')
+        
+        if resource_type:
+            message = f"{resource_type} not found"
+        else:
+            message = default_message
+            
+        if resource_id:
+            message = f"{message}: {resource_id}"
+            
+        return message
+```
+
+#### 5. Problemas de Servidor
 **Problema**: Uvicorn no inicia correctamente en ciertos entornos
 **Solución**: Configuración estándar de host/puerto
 ```bash
@@ -1143,7 +1186,7 @@ Integrar Google Classroom API completa con modo dual (Google/Mock), implementar 
 - [ ] **Modo Dual**: Switching Google/Mock estable + Fallback automático
 - [ ] **Visualizaciones**: ApexCharts avanzados + Export + Responsive
 - [ ] **Cache**: Redis implementado + Invalidación inteligente
-- [ ] **Error Prevention**: Google API Test Resolution + Rate limiting + Fallback + API mocks
+- [ ] **Error Prevention**: Google API Test Resolution + Rate limiting + Fallback + API mocks + Template Method Pattern
 
 </llm:section>
 
@@ -1352,7 +1395,7 @@ Implementar búsqueda avanzada, notificaciones WebSocket en tiempo real, visuali
 - [ ] **Performance**: <1.5s load time + Optimización de gráficos
 - [ ] **Visualization**: D3.js completo + ApexCharts avanzado + Export + Responsive
 - [ ] **Real-time**: WebSocket estable + Fallback polling + Multi-channel delivery
-- [ ] **Error Prevention**: WebSocket Test Resolution + Gráficos + Real-time
+- [ ] **Error Prevention**: WebSocket Test Resolution + Gráficos + Real-time + Template Method Pattern
 
 </llm:section>
 
@@ -1615,7 +1658,7 @@ Completar Google sync bidireccional, implementar WCAG 2.2 AA completo, testing e
 - [ ] **Documentation**: Completa + Runbooks + Training + API docs
 - [ ] **Performance**: <1s load time + Optimización completa + Bundle optimization
 - [ ] **Security**: 0 vulnerabilidades CRITICAL/HIGH + OWASP compliance
-- [ ] **Error Prevention**: Complete Test Error Resolution + Todos los sistemas estables + Monitoring
+- [ ] **Error Prevention**: Complete Test Error Resolution + Todos los sistemas estables + Monitoring + Template Method Pattern
 
 </llm:section>
 
@@ -1630,7 +1673,7 @@ Completar Google sync bidireccional, implementar WCAG 2.2 AA completo, testing e
 - [ ] **Tests**: Backend + Frontend + E2E básicos + AsyncMock
 - [ ] **Integration**: Frontend-Backend comunicación + OAuth flow completo
 - [ ] **CI/CD**: Pipeline básico funcionando + Quality gates
-- [ ] **Error Prevention**: Todos los checks de prevención pasando + Limpieza automática + Test Error Resolution Protocols
+- [ ] **Error Prevention**: Todos los checks de prevención pasando + Limpieza automática + Test Error Resolution Protocols + Template Method Pattern
 - [ ] **Context Managers**: Tests completos para lifespan + AsyncMock
 - [ ] **Error Paths**: Todos los try/except cubiertos + Migración automática
 - [ ] **Modern APIs**: Pydantic v2 + FastAPI lifespan + ConfigDict implementados
@@ -1643,7 +1686,7 @@ Completar Google sync bidireccional, implementar WCAG 2.2 AA completo, testing e
 - [ ] **Tests**: Google mocks + Integration tests + Chart tests
 - [ ] **Google**: OAuth + Classroom API + Rate limiting estable
 - [ ] **Modo Dual**: Switching Google/Mock + Fallback automático funcional
-- [ ] **Error Prevention**: Rate limiting + fallback + Cache Redis funcionando + Google API Test Resolution
+- [ ] **Error Prevention**: Rate limiting + fallback + Cache Redis funcionando + Google API Test Resolution + Template Method Pattern
 - [ ] **API Integration**: Tests para todos los endpoints + Métricas educativas
 - [ ] **Visualizaciones**: ApexCharts v5.3.5 + Export + Responsive
 - [ ] **Cache**: Redis implementado + Invalidación inteligente
@@ -1657,7 +1700,7 @@ Completar Google sync bidireccional, implementar WCAG 2.2 AA completo, testing e
 - [ ] **Visualization**: D3.js completo + ApexCharts avanzado + Export + Responsive
 - [ ] **WebSocket**: Tests para conexiones real-time + Fallback polling
 - [ ] **Real-time**: Notificaciones WebSocket + Multi-channel delivery funcionando
-- [ ] **Error Prevention**: WebSocket Test Resolution + Gráficos + Real-time
+- [ ] **Error Prevention**: WebSocket Test Resolution + Gráficos + Real-time + Template Method Pattern
 - [ ] **Widgets**: Sistema de widgets personalizables + Drag & drop
 - [ ] **Búsqueda**: Búsqueda avanzada + Filtros + Resultados contextuales
 
@@ -1673,7 +1716,7 @@ Completar Google sync bidireccional, implementar WCAG 2.2 AA completo, testing e
 - [ ] **Production**: CI/CD + Docker + Monitoring 24/7 + Alertas automáticas
 - [ ] **Google**: Sync bidireccional + Backup + Webhooks + Conflict resolution
 - [ ] **Documentation**: Completa + Runbooks + Training + API docs
-- [ ] **Error Prevention**: Complete Test Error Resolution + Todos los sistemas estables + Monitoring
+- [ ] **Error Prevention**: Complete Test Error Resolution + Todos los sistemas estables + Monitoring + Template Method Pattern
 
 </llm:section>
 
@@ -1693,6 +1736,10 @@ Completar Google sync bidireccional, implementar WCAG 2.2 AA completo, testing e
 3. **Security Vulnerabilities**
    - Mitigación: Security scanning automático
    - Contingencia: Patch inmediato + rollback
+
+4. **Inconsistencia en Mensajes de Excepción**
+   - Mitigación: Template Method Pattern implementado
+   - Contingencia: Refactoring de excepciones + tests de validación
 
 ### Riesgos de Calidad
 1. **Test Coverage Insuficiente**

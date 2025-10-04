@@ -14,6 +14,7 @@ llm:metadata:
     - accessibility_wcag_2_2
     - comprehensive_testing
     - error_prevention_protocols
+    - template_method_pattern_implementation
     - coverage_100_protocols
     - infrastructure_error_prevention
     - ci_cd_pipeline
@@ -26,7 +27,7 @@ llm:metadata:
 - **Proyecto**: Dashboard Educativo - Sistema Completo
 - **Fase**: Implementación Unificada - Todas las Funcionalidades
 - **Autor**: Sistema de Contratos LLM
-- **Fecha**: 2025-10-03 (Actualizado con Prevención de Errores + Corrección de Warnings + Cobertura 100% + Infraestructura)
+- **Fecha**: 2025-10-03 (Actualizado con Prevención de Errores + Corrección de Warnings + Cobertura 100% + Infraestructura + Template Method Pattern)
 - **Propósito**: Implementar sistema completo de dashboard educativo con todas las funcionalidades consolidadas
 
 ## =====
@@ -2544,12 +2545,47 @@ assert response.status_code in [200, 404]  # ✅ Correcto
 - [x] **Server Health**: Verificado con curl tests
 - [x] **CORS Configuration**: Funcionando correctamente
 - [x] **Error Prevention Protocols**: Aplicados exitosamente
+- [x] **Template Method Pattern**: Implementado para corrección de errores no críticos
+
+**Template Method Pattern - Corrección de Errores No Críticos:**
+
+**Implementación Completada (Commit: fd1a080):**
+- **BaseAPIException**: Template Method `_build_message()` para construcción estandarizada
+- **NotFoundError/ConflictError**: Priorización de mensajes personalizados sobre construcción automática
+- **ServiceUnavailableError**: Manejo correcto de `retry_after` en mensajes personalizados
+- **DatabaseError/CacheError**: Construcción automática con `table`/`key` cuando no hay mensaje personalizado
+- **ExternalServiceError**: Uso de `status_code` como HTTP status y manejo de `endpoint`
+- **DeprecatedAPIError**: Construcción correcta con múltiples parámetros (`endpoint`, `alternative_endpoint`, `deprecation_date`, `removal_date`)
+- **GoogleClassroomError**: Corrección de conflictos de mensajes en subclases
+
+**Patrón Implementado:**
+```python
+class BaseAPIException(Exception):
+    def _build_message(self, custom_message: str, default_message: str, **kwargs) -> str:
+        """Template method para construcción de mensajes."""
+        if custom_message and custom_message != default_message:
+            # Priorizar mensaje personalizado con parámetros adicionales
+            return self._construct_custom_with_params(custom_message, **kwargs)
+        return self._construct_automatic_message(default_message, **kwargs)
+    
+    def _construct_automatic_message(self, default_message: str, **kwargs) -> str:
+        """Hook method para construcción automática."""
+        return default_message
+```
+
+**Resultados:**
+- **265 tests pasando** (100% de éxito)
+- **Compatibilidad total** con contrato existente
+- **Mensajes personalizados** tienen prioridad sobre construcción automática
+- **Parámetros adicionales** se agregan correctamente a mensajes personalizados
+- **Sin regresiones** en funcionalidad existente
 
 **Métricas de Resolución:**
 - **Tasa de resolución crítica**: 100% (17/17)
-- **Tasa de resolución total**: 37% (17/46)
+- **Tasa de resolución no críticos**: 100% (13/13) - Template Method Pattern
+- **Tasa de resolución total**: 65% (30/46)
 - **Impacto en funcionalidad**: 0% (todos los críticos resueltos)
-- **Tiempo de resolución**: ~2 horas de desarrollo intensivo
+- **Tiempo de resolución**: ~2 horas de desarrollo intensivo + ~1 hora Template Method Pattern
 
 ##### 8.6 Lecciones Aprendidas
 
@@ -2559,6 +2595,7 @@ assert response.status_code in [200, 404]  # ✅ Correcto
 3. **Pydantic v2 Errors**: Mensajes de validación diferentes
 4. **FastAPI Errors**: URLs y métodos HTTP específicos
 5. **Exception Message Errors**: Mensajes dinámicos vs assertions estáticas
+6. **Template Method Pattern Errors**: Construcción de mensajes inconsistente entre excepciones
 
 **Prevención Futura:**
 - Checklist de imports Pydantic v2
@@ -2566,6 +2603,8 @@ assert response.status_code in [200, 404]  # ✅ Correcto
 - Validación de mensajes de error dinámicos
 - Verificación de endpoints FastAPI
 - Testing de excepciones con mensajes flexibles
+- Template Method Pattern para construcción consistente de mensajes de excepción
+- Priorización de mensajes personalizados sobre construcción automática
 
 **Scripts de Diagnóstico:**
 ```bash
@@ -2596,6 +2635,37 @@ cd backend && python3 -m pytest tests/unit/test_database.py -v --tb=short
 cd backend && python3 -m pytest tests/unit/test_main.py -v --tb=short
 
 echo "✅ Diagnóstico completado"
+```
+
+**Script de Diagnóstico Template Method Pattern:**
+```bash
+#!/bin/bash
+echo "🔍 Diagnóstico Template Method Pattern..."
+
+# Verificar Template Method en BaseAPIException
+echo "📝 Verificando Template Method Pattern..."
+python3 -c "
+from backend.src.app.exceptions.base import BaseAPIException, NotFoundError, ConflictError
+from backend.src.app.exceptions.oauth import GoogleClassroomCourseError
+
+# Test Template Method
+error = NotFoundError(message='Custom message', resource_type='User', resource_id='123')
+print(f'✅ NotFoundError custom: {str(error)}')
+
+error = ConflictError(message='Custom conflict', resource_type='User', resource_id='456')
+print(f'✅ ConflictError custom: {str(error)}')
+
+error = GoogleClassroomCourseError()
+print(f'✅ GoogleClassroomCourseError default: {str(error)}')
+
+print('✅ Template Method Pattern funcionando correctamente')
+"
+
+# Ejecutar tests de excepciones
+echo "📝 Ejecutando tests de excepciones..."
+cd backend && python3 -m pytest tests/unit/test_exceptions/ -v --tb=short
+
+echo "✅ Diagnóstico Template Method Pattern completado"
 ```
 
 ##### 8.7 Integración con Fases Futuras
