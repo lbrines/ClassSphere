@@ -59,8 +59,10 @@ def create_app() -> FastAPI:
         }
     
     # Routers
-    from app.api.endpoints import auth
+    from app.api.endpoints import auth, oauth, admin
     app.include_router(auth.router)
+    app.include_router(oauth.router)
+    app.include_router(admin.router)
     
     return app
 
