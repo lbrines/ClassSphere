@@ -143,3 +143,67 @@ Backend result: {
  ✓ Compiled /api/auth/me in 203ms (656 modules)
  GET /api/auth/me 200 in 260ms
  GET /api/auth/me 200 in 11ms
+ ○ Compiling /_not-found ...
+ ✓ Compiled /_not-found in 504ms (659 modules)
+ GET /auth/login 404 in 596ms
+ ✓ Compiled / in 294ms (344 modules)
+ GET / 200 in 345ms
+ GET /login 200 in 31ms
+ ✓ Compiled /api/auth/login in 259ms (346 modules)
+=== LOGIN API ROUTE START ===
+Request body: { email: 'admin@classsphere.edu', password: 'secret' }
+Calling backend API: http://127.0.0.1:8000/api/v1/auth/login
+Backend response status: 200
+Backend result: {
+  success: true,
+  data: {
+    token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhZG1pbi0wMDEiLCJlbWFpbCI6ImFkbWluQGNsYXNzc3BoZXJlLmVkdSIsInJvbGUiOiJhZG1pbiIsImV4cCI6MTc1OTY1NzYwOH0.IVCI8TgqjEm-FqffT7GnUGTpO6GPQcw92FfyTI7TuOk',
+    user: {
+      id: 'admin-001',
+      email: 'admin@classsphere.edu',
+      name: 'System Administrator',
+      role: 'admin',
+      is_active: true,
+      created_at: '2024-01-01T00:00:00Z',
+      updated_at: '2024-01-01T00:00:00Z'
+    }
+  },
+  message: 'Login successful'
+}
+=== LOGIN API ROUTE SUCCESS ===
+ POST /api/auth/login 200 in 648ms
+ ✓ Compiled /dashboard in 200ms (350 modules)
+ GET /dashboard 200 in 266ms
+ GET /login 200 in 13ms
+ GET /login 200 in 27ms
+=== LOGIN API ROUTE START ===
+Request body: { email: 'admin@classsphere.edu', password: 'secret' }
+Calling backend API: http://127.0.0.1:8000/api/v1/auth/login
+Backend response status: 200
+Backend result: {
+  success: true,
+  data: {
+    token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhZG1pbi0wMDEiLCJlbWFpbCI6ImFkbWluQGNsYXNzc3BoZXJlLmVkdSIsInJvbGUiOiJhZG1pbiIsImV4cCI6MTc1OTY1NzY1Mn0.9qY_moI9H8WrQDcspeFOAshjr4lb6LAG5WtdCDcj39c',
+    user: {
+      id: 'admin-001',
+      email: 'admin@classsphere.edu',
+      name: 'System Administrator',
+      role: 'admin',
+      is_active: true,
+      created_at: '2024-01-01T00:00:00Z',
+      updated_at: '2024-01-01T00:00:00Z'
+    }
+  },
+  message: 'Login successful'
+}
+=== LOGIN API ROUTE SUCCESS ===
+ POST /api/auth/login 200 in 328ms
+ GET /dashboard 200 in 11ms
+ GET /login 200 in 14ms
+ ✓ Compiled in 1198ms (658 modules)
+ ✓ Compiled in 603ms (658 modules)
+ ✓ Compiled in 260ms (658 modules)
+ ✓ Compiled in 378ms (658 modules)
+ ✓ Compiled in 259ms (638 modules)
+ ✓ Compiled in 268ms (638 modules)
+ ✓ Compiled in 217ms (638 modules)
