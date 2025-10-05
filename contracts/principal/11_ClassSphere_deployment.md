@@ -1,6 +1,6 @@
 ---
 title: "ClassSphere - Configuración de Deployment Unificada"
-version: "2.6"
+version: "3.0"
 type: "documentation"
 related_files:
   - "00_ClassSphere_index.md"
@@ -14,70 +14,61 @@ related_files:
 
 ## Variables de Entorno Consolidadas
 
-### Backend (.env)
+### Backend Go (.env)
 ```env
 # Ambiente
 ENVIRONMENT=production
-PORT=8000
+PORT=8080
 
-# Services
-GOOGLE_API_KEY=your_api_key_here
-GOOGLE_CLIENT_ID=your_client_id_here
-GOOGLE_CLIENT_SECRET=your_client_secret_here
+# Database & Cache
 REDIS_URL=redis://redis:6379/0
+REDIS_PASSWORD=
+REDIS_DB=0
 
 # JWT & OAuth
 JWT_SECRET=production-secret-change-this
-JWT_EXPIRES_IN=1h
-OAUTH_PKCE_ENABLED=true
-OAUTH_REFRESH_TOKEN_ROTATION_ENABLED=true
-OAUTH_ENFORCE_HTTPS=true
-
-# Google Integration
-GOOGLE_API_KEY=your-google-api-key
+JWT_EXPIRES_IN=24h
 GOOGLE_CLIENT_ID=your-google-client-id
 GOOGLE_CLIENT_SECRET=your-google-client-secret
+GOOGLE_REDIRECT_URL=https://your-domain.com/auth/google/callback
+
+# Google Classroom API
+GOOGLE_API_KEY=your-google-api-key
 GOOGLE_API_SCOPES=https://www.googleapis.com/auth/classroom.courses,https://www.googleapis.com/auth/classroom.rosters
 DEFAULT_MODE=MOCK
 
-# Sync & Backup
-SYNC_SCHEDULE="0 3 * * *"
-BACKUP_SCHEDULE="0 1 * * *"
-BACKUP_RETENTION_DAYS=30
-
-# Notifications
-WEBSOCKET_PORT=8001
-EMAIL_MOCK=true
-TELEGRAM_MOCK=true
-NOTIFICATION_RETENTION_DAYS=30
-
-# Testing & Quality
-TEST_COVERAGE_THRESHOLD_CRITICAL=90
-TEST_COVERAGE_THRESHOLD_GLOBAL=80
-
-# Security
-ERROR_SANITIZE_SENSITIVE_DATA=true
-ERROR_FRIENDLY_MESSAGES=true
+# CORS
 CORS_ORIGINS=https://your-domain.com
+CORS_ALLOW_CREDENTIALS=true
+
+# Rate Limiting
+RATE_LIMIT_REQUESTS=100
+RATE_LIMIT_DURATION=1m
+
+# Logging
+LOG_LEVEL=info
+LOG_FORMAT=json
 ```
 
-### Frontend (.env.local)
-```env
-# API Configuration
-NEXT_PUBLIC_API_URL=https://api.your-domain.com/api/v1
-NEXT_PUBLIC_WS_URL=wss://api.your-domain.com/api/v1/ws
-
-# Google
-NEXT_PUBLIC_GOOGLE_CLIENT_ID=your-google-client-id
-NEXT_PUBLIC_DEFAULT_MODE=MOCK
-
-# Features
-NEXT_PUBLIC_FEATURE_FLAGS_ENDPOINT=/api/v1/features
-NEXT_PUBLIC_ACCESSIBILITY_FEATURES=true
-NEXT_PUBLIC_HIGH_CONTRAST=true
-
-# Performance
-NEXT_PUBLIC_SEARCH_DEBOUNCE_MS=300
+### Frontend Angular (environment.prod.ts)
+```typescript
+export const environment = {
+  production: true,
+  apiUrl: 'https://api.your-domain.com',
+  wsUrl: 'wss://api.your-domain.com/ws',
+  googleClientId: 'your-google-client-id',
+  defaultMode: 'MOCK',
+  features: {
+    accessibility: true,
+    highContrast: true,
+    notifications: true
+  },
+  performance: {
+    searchDebounceMs: 300,
+    cacheTimeout: 300000
+  }
+};
+```
 NEXT_PUBLIC_NOTIFICATION_POLL_INTERVAL=30000
 ```
 

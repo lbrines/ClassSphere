@@ -1,6 +1,6 @@
 ---
 title: "ClassSphere - Estrategia de Testing Unificada"
-version: "2.6"
+version: "3.0"
 type: "documentation"
 related_files:
   - "00_ClassSphere_index.md"
@@ -12,23 +12,25 @@ related_files:
 
 # Estrategia de Testing Unificada
 
-## Estrategia de Testing Frontend (Next.js 15 + React 19)
+### Stack de Testing Backend (Go)
+- ✅ **Unit Testing:** testify/assert + testify/mock
+- ✅ **HTTP Testing:** httptest (Go standard library)
+- ✅ **Mocking:** testify/mock + mockery
+- ✅ **Coverage:** go test -cover
 
-### Stack de Testing Definido
-- ✅ **Unit / Integration:** Vitest + React Testing Library  
-- ✅ **E2E:** Playwright  
-- 🚫 **No usar Jest** (incompatible con ESM y React 19, soporte experimental)
+### Stack de Testing Frontend (Angular 19)
+- ✅ **Unit Testing:** Jasmine + Karma (estándar Angular)
+- ✅ **Component Testing:** Angular Testing Library
+- ✅ **E2E Testing:** Playwright
+- ✅ **Coverage:** karma-coverage
 
-> **Nota:** No agregar Jest ni dependencias relacionadas (`jest`, `babel-jest`, `ts-jest`, `jest-environment-jsdom`).  
-> Si se requiere compatibilidad con tests antiguos, migrarlos a Vitest gradualmente.
-
-### Motivación del Cambio
-| Motivo | Beneficio |
-|--------|----------|
-| Claridad técnica | Todos saben qué stack usar |
-| Prevención | Evita roturas en builds/tests |
-| Estándar oficial Next 15 | 100% compatible |
-| Automatización CI | Garantiza cumplimiento |
+### Ventajas del Stack
+| Aspecto | Beneficio |
+|---------|----------|
+| Estándar oficial | Jasmine es el framework oficial de Angular |
+| Zero-config | Angular CLI configura automáticamente |
+| Maduro y estable | testify es el estándar de facto en Go |
+| Documentación completa | Ambos tienen documentación oficial extensa |
 
 ## Metodología TDD Consolidada
 
@@ -45,7 +47,9 @@ El sistema completo sigue Test-Driven Development (TDD) estricto:
 - **Módulos Críticos**: ≥90% líneas, ≥80% ramas
 - **Componentes de Seguridad**: ≥95% líneas, ≥85% ramas
 - **API Endpoints**: 100% casos de éxito y error
-- **Fase 1 Completa**: ≥100% cobertura en toda la Fase 1 (backend + frontend + tests)
+- **Backend Go**: ≥80% líneas con testify
+- **Frontend Angular**: ≥80% líneas con Jasmine + Karma
+- **E2E**: Cobertura de flujos críticos con Playwright
 
 ### Criterios de Aceptación Medibles:
 

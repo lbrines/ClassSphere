@@ -1,6 +1,6 @@
 ---
 title: "ClassSphere - Arquitectura del Sistema Unificado"
-version: "2.6"
+version: "3.0"
 type: "documentation"
 related_files:
   - "00_ClassSphere_index.md"
@@ -16,28 +16,31 @@ related_files:
 
 ```
 # Backend
-- Python 3.11.4 (pyenv)
-- FastAPI 0.104.1
-- Pydantic v2 (validación estricta)
+- Go 1.21+ (lenguaje compilado)
+- Echo v4 (framework web)
+- Go structs (validación con tags)
 - Google Classroom API (fuente de datos principal)
 - WebSockets (notificaciones)
-- Redis (cache y sesiones únicamente)
-- pytest (testing)
+- Redis (cache compartido)
+- testify + mock (testing)
+- resty (HTTP client)
 
 # Frontend
-- Next.js 15 (actualizado desde 13.5.6)
-- React 19 (actualizado desde 18.2.0)
-- TypeScript 5.1.6
-- @tanstack/react-query 4.36.1
-- ApexCharts 5.3.5
-- Tailwind CSS 3.3.3
-- Vitest + React Testing Library + Playwright (testing)
+- Angular 19 (framework)
+- esbuild (bundler oficial desde Angular 17)
+- Vite (dev server integrado)
+- TypeScript 5.x
+- RxJS (reactive programming)
+- TailwindCSS 3.x
+- Jasmine + Karma (testing unit)
+- Playwright (testing E2E)
+- Biome (linter/formatter)
 
 # DevOps
 - Docker (multi-stage)
-- GitHub Actions
-- Trivy (security)
-- pnpm 8.x+
+- GitHub Actions (CI/CD)
+- Trivy (security scanning)
+- Redis (cache compartido)
 ```
 
 ## Instalación Nueva Google Classroom con Mocks
@@ -52,129 +55,85 @@ Siguiendo la definición de [Instalación Nueva Google Classroom](02_ClassSphere
 
 ### 1. Arquitectura Estándar Moderna
 
-Siguiendo las definiciones del [Glosario Técnico](02_ClassSphere_glosario_tecnico.md#arquitectura-semántica-simplificada):
+**Go Structs**: Validación con tags y custom validators
+**Echo Middleware**: Sistema de middleware para autenticación, CORS, rate limiting
+**Angular Services**: Inyección de dependencias nativa
+**RxJS Observables**: Manejo reactivo de datos y eventos
 
-**Pydantic v2**: Implementación según [Pydantic v2 - Migración Automática](02_ClassSphere_glosario_tecnico.md#pydantic-v2---migración-automática)
-**FastAPI Lifespan**: Implementación según [FastAPI Lifespan - Context Manager Estándar](02_ClassSphere_glosario_tecnico.md#fastapi-lifespan---context-manager-estándar)
-**Error Prevention**: Siguiendo [Error Prevention Protocols](02_ClassSphere_glosario_tecnico.md#error-prevention-protocols)
-**Work Plan Context Management**: Implementación según [Work Plan Development Rules](02_ClassSphere_glosario_tecnico.md#work-plan-development-rules-llm-2024-2025)
+#### 1.1. Arquitectura de Servicios Go
 
-#### 1.1. Context-Aware Architecture Implementation
+**Ejemplo de Servicio Go con Echo:**
+```go
+// AuthService maneja autenticación JWT y OAuth
+type AuthService struct {
+    jwtSecret []byte
+    redis     *redis.Client
+}
 
-Siguiendo las [Work Plan Development Rules (LLM 2024-2025)](02_ClassSphere_glosario_tecnico.md#work-plan-development-rules-llm-2024-2025):
+func NewAuthService(secret string, redisClient *redis.Client) *AuthService {
+    return &AuthService{
+        jwtSecret: []byte(secret),
+        redis:     redisClient,
+    }
+}
 
-**Context Window Management en Servicios:**
-```python
-# ✅ ARQUITECTURA CONTEXT-AWARE - Chunking por prioridad
-class ContextAwareService:
-    """Servicio con gestión de contexto según prioridad 2024-2025"""
-
-    def __init__(self, priority: str = "MEDIUM"):
-        self.priority = priority
-        self.max_tokens = self._get_max_tokens(priority)
-        self.context_id = f"{priority.lower()}-{uuid4().hex[:8]}"
-
-    def _get_max_tokens(self, priority: str) -> int:
-        """Límites de tokens según prioridad (LLM 2024-2025)"""
-        limits = {
-            "CRITICAL": 2000,  # auth, config, main.py
-            "HIGH": 1500,      # google_service, classroom_service
-            "MEDIUM": 1000,    # components, charts
-            "LOW": 800         # admin, a11y
-        }
-        return limits.get(priority, 1000)
-
-    async def log_context_status(self, status: str, **kwargs):
-        """Log estructurado según template obligatorio"""
-        log_entry = {
-            "timestamp": datetime.now().isoformat(),
-            "context_id": self.context_id,
-            "token_count": kwargs.get("token_count", 0),
-            "context_priority": self.priority,
-            "status": status,
-            "memory_management": {
-                "chunk_position": kwargs.get("chunk_position", "middle"),
-                "lost_in_middle_risk": kwargs.get("risk", "low")
-            }
-        }
-
-        # Log a archivo temporal para tracking LLM
-        with open("/tmp/classsphere_context_status.json", "a") as f:
-            f.write(json.dumps(log_entry) + "\n")
+func (s *AuthService) GenerateToken(userID string, role string) (string, error) {
+    claims := jwt.MapClaims{
+        "user_id": userID,
+        "role":    role,
+        "exp":     time.Now().Add(time.Hour * 24).Unix(),
+    }
+    token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+    return token.SignedString(s.jwtSecret)
+}
 ```
 
-**Anti Lost-in-the-Middle Service Structure:**
-```python
-# ✅ ARQUITECTURA ANTI LOST-IN-THE-MIDDLE
-class AntiLostInMiddleService:
-    """Servicio estructurado para prevenir pérdida de contexto"""
+**Ejemplo de Componente Angular:**
+```typescript
+// AuthService en Angular con RxJS
+@Injectable({ providedIn: 'root' })
+export class AuthService {
+  private currentUserSubject: BehaviorSubject<User | null>;
+  public currentUser: Observable<User | null>;
 
-    async def execute_with_context_priority(self, task_data: dict):
-        """
-        Estructura Anti Lost-in-the-Middle:
-        - inicio: objetivos críticos + dependencias bloqueantes
-        - medio: implementación detallada + casos de uso
-        - final: checklist verificación + próximos pasos
-        """
+  constructor(private http: HttpClient) {
+    this.currentUserSubject = new BehaviorSubject<User | null>(null);
+    this.currentUser = this.currentUserSubject.asObservable();
+  }
 
-        # INICIO (primacy bias): información crítica
-        critical_objectives = task_data.get("critical_objectives", [])
-        blocking_dependencies = task_data.get("blocking_dependencies", [])
-
-        # Log inicio con prioridad alta
-        await self.log_context_status(
-            "started",
-            chunk_position="beginning",
-            risk="low",
-            token_count=len(str(critical_objectives))
-        )
-
-        # MEDIO: implementación detallada (riesgo de pérdida)
-        detailed_implementation = task_data.get("implementation", {})
-        use_cases = task_data.get("use_cases", [])
-
-        # Log medio con gestión de riesgo
-        await self.log_context_status(
-            "in_progress",
-            chunk_position="middle",
-            risk="medium",
-            token_count=len(str(detailed_implementation))
-        )
-
-        # FINAL (recency bias): próximos pasos críticos
-        verification_checklist = task_data.get("verification", [])
-        next_steps = task_data.get("next_steps", [])
-
-        # Log final con prioridad alta
-        await self.log_context_status(
-            "completed",
-            chunk_position="end",
-            risk="low",
-            token_count=len(str(verification_checklist))
-        )
-
-        return {
-            "critical_processed": critical_objectives,
-            "next_actions": next_steps,
-            "verification_required": verification_checklist
-        }
+  login(email: string, password: string): Observable<User> {
+    return this.http.post<User>('/api/auth/login', { email, password })
+      .pipe(
+        tap(user => this.currentUserSubject.next(user))
+      );
+  }
+}
 ```
 
 ### 2. Infraestructura Estándar
 
-Siguiendo la definición de [Puerto 8000 - Estándar Arquitectónico](02_ClassSphere_glosario_tecnico.md#puerto-8000---estándar-arquitectónico):
+**Backend Go**:
+- Puerto 8080 (estándar Go)
+- Graceful shutdown
+- Health checks en /health
+- Metrics en /metrics
 
-**Puerto Fijo**: Implementación obligatoria en puerto 8000
-**Limpieza Automática**: Scripts estándar para limpieza de procesos
-**Verificación**: Checks automáticos de disponibilidad de puerto
+**Frontend Angular**:
+- Puerto 4200 (desarrollo con ng serve)
+- Puerto 80/443 (producción con nginx)
+- Server-side rendering opcional
+- Progressive Web App (PWA) capabilities
 
-### 3. Implementación Evolutiva
+### 3. Redis Compartido
 
-Siguiendo las definiciones del [Glosario Técnico](02_ClassSphere_glosario_tecnico.md#arquitectura-semántica-simplificada):
+**Uso en Backend (Go)**:
+- Sesión de usuario
+- Cache de respuestas API
+- Rate limiting
 
-**Migración Automática**: Implementación transparente de APIs modernas
-**Verificación Post-Implementación**: Checks automáticos de éxito
-**Ciclo de Vida**: Integración en el desarrollo arquitectónico
+**Uso en Frontend (Angular)**:
+- No acceso directo (solo via backend)
+- Cache de datos en localStorage/sessionStorage
 
 ## Estructura de Directorios Completa
 
@@ -415,50 +374,36 @@ Siguiendo las definiciones del [Glosario Técnico](02_ClassSphere_glosario_tecni
 
 **Metodología**: Todos los servicios usan puerto 8000 como estándar arquitectónico
 
-**Arquitectura de Servicios Backend:**
-```python
-# ✅ ARQUITECTURA ESTÁNDAR - Servicios con puerto fijo
-from fastapi import FastAPI
-from contextlib import asynccontextmanager
+**Arquitectura de Servicios Backend (Go + Echo):**
+```go
+package main
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    # Startup - servicios externos opcionales (instalación nueva)
-    try:
-        # Google Classroom API (verificación)
-        await verify_google_api_access()
-    except Exception as e:
-        print(f"Warning: Google Classroom API no disponible: {e}")
-    
-    try:
-        # Redis (opcional)
-        await init_redis()
-    except Exception as e:
-        print(f"Warning: Redis no disponible: {e}")
-    
-    yield
-    
-    # Shutdown - limpieza automática
-    try:
-        await cleanup_services()
-    except Exception as e:
-        print(f"Warning: Error en cleanup: {e}")
+import (
+    "github.com/labstack/echo/v4"
+    "github.com/labstack/echo/v4/middleware"
+)
 
-def create_app() -> FastAPI:
-    return FastAPI(
-        title="ClassSphere",
-        version="1.0.0",
-        lifespan=lifespan
-    )
-
-# Servidor siempre en puerto 8000
-if __name__ == "__main__":
-    uvicorn.run(
-        "src.app.main:app",
-        host="127.0.0.1",
-        port=8000,  # Puerto fijo arquitectónico
-        reload=True
-    )
+func main() {
+    e := echo.New()
+    
+    // Middleware
+    e.Use(middleware.Logger())
+    e.Use(middleware.Recover())
+    e.Use(middleware.CORS())
+    
+    // Routes
+    e.GET("/", handleWelcome)
+    e.GET("/health", handleHealth)
+    
+    // Auth routes
+    auth := e.Group("/auth")
+    auth.POST("/login", handleLogin)
+    auth.GET("/google", handleGoogleOAuth)
+    auth.GET("/google/callback", handleGoogleCallback)
+    
+    // Start server
+    e.Logger.Fatal(e.Start(":8080"))
+}
 ```
 
 ## Documentación de Arquitectura
@@ -478,10 +423,10 @@ docs/architecture/
 
 El archivo `docs/architecture/testing.md` contiene la documentación completa sobre la estrategia de testing, incluyendo:
 
-- Stack de testing definido (Vitest + React Testing Library + Playwright)
-- Justificación de la eliminación de Jest
+- Stack de testing definido (Jasmine + Karma + Playwright)
+- Testing en Go con testify
 - Ejemplos de configuración y uso
-- Estrategias de migración
+- Estrategias de testing E2E
 
 ## Referencias a Otros Documentos
 
