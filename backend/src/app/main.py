@@ -46,10 +46,13 @@ def create_app() -> FastAPI:
         lifespan=lifespan
     )
 
-    # CORS
+    # CORS - Debe ser el primer middleware
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["http://localhost:3000"],
+        allow_origins=[
+            "http://localhost:3000",  # Puerto fijo Next.js
+            "http://127.0.0.1:3000",  # Variante localhost
+        ],
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
