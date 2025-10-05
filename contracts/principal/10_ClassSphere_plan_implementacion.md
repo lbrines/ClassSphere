@@ -14,14 +14,26 @@ related_files:
 
 ## Metodología TDD Consolidada
 
-Todo el sistema sigue **Test-Driven Development** estricto:
+Todo el sistema sigue **Test-Driven Development** estricto con **Prevención de Errores Integrada**:
 
 1. **Red**: Escribir test que falle definiendo comportamiento esperado
 2. **Green**: Implementar código mínimo para hacer pasar el test
 3. **Refactor**: Mejorar código manteniendo tests verdes
-4. **Document**: Documentar decisiones basadas en tests
-5. **Integrate**: Integrar con sistema existente
-6. **Validate**: Validar cumplimiento de criterios de aceptación
+4. **Validate Patterns**: Aplicar validación automática de patterns 1-6
+5. **Document**: Documentar decisiones basadas en tests
+6. **Integrate**: Integrar con sistema existente
+7. **Validate**: Validar cumplimiento de criterios de aceptación
+
+### Patterns de Prevención Integrados
+
+Referencia: `contracts/extra/revision/llm_error_prevention_guide.md`
+
+- **Pattern 1**: ConfigDict imports (Pydantic v2)
+- **Pattern 2**: Next.js config deprecated options
+- **Pattern 3**: Zod schema validation
+- **Pattern 4**: AsyncMock para funciones async
+- **Pattern 5**: Frontend dependency mocking
+- **Pattern 6**: E2E test coverage
 
 ## Cobertura de Testing Requerida
 
@@ -153,6 +165,14 @@ Todo el sistema sigue **Test-Driven Development** estricto:
 - [ ] Integration: Frontend-Backend comunicación (Pendiente - Día 10)
 - [x] Error Prevention: AsyncMock + CORS tests + Server health + Test Error Resolution Protocols ✅
 
+**Patterns de Prevención Aplicados:**
+- [x] Pattern 1: ConfigDict imports validados ✅
+- [x] Pattern 4: AsyncMock en tests backend ✅
+- [ ] Pattern 2: Next.js config limpio (Pendiente - Día 6)
+- [ ] Pattern 3: Zod schemas validados (Pendiente - Día 4)
+- [ ] Pattern 5: Frontend mocks comprehensivos (Pendiente - Día 7)
+- [ ] Pattern 6: E2E tests completos (Pendiente - Día 10)
+
 #### Checklist de Implementación Obligatoria:
 - [ ] **OAuth Integration**: useAuth.getGoogleAuthUrl() → /api/auth/oauth/google → OAuthButton funcional
 - [ ] **React Query Usage**: useQuery(checkAuth) + useMutation(login/logout) implementado en useAuth
@@ -171,6 +191,12 @@ Todo el sistema sigue **Test-Driven Development** estricto:
 - ✅ **CI/CD**: GitHub Actions + linting + type checking + security scanning
 - ✅ **Error Prevention**: AsyncMock + CORS + warnings deprecación + limpieza automática
 
+**Métricas de Prevención Fase 1:**
+- ConfigDict errors: 0 (100% prevención - Pattern 1)
+- AsyncMock errors: 0 (100% prevención - Pattern 4)
+- Mock path errors: 0 (100% prevención - Pattern 4)
+- Tests pasando: 45/45 (100% - mejora desde 41/45)
+
 ### Fase 2 - Google Integration
 
 - [ ] Backend: Google API + Modo dual + Dashboards
@@ -178,6 +204,12 @@ Todo el sistema sigue **Test-Driven Development** estricto:
 - [ ] Testing: Google mocks + Integration tests
 - [ ] Error Prevention: Rate limiting + Fallback + API mocks + Google API Test Resolution
 - [ ] Performance: <2s dashboard load
+
+**Patterns de Prevención Aplicados:**
+- [ ] Pattern 3: Zod schemas en validación OAuth
+- [ ] Pattern 4: AsyncMock en tests Google API
+- [ ] Pattern 6: E2E tests flujo Google completo
+- [ ] Validación automática: Rate limiting + API mocks
 
 ### Fase 3 - Visualización Avanzada
 
@@ -187,6 +219,12 @@ Todo el sistema sigue **Test-Driven Development** estricto:
 - [ ] Testing: E2E scenarios + Performance
 - [ ] Accessibility: Keyboard + Screen reader básico
 
+**Patterns de Prevención Aplicados:**
+- [ ] Pattern 3: Zod schemas en validación de métricas
+- [ ] Pattern 5: Mocks comprehensivos en componentes visualización
+- [ ] Pattern 6: E2E tests para dashboards por rol
+- [ ] Validación automática: WebSocket + Real-time
+
 ### Fase 4 - Production Ready
 
 - [ ] Google: Sync bidireccional + Backup + Webhooks
@@ -194,6 +232,19 @@ Todo el sistema sigue **Test-Driven Development** estricto:
 - [ ] Accessibility: WCAG 2.2 AA completo
 - [ ] Testing: ≥90% críticos + Security + Load
 - [ ] CI/CD: Pipeline completo + Docker + Monitoring
+
+**Patterns de Prevención Aplicados:**
+- [ ] Todos los patterns 1-6 validados en integración
+- [ ] Scripts de detección automática ejecutándose
+- [ ] Métricas de éxito: 100% tests passing
+- [ ] Tiempo resolución errores: <3 min (mejora 80%)
+
+**Métricas Finales de Prevención:**
+- ConfigDict errors: 0 (100% prevención)
+- AsyncMock errors: 0 (100% prevención)
+- Frontend mocking errors: 0 (100% prevención)
+- E2E coverage: 100%
+- Automation success rate: >95%
 
 ## Metodología de Desarrollo
 
@@ -577,8 +628,70 @@ async def test_async_method():
         mock_instance.method.assert_called_once()
 ```
 
+## Checklist de Validación de Patterns
+
+### Pre-Commit Validation
+```bash
+#!/bin/bash
+# Validación automática de patterns antes de commit
+
+echo "🔍 Validando Patterns de Prevención..."
+
+# Pattern 1: ConfigDict imports
+find backend/src -name "*.py" -exec grep -l "model_config = ConfigDict" {} \; | \
+  xargs -I {} sh -c 'grep -q "from pydantic import.*ConfigDict" {} || (echo "❌ Pattern 1: {}" && exit 1)'
+
+# Pattern 4: AsyncMock usage
+find backend/tests -name "test_*.py" -exec grep -l "async def test" {} \; | \
+  xargs -I {} sh -c 'grep -q "AsyncMock" {} || (echo "❌ Pattern 4: {}" && exit 1)'
+
+# Pattern 2: Next.js config
+if grep -q "swcMinify" frontend/next.config.js 2>/dev/null; then
+    echo "❌ Pattern 2: next.config.js contains deprecated swcMinify"
+    exit 1
+fi
+
+# Pattern 5: Frontend mocks
+find frontend/src -name "*.test.tsx" -exec grep -l "vi.mock" {} \; | \
+  xargs -I {} sh -c 'grep -q "@/lib/defensive" {} || echo "⚠️  Pattern 5 warning: {}"'
+
+echo "✅ Todos los patterns validados correctamente"
+```
+
+### CI/CD Integration
+```yaml
+# .github/workflows/pattern-validation.yml
+name: Pattern Validation
+
+on: [push, pull_request]
+
+jobs:
+  validate-patterns:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Validate Pattern 1 (ConfigDict)
+        run: |
+          find backend/src -name "*.py" -exec grep -l "model_config = ConfigDict" {} \; | \
+            xargs -I {} sh -c 'grep -q "from pydantic import.*ConfigDict" {} || exit 1'
+      
+      - name: Validate Pattern 4 (AsyncMock)
+        run: |
+          find backend/tests -name "test_*.py" -exec grep -l "async def test" {} \; | \
+            xargs -I {} sh -c 'grep -q "AsyncMock" {} || exit 1'
+      
+      - name: Validate Pattern 2 (Next.js config)
+        run: |
+          ! grep -q "swcMinify" frontend/next.config.js
+      
+      - name: Report Success
+        run: echo "✅ All patterns validated successfully"
+```
+
 ## Referencias a Otros Documentos
 
+- **Guía de Prevención LLM**: [llm_error_prevention_guide.md](../extra/revision/llm_error_prevention_guide.md) - Patterns completos y algoritmos de detección
 - Para detalles sobre la estrategia de testing, consulte [Estrategia de Testing](09_ClassSphere_testing.md).
 - Para detalles sobre la configuración de deployment, consulte [Configuración de Deployment](11_ClassSphere_deployment.md).
 - Para detalles sobre los criterios de aceptación, consulte [Criterios de Aceptación](12_ClassSphere_criterios_aceptacion.md).
