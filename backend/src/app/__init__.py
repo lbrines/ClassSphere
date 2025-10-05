@@ -1,1 +1,0 @@
-# ClassSphere Backend Application
