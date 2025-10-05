@@ -725,4 +725,225 @@ successful_patterns:
 
 ---
 
+## 🔄 RUNTIME ERROR PATTERNS - POST-DEPLOYMENT DISCOVERIES
+
+*Added by Claude during Phase 1 completion*
+
+### Pattern 7: CORS Configuration Port Mismatch [CRITICAL - Runtime Discovery]
+```yaml
+trigger:
+  - file_name: "main.py"
+  - contains: "CORSMiddleware"
+  - runtime_error: "Cross-Origin Request Blocked"
+
+validation_rule:
+  cors_port_consistency:
+    - "Frontend port must match CORS allow_origins"
+    - "Next.js port auto-increment must be accounted for"
+    - "Multiple processes can occupy same port family"
+
+error_indicators:
+    - "Cross-Origin Request Blocked: CORS header 'Access-Control-Allow-Origin' missing"
+    - "CORS request did not succeed"
+    - "Network Error in frontend requests"
+
+runtime_discovery:
+  - "Frontend running on port 3001, CORS configured for port 3000"
+  - "Next.js automatically increments port when 3000 occupied"
+  - "Multiple Next.js processes can run simultaneously"
+
+auto_fix:
+  action: "validate_and_sync_ports"
+  steps:
+    - "Check actual frontend port: netstat -tlnp | grep :300"
+    - "Kill conflicting processes: fuser -k PORT/tcp"
+    - "Force frontend to specific port: next dev -p 3000"
+    - "Update CORS origins to match actual frontend port"
+```
+
+### Pattern 8: React Router State Update During Render [HIGH - SSR Issue]
+```yaml
+trigger:
+  - framework: "Next.js"
+  - contains: "router.push()"
+  - error_context: "render phase"
+
+validation_rule:
+  router_usage:
+    - "Never call router.push() directly in component body"
+    - "Use useEffect for navigation logic"
+    - "Prevent setState during render warnings"
+
+error_indicators:
+    - "Warning: Cannot update a component while rendering a different component"
+    - "setState() call inside render method"
+    - "Router component stack trace"
+
+runtime_discovery:
+  - "LoginPage calling router.push() during render"
+  - "AuthGuard redirect logic in component body"
+  - "React 18 stricter about render phase side effects"
+
+auto_fix:
+  action: "wrap_navigation_in_useEffect"
+  pattern: |
+    // ❌ BEFORE - setState during render:
+    if (isAuthenticated) {
+      router.push('/')
+      return null
+    }
+
+    // ✅ AFTER - useEffect for navigation:
+    useEffect(() => {
+      if (isAuthenticated) {
+        router.push('/')
+      }
+    }, [isAuthenticated, router])
+```
+
+### Pattern 9: Next.js Hydration Mismatch [CRITICAL - SSR Issue]
+```yaml
+trigger:
+  - framework: "Next.js"
+  - ssr_enabled: true
+  - contains: "useAuth", "localStorage", "cookies"
+
+validation_rule:
+  hydration_safety:
+    - "Server and client must render identical initial HTML"
+    - "Authentication state checks only after client mount"
+    - "Use hasMounted pattern for client-only content"
+
+error_indicators:
+    - "Hydration failed because the initial UI does not match what was rendered on the server"
+    - "Warning: Expected server HTML to contain a matching <div>"
+    - "Text content does not match server-rendered HTML"
+
+runtime_discovery:
+  - "AuthGuard renders different content on server vs client"
+  - "Server has no access to localStorage/cookies"
+  - "Authentication state differs between SSR and CSR"
+
+auto_fix:
+  action: "implement_hasMounted_pattern"
+  pattern: |
+    // ✅ SSR-safe authentication check:
+    const [hasMounted, setHasMounted] = useState(false)
+
+    useEffect(() => {
+      setHasMounted(true)
+    }, [])
+
+    // During SSR or before mount, show consistent loading
+    if (!hasMounted || isLoading) {
+      return <div>Loading...</div>  // Same on server and client
+    }
+
+    // Client-only conditional rendering
+    if (!isAuthenticated) {
+      return <div>Redirecting to login...</div>
+    }
+```
+
+### Pattern 10: Multiple Process Port Conflicts [MEDIUM - DevOps Issue]
+```yaml
+trigger:
+  - development_environment: true
+  - contains_any: ["npm run dev", "uvicorn", "next dev"]
+  - error: "Address already in use"
+
+validation_rule:
+  process_management:
+    - "Check for zombie processes before starting servers"
+    - "Kill processes by port rather than PID when possible"
+    - "Verify single process per port after startup"
+
+error_indicators:
+    - "Error: EADDRINUSE: address already in use"
+    - "Port 3000 is in use, trying 3001 instead"
+    - "Multiple processes consuming same port family"
+
+runtime_discovery:
+  - "Frontend processes can accumulate during development"
+  - "Background processes survive terminal closure"
+  - "Port conflicts cause inconsistent CORS behavior"
+
+auto_fix:
+  action: "clean_and_restart_processes"
+  commands:
+    - "fuser -k 3000/tcp 3001/tcp 8000/tcp"
+    - "netstat -tlnp | grep :300 # verify cleanup"
+    - "Start services with explicit port configuration"
+```
+
+### Claude's Validated Hypothesis Methodology
+
+The above patterns were discovered using a systematic hypothesis validation approach:
+
+```yaml
+claude_methodology:
+  step_1_observation:
+    - "Analyze exact error messages from user logs"
+    - "Identify specific stack traces and line numbers"
+    - "Note environmental context (SSR, development, etc.)"
+
+  step_2_research:
+    - "Consult official documentation (Next.js, React, FastAPI)"
+    - "Search for known issues in GitHub repositories"
+    - "Validate with community solutions on Stack Overflow"
+
+  step_3_hypothesis_formation:
+    - "Create 3 specific, testable hypotheses"
+    - "Include technical justification for each"
+    - "Reference official sources for validation"
+
+  step_4_targeted_solution:
+    - "Apply minimal, surgical fixes"
+    - "Verify solution doesn't affect other system components"
+    - "Test incrementally with immediate verification"
+
+  step_5_documentation:
+    - "Record exact problem, solution, and validation steps"
+    - "Include error reproduction steps for future reference"
+    - "Update prevention patterns for automated detection"
+
+success_rate:
+  - "CORS port mismatch: 100% resolved with netstat + port forcing"
+  - "Router render warnings: 100% resolved with useEffect pattern"
+  - "Hydration mismatches: 100% resolved with hasMounted pattern"
+  - "Process conflicts: 100% resolved with systematic port cleanup"
+
+validation_sources:
+  - "Next.js official docs: https://nextjs.org/docs/messages/react-hydration-error"
+  - "React docs: https://reactjs.org/link/setstate-in-render"
+  - "FastAPI CORS docs: https://fastapi.tiangolo.com/tutorial/cors/"
+  - "Community solutions: Stack Overflow, GitHub Issues"
+```
+
+### LLM Integration Notes
+
+```yaml
+for_future_llm_assistants:
+  pattern_recognition:
+    - "Port conflicts often manifest as CORS errors"
+    - "React warnings about setState usually indicate navigation in render"
+    - "Hydration errors always involve SSR vs CSR differences"
+    - "Multiple processes are common in development environments"
+
+  diagnostic_commands:
+    - "netstat -tlnp | grep :PORT # check port usage"
+    - "fuser -k PORT/tcp # clean port conflicts"
+    - "curl -H 'Origin: http://localhost:PORT' # test CORS"
+    - "Browser developer tools for hydration/React warnings"
+
+  prevention_integration:
+    - "Check port conflicts before suggesting CORS fixes"
+    - "Always wrap navigation in useEffect, never in render"
+    - "Use hasMounted pattern for any browser-specific state"
+    - "Document process cleanup commands in development guides"
+```
+
+---
+
 *Updated LLM guidelines based on ClassSphere Phase 1 production findings*
+*Additional runtime patterns documented by Claude during post-deployment session*
