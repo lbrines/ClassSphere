@@ -42,6 +42,9 @@ total_prompts: 20
 ### Análisis de Cumplimiento
 21. [Analizar Cumplimiento con Mejores Prácticas](#21-prompt-analyze-best-practices-compliance)
 
+### Gestión de Repositorio
+22. [Limpiar Repositorio y Mantener Solo Contracts](#22-prompt-clean-repo-keep-contracts)
+
 ---
 
 ## 🎯 Guía de Uso Rápida
@@ -66,6 +69,9 @@ total_prompts: 20
 
 **Verificar cumplimiento con mejores prácticas:**
 → Usar prompt 21
+
+**Limpiar repositorio manteniendo solo contracts:**
+→ Usar prompt 22
 
 ---
 
@@ -2562,11 +2568,434 @@ Verificación de cumplimiento del plan con @SOFTWARE_PROJECT_BEST_PRACTICES.md.
 
 ---
 
+## 22. PROMPT_CLEAN_REPO_KEEP_CONTRACTS
+
+```markdown
+# PROMPT: Limpiar Repositorio y Mantener Solo Contracts
+
+## OBJETIVO
+Eliminar todo el contenido del repositorio EXCEPTO el directorio `/contracts/` y su contenido, manteniendo el historial de Git completo y creando un commit descriptivo.
+
+## ⚠️ ADVERTENCIA CRÍTICA
+Esta operación es **DESTRUCTIVA** e **IRREVERSIBLE**. Asegúrate de:
+1. Tener un backup completo del repositorio
+2. Estar absolutamente seguro de que quieres eliminar todo excepto `/contracts/`
+3. Haber verificado que `/contracts/` contiene todo lo necesario
+
+## CONTEXTO
+- **Directorio a preservar**: `/contracts/` y todo su contenido
+- **Archivo a preservar**: `CLAUDE.md` (notas de desarrollo)
+- **Directorios a eliminar**: backend/, frontend/, scripts/, etc.
+- **Historial Git**: Se mantiene intacto
+- **Acción**: Crear commit completo documentando la limpieza
+
+## PASO 1: VERIFICAR ESTADO ACTUAL
+
+**Comandos de verificación:**
+```bash
+# Ver estructura actual del repositorio
+tree -L 2 -a
+
+# Ver qué hay en contracts/
+ls -la contracts/
+
+# Ver tamaño de contracts/
+du -sh contracts/
+
+# Ver archivos en Git
+git ls-files
+
+# Ver estado actual
+git status
+```
+
+## PASO 2: CREAR BACKUP DE SEGURIDAD
+
+**⚠️ OBLIGATORIO antes de continuar:**
+```bash
+# Crear backup completo
+cd ..
+tar -czf classsphere-backup-$(date +%Y%m%d-%H%M%S).tar.gz ClassSphere/
+ls -lh classsphere-backup-*.tar.gz
+
+# Verificar backup
+tar -tzf classsphere-backup-*.tar.gz | head -20
+
+# Volver al repositorio
+cd ClassSphere/
+```
+
+## PASO 3: IDENTIFICAR ARCHIVOS A ELIMINAR
+
+**Comandos de análisis:**
+```bash
+# Listar todos los directorios de primer nivel
+ls -d */ | grep -v "contracts/"
+
+# Listar todos los archivos de primer nivel
+ls -p | grep -v /
+
+# Ver todo lo que NO es contracts/
+find . -maxdepth 1 ! -name "." ! -name ".git" ! -name "contracts" -type d
+find . -maxdepth 1 ! -name "." ! -name ".git" ! -name "contracts" -type f
+```
+
+**Directorios típicos a eliminar:**
+- backend/
+- frontend/
+- scripts/
+- .benchmarks/
+- node_modules/ (si existe)
+- venv/ (si existe)
+- __pycache__/ (si existe)
+
+**Archivos típicos a eliminar:**
+- README.md (si existe)
+- package.json (si existe)
+- requirements.txt (si existe)
+
+**Archivos a preservar:**
+- CLAUDE.md (notas de desarrollo)
+- .gitignore (opcional, puede mantenerse)
+
+## PASO 4: ELIMINAR ARCHIVOS Y DIRECTORIOS
+
+**Comandos de eliminación:**
+```bash
+# Eliminar directorios (CUIDADO: IRREVERSIBLE)
+rm -rf backend/
+rm -rf frontend/
+rm -rf scripts/
+rm -rf .benchmarks/
+rm -rf node_modules/
+rm -rf venv/
+rm -rf __pycache__/
+
+# Eliminar archivos específicos (preservando CLAUDE.md y .gitignore)
+rm -f README.md
+rm -f package.json
+rm -f requirements.txt
+
+# O eliminar todos excepto CLAUDE.md y .gitignore
+find . -maxdepth 1 -type f ! -name ".gitignore" ! -name "CLAUDE.md" -delete
+
+# Verificar que contracts/ sigue intacto
+ls -la contracts/
+tree contracts/ -L 2
+```
+
+## PASO 5: VERIFICAR ELIMINACIÓN
+
+**Comandos de verificación:**
+```bash
+# Ver estructura resultante
+tree -L 2 -a
+
+# Debe mostrar solo:
+# .
+# ├── .git/
+# ├── CLAUDE.md
+# ├── contracts/
+# │   ├── extra/
+# │   ├── plan/
+# │   ├── principal/
+# │   └── prompt/
+# └── .gitignore (opcional)
+
+# Ver estado de Git
+git status
+
+# Debe mostrar muchos archivos eliminados
+```
+
+## PASO 6: AGREGAR CAMBIOS A GIT
+
+**Comandos:**
+```bash
+# Agregar todos los cambios (eliminaciones)
+git add -A
+
+# Verificar qué se va a commitear
+git status
+
+# Ver resumen de cambios
+git diff --staged --stat
+
+# Ver archivos eliminados
+git diff --staged --name-only --diff-filter=D | wc -l
+```
+
+## PASO 7: CREAR COMMIT COMPLETO
+
+**Mensaje de commit:**
+```bash
+git commit -m "[repo] Clean repository - Keep only contracts directory
+
+DESTRUCTIVE OPERATION: Removed all code and kept only documentation.
+
+Directories removed:
+- backend/ (FastAPI application code)
+- frontend/ (Next.js application code)
+- scripts/ (automation scripts)
+- .benchmarks/ (performance benchmarks)
+- node_modules/ (if existed)
+- venv/ (if existed)
+
+Files removed:
+- README.md (project readme)
+- package.json (frontend dependencies)
+- requirements.txt (backend dependencies)
+- All other root-level files (except CLAUDE.md)
+
+Directories preserved:
+- contracts/ (complete documentation)
+  - contracts/extra/ (best practices, guides)
+  - contracts/plan/ (development plan)
+  - contracts/principal/ (specifications)
+  - contracts/prompt/ (management prompts)
+
+Files preserved:
+- CLAUDE.md (development notes and context)
+- .gitignore (Git ignore rules)
+
+Reason for cleanup:
+Repository restructuring to maintain only documentation and specifications.
+All implementation code removed to focus on planning and design phase.
+
+Git history:
+- Full Git history preserved
+- All commits maintained
+- Branch history intact
+
+Backup created:
+- File: classsphere-backup-YYYYMMDD-HHMMSS.tar.gz
+- Location: Parent directory
+- Size: [size]
+
+Next steps:
+1. Verify contracts/ integrity
+2. Push to remote if needed
+3. Start fresh implementation from plan
+4. Use contracts/plan/ as source of truth
+
+Verification commands:
+- tree -L 2 -a
+- ls -la contracts/
+- git log --oneline -10
+
+Status: ✅ Repository cleaned successfully
+Impact: MAJOR - All implementation code removed
+Reversibility: Use backup file to restore if needed"
+```
+
+## PASO 8: VERIFICAR COMMIT
+
+**Comandos de verificación:**
+```bash
+# Ver commit creado
+git log -1
+
+# Ver estadísticas del commit
+git log -1 --stat
+
+# Ver archivos eliminados en el commit
+git show HEAD --name-only --diff-filter=D
+
+# Ver archivos que quedan en el repositorio
+git ls-files
+
+# Verificar que contracts/ está completo
+git ls-files | grep "^contracts/"
+```
+
+## PASO 9: VALIDAR INTEGRIDAD DE CONTRACTS
+
+**Comandos de validación:**
+```bash
+# Verificar estructura de contracts/
+tree contracts/
+
+# Verificar archivos principales
+ls -la contracts/plan/
+ls -la contracts/principal/
+ls -la contracts/prompt/
+ls -la contracts/extra/
+
+# Contar archivos en contracts/
+find contracts/ -type f | wc -l
+
+# Verificar que no hay archivos corruptos
+find contracts/ -type f -exec file {} \; | grep -v "text"
+
+# Verificar tamaño total
+du -sh contracts/
+```
+
+## PASO 10: PUSH A REMOTO (OPCIONAL)
+
+**⚠️ Solo si estás seguro:**
+```bash
+# Ver remoto configurado
+git remote -v
+
+# Push del commit (CUIDADO: esto es permanente en el remoto)
+git push origin main
+
+# O crear una nueva rama para la limpieza
+git checkout -b repo-cleanup
+git push origin repo-cleanup
+```
+
+## OUTPUT ESPERADO: RESUMEN EJECUTIVO
+
+# Resumen Ejecutivo: Limpieza de Repositorio
+
+## 🎯 Objetivo Cumplido
+Repositorio limpiado exitosamente, manteniendo solo `/contracts/` y historial Git completo.
+
+## 📊 Estadísticas de Limpieza
+
+### Directorios Eliminados
+- ✅ backend/ (eliminado)
+- ✅ frontend/ (eliminado)
+- ✅ scripts/ (eliminado)
+- ✅ .benchmarks/ (eliminado)
+- ✅ node_modules/ (eliminado, si existía)
+- ✅ venv/ (eliminado, si existía)
+
+**Total directorios eliminados:** 6
+
+### Archivos Eliminados
+- ✅ README.md
+- ✅ package.json
+- ✅ requirements.txt
+- ✅ Otros archivos de configuración
+
+**Total archivos eliminados:** ~50+
+
+### Contenido Preservado
+- ✅ contracts/extra/ (3 archivos)
+- ✅ contracts/plan/ (10 archivos)
+- ✅ contracts/principal/ (15 archivos)
+- ✅ contracts/prompt/ (1 archivo)
+- ✅ CLAUDE.md (1 archivo)
+- ✅ .gitignore (1 archivo)
+
+**Total archivos preservados:** 31
+
+## 📈 Estructura Resultante
+
+```
+ClassSphere/
+├── .git/                    # Historial completo preservado
+├── CLAUDE.md                # Notas de desarrollo preservadas
+├── .gitignore              # Git ignore rules
+└── contracts/
+    ├── extra/
+    │   ├── revision/
+    │   ├── DOCKER_BEST_PRACTICES.md
+    │   └── SOFTWARE_PROJECT_BEST_PRACTICES.md
+    ├── plan/
+    │   ├── 01_plan_index.md
+    │   ├── 02_plan_fase1_fundaciones.md
+    │   ├── 03_plan_fase2_google_integration.md
+    │   ├── 04_plan_fase3_visualizacion.md
+    │   ├── 05_plan_fase4_integracion.md
+    │   ├── 06_plan_testing_strategy.md
+    │   ├── 07_plan_security_protocols.md
+    │   ├── 08_plan_context_management.md
+    │   ├── 09_plan_evaluation_metrics.md
+    │   └── README.md
+    ├── principal/
+    │   ├── 00_ClassSphere_index.md
+    │   ├── 01_ClassSphere_info_status.md
+    │   ├── ... (15 archivos totales)
+    │   └── 14_ClassSphere_conclusion.md
+    └── prompt/
+        └── manage_plan_prompts.md
+```
+
+## ✅ Validaciones Realizadas
+
+- ✅ Backup creado: classsphere-backup-YYYYMMDD-HHMMSS.tar.gz
+- ✅ Estructura contracts/ intacta
+- ✅ Todos los archivos de contracts/ preservados
+- ✅ Historial Git completo mantenido
+- ✅ Commit descriptivo creado
+- ✅ No hay archivos corruptos
+- ✅ Tamaño de contracts/: ~500KB
+
+## 📝 Commit Creado
+
+**Hash:** [commit-hash]
+**Mensaje:** [repo] Clean repository - Keep only contracts directory
+**Archivos modificados:** ~60 eliminaciones
+**Líneas eliminadas:** ~50,000+
+**Tamaño reducido:** ~95% del repositorio
+
+## ⚠️ Información Importante
+
+### Reversibilidad
+- **Backup disponible:** classsphere-backup-YYYYMMDD-HHMMSS.tar.gz
+- **Ubicación:** Directorio padre
+- **Restauración:** `tar -xzf classsphere-backup-*.tar.gz`
+
+### Historial Git
+- **Commits preservados:** Todos
+- **Branches preservados:** Todas
+- **Tags preservados:** Todos
+- **Acceso a código anterior:** `git checkout <commit-hash>`
+
+### Próximos Pasos
+1. ✅ Verificar integridad de contracts/
+2. ⏳ Push a remoto (si es necesario)
+3. ⏳ Comenzar implementación desde plan
+4. ⏳ Usar contracts/plan/ como fuente de verdad
+
+## 📈 Estado General
+✅ LIMPIEZA EXITOSA - Repositorio optimizado para documentación
+
+**Impacto:** MAJOR (código eliminado, documentación preservada)
+**Reversibilidad:** ALTA (backup completo disponible)
+**Riesgo:** BAJO (contracts/ verificado e intacto)
+```
+
+---
+
+## ⚠️ CHECKLIST DE SEGURIDAD
+
+Antes de ejecutar este prompt, verifica:
+
+- [ ] **Backup creado y verificado**
+- [ ] **Estás en el repositorio correcto**
+- [ ] **Entiendes que esto es irreversible sin backup**
+- [ ] **Has revisado qué hay en contracts/**
+- [ ] **No hay trabajo sin commitear que necesites**
+- [ ] **Tienes permisos para hacer esta operación**
+- [ ] **Has informado al equipo (si aplica)**
+
+## 🔄 Comandos de Restauración (Si es necesario)
+
+```bash
+# Si necesitas restaurar desde backup
+cd ..
+tar -xzf classsphere-backup-YYYYMMDD-HHMMSS.tar.gz
+cd ClassSphere/
+
+# O revertir el commit (antes de push)
+git reset --hard HEAD~1
+
+# O crear nueva rama desde commit anterior
+git checkout -b restore-code HEAD~1
+```
+
+---
+
 # FIN DEL DOCUMENTO
 
 ## 📝 Notas Finales
 
-**Total de prompts:** 21
+**Total de prompts:** 22
 **Fecha de creación:** 2025-10-05
 **Versión:** 1.0
 
