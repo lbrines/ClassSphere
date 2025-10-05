@@ -1,6 +1,6 @@
 ---
 title: "ClassSphere - Plan de Implementación Unificado"
-version: "2.6"
+version: "3.0"
 type: "documentation"
 related_files:
   - "00_ClassSphere_index.md"
@@ -24,16 +24,18 @@ Todo el sistema sigue **Test-Driven Development** estricto con **Prevención de 
 6. **Integrate**: Integrar con sistema existente
 7. **Validate**: Validar cumplimiento de criterios de aceptación
 
-### Patterns de Prevención Integrados
+### Stack de Testing
 
-Referencia: `contracts/extra/revision/llm_error_prevention_guide.md`
+**Backend (Go)**:
+- testify/assert para assertions
+- testify/mock para mocking
+- httptest para testing HTTP
+- go test -cover para cobertura
 
-- **Pattern 1**: ConfigDict imports (Pydantic v2)
-- **Pattern 2**: Next.js config deprecated options
-- **Pattern 3**: Zod schema validation
-- **Pattern 4**: AsyncMock para funciones async
-- **Pattern 5**: Frontend dependency mocking
-- **Pattern 6**: E2E test coverage
+**Frontend (Angular)**:
+- Jasmine + Karma (estándar Angular)
+- Angular Testing Library
+- Playwright para E2E
 
 ## Cobertura de Testing Requerida
 
@@ -41,63 +43,93 @@ Referencia: `contracts/extra/revision/llm_error_prevention_guide.md`
 - **Módulos Críticos**: ≥90% líneas, ≥80% ramas
 - **Componentes de Seguridad**: ≥95% líneas, ≥85% ramas
 - **API Endpoints**: 100% casos de éxito y error
-- **Fase 1 Completa**: ≥100% cobertura en toda la Fase 1 (backend + frontend + tests)
+- **Backend Go**: ≥80% líneas con testify
+- **Frontend Angular**: ≥80% líneas con Jasmine
+- **E2E**: Cobertura de flujos críticos con Playwright
 
-## Orden de Implementación (40-45 días)
+## Orden de Implementación (15-20 semanas)
 
-### Fase 1: Fundaciones (10-12 días)
+### Fase 1: Capacitación (2-3 semanas)
 
-**Días 1-3: Backend Fundacional**
-- Tests para FastAPI + JWT + OAuth + MockService
-- Implementación de autenticación completa
-- API REST con envelope estándar
-- Health checks básicos
+**Semana 1-2: Go + Echo**
+- Fundamentos de Go
+- Echo framework
+- testify para testing
+- Proof of Concept API REST
 
-**Días 4-6: Frontend Fundacional**
-- Tests para Next.js + Auth + Layout + i18n
-- Implementación de UI base
-- React Query v4 + Tailwind CSS
-- Páginas principales (login, dashboard)
+**Semana 2-3: Angular 19**
+- Fundamentos de Angular
+- esbuild y Vite
+- Jasmine + Karma
+- Proof of Concept componentes
 
-### Implementación Obligatoria por Tecnología:
-- **React Query v4**: useQuery(checkAuth) + useMutation(login/logout) en useAuth hook
-- **OAuth Integration**: getGoogleAuthUrl() implementado en useAuth → OAuthButton funcional
-- **Role-Based Dashboard**: AdminDashboard, CoordinatorDashboard, TeacherDashboard, StudentDashboard
-- **Frontend-Backend Mapping**: Cada endpoint → hook → componente documentado
+### Fase 2: Backend Go (4-6 semanas)
 
-**Días 7-9: Integración Base**
-- Tests de integración frontend-backend
-- Comunicación API completa
-- Manejo de errores y estados
-- Protección de rutas
+**Semanas 1-2: Autenticación**
+- JWT con Echo middleware
+- OAuth 2.0 Google
+- Tests con testify
+- Redis para sesiones
 
-**Días 10-12: Testing y Refinamiento**
-- Tests E2E básicos
-- Documentación inicial
-- Configuración CI/CD básica
-- Validación Stage 1 completo
+**Semanas 3-4: Sistema de Roles**
+- Middleware de autorización
+- Rate limiting
+- CORS configuration
+- Tests de integración
 
-### Fase 2: Google Integration (8-10 días)
-
-**Días 13-15: Backend Google**
-- Tests para Google Classroom API
-- Implementación GoogleService + ClassroomService
-- Modo dual (Google/Mock)
+**Semanas 5-6: Google Classroom API**
+- Integración con Google API
+- Modo dual (Mock/Real)
 - Endpoints dashboard por rol
+- Tests con mocks
 
-**Días 16-18: Frontend Google**
-- Tests para componentes Google
-- Selector de modo + Lista de cursos
-- Dashboards por rol con ApexCharts v5.3.5
-- Métricas básicas y visualización
+### Fase 3: Frontend Angular (3-5 semanas)
 
-**Días 19-21: Métricas y Dashboards**
-- Tests para métricas avanzadas
-- KPIs educativos + agregaciones
-- Dashboards interactivos
-- Cache y optimización
+**Semanas 1-2: Componentes Base**
+- LoginForm component
+- AuthGuard service
+- Routing configuration
+- Tests con Jasmine
 
-**Días 22-23: Integración Google**
+**Semanas 3-4: Dashboards por Rol**
+- AdminDashboard component
+- CoordinatorDashboard component
+- TeacherDashboard component
+- StudentDashboard component
+- Tests de componentes
+
+**Semana 5: Integración Backend**
+- Angular services para API
+- RxJS observables
+- Error handling
+- Tests de integración
+
+### Fase 4: Testing Completo (3-4 semanas)
+
+**Semanas 1-2: Tests Unitarios**
+- Backend: testify coverage ≥80%
+- Frontend: Jasmine coverage ≥80%
+- Refactoring basado en tests
+
+**Semanas 3-4: Tests E2E**
+- Playwright setup
+- Flujos críticos (login, OAuth, dashboards)
+- Tests cross-browser
+- Performance testing
+
+### Fase 5: Deployment (2-3 semanas)
+
+**Semanas 1-2: Configuración**
+- Dockerfile para Go
+- Dockerfile para Angular
+- Docker Compose
+- GitHub Actions workflows
+
+**Semana 3: Producción**
+- Deployment a producción
+- Monitoring setup
+- Security scanning con Trivy
+- Documentación final
 - Tests de integración completa
 - Validación modo dual
 - Performance tuning

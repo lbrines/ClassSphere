@@ -1,6 +1,6 @@
 ---
 title: "ClassSphere - Información del Proyecto y Estado Actual"
-version: "2.6"
+version: "3.0"
 type: "documentation"
 related_files:
   - "00_ClassSphere_index.md"
@@ -17,19 +17,19 @@ related_files:
 - **Proyecto**: ClassSphere - Sistema Completo
 - **Fase**: Implementación Unificada - Todas las Funcionalidades
 - **Autor**: Sistema de Contratos LLM
-- **Fecha**: 2025-10-04 (Actualizado con Progreso Fase 1 - Días 1-5 Completados)
-- **Propósito**: Implementar sistema completo de ClassSphere con coherencia semántica optimizada y todas las funcionalidades consolidadas
+- **Fecha**: 2025-10-05 (Migración a nuevo stack tecnológico)
+- **Propósito**: Implementar sistema completo de ClassSphere con stack moderno Go + Angular
 
-## 🚀 Estado Actual del Proyecto (Actualizado: 2025-10-04)
+## 🚀 Estado Actual del Proyecto (Actualizado: 2025-10-05)
 
-### ✅ Fase 1 - Fundaciones (5/12 días completados - 42% progreso)
+### 🔄 Migración de Stack Tecnológico (En Planificación)
 
-**Backend Completamente Funcional**:
-- 🎯 **FastAPI 0.104.1** + Pydantic v2 funcionando en puerto 8000
-- 🔐 **Autenticación JWT** + OAuth 2.0 Google con PKCE + State validation
-- 👥 **Sistema de Roles** completo (admin > coordinator > teacher > student)
-- 💾 **Redis Caché** con degradación elegante
-- 🧪 **78 Tests Unitarios** pasando con cobertura 100%
+**Nuevo Stack Backend (Go + Echo)**:
+- 🎯 **Go** + Echo framework v4
+- 🔐 **Autenticación JWT** + OAuth 2.0 Google
+- 👥 **Sistema de Roles** (admin > coordinator > teacher > student)
+- 💾 **Redis** (caché)
+- 🧪 **testify/mock** + resty (testing)
 - 🔧 **CI/CD Pipeline** con GitHub Actions
 
 **Endpoints API Disponibles**:
@@ -44,57 +44,66 @@ related_files:
 - `POST /auth/logout` - Logout
 - `GET /auth/verify` - Token verification
 
-**Próximos Pasos**:
-- ⏳ **Día 6**: Sistema de Roles TDD - middleware seguridad, rate limiting
-- ⏳ **Día 7**: UI Base TDD - Next.js, TypeScript, Tailwind CSS
-- ⏳ **Día 8**: Componentes de Autenticación TDD - LoginForm, OAuthButton, hooks
-- ⏳ **Día 9**: Servicios de API TDD - servicios API, manejo errores, integración
-- ⏳ **Día 10**: Comunicación Frontend-Backend TDD - tests integración, envelope estándar
-- ⏳ **Día 11**: Protección de Rutas TDD - protección por rol, tests E2E Playwright
-- ⏳ **Día 12**: CI/CD y Documentación TDD - pipeline, documentación completa
+**Nuevo Stack Frontend (Angular 19)**:
+- 🚀 **Angular 19** con esbuild oficial
+- 🎨 **TailwindCSS 3.x**
+- 🧹 **Biome** (linter/formatter)
+- 🧪 **Jasmine + Karma** (testing estándar Angular)
+- 🎭 **Playwright** (E2E testing)
 
-## Cronograma de Implementación
+**DevOps Mantenido**:
+- 🔧 **GitHub Actions** (CI/CD)
+- 🐳 **Docker** multi-stage
+- 🔒 **Trivy** (security scanning)
+- 💾 **Redis** (caché compartido)
 
-### Fase 1: Fundaciones (Días 1-12)
-- **Días 1-3**: Backend Fundacional ✅
-- **Días 4-6**: Frontend Fundacional (En progreso)
-- **Días 7-9**: Integración Base (Pendiente)
-- **Días 10-12**: Testing y Refinamiento (Pendiente)
+## Cronograma de Migración
 
-### Fase 2: Google Integration (Días 13-23)
-- **Días 13-15**: Backend Google (Pendiente)
-- **Días 16-18**: Frontend Google (Pendiente)
-- **Días 19-21**: Métricas y Dashboards (Pendiente)
-- **Días 22-23**: Integración Google (Pendiente)
+### Fase 1: Capacitación (2-3 semanas)
+- **Semana 1-2**: Aprendizaje Go + Echo framework
+- **Semana 2-3**: Aprendizaje Angular 19 + esbuild
+- **Entregable**: Proof of Concept básico
 
-### Fase 3: Visualización Avanzada (Días 24-34)
-- **Días 24-26**: Backend Avanzado (Pendiente)
-- **Días 27-29**: Frontend Avanzado (Pendiente)
-- **Días 30-32**: Visualización Completa (Pendiente)
-- **Días 33-34**: Integración Avanzada (Pendiente)
+### Fase 2: Backend Go (4-6 semanas)
+- **Semanas 1-2**: Autenticación JWT + OAuth 2.0
+- **Semanas 3-4**: Sistema de Roles + Middleware
+- **Semanas 5-6**: Google Classroom API integration
+- **Entregable**: API REST completa con tests
 
-### Fase 4: Integración Completa (Días 35-45)
-- **Días 35-37**: Google Completo (Pendiente)
-- **Días 38-40**: Accesibilidad WCAG 2.2 AA (Pendiente)
-- **Días 41-43**: Testing Completo (Pendiente)
-- **Días 44-45**: Production Ready (Pendiente)
+### Fase 3: Frontend Angular (3-5 semanas)
+- **Semanas 1-2**: Componentes base + Autenticación
+- **Semanas 3-4**: Dashboards por rol
+- **Semana 5**: Integración con backend
+- **Entregable**: Aplicación Angular funcional
 
-## Estadísticas Actuales
+### Fase 4: Testing Completo (3-4 semanas)
+- **Semanas 1-2**: Tests unitarios (testify + Jasmine)
+- **Semanas 3-4**: Tests E2E (Playwright)
+- **Entregable**: Cobertura ≥80%
 
-- 📊 **Tests unitarios**: 78 tests pasando ✅
-- 🎯 **Cobertura**: Configurada para 100% ✅
-- 🚀 **Servidor**: Funcionando en puerto 8000 ✅
-- 💾 **Redis**: Conectado y funcionando ✅
-- 🔐 **Autenticación**: JWT + OAuth 2.0 Google completo ✅
-- 🌐 **Endpoints**: /auth/login, /auth/google, /auth/refresh, /auth/me ✅
+### Fase 5: Deployment (2-3 semanas)
+- **Semanas 1-2**: Configuración Docker + CI/CD
+- **Semana 3**: Production deployment
+- **Entregable**: Sistema en producción
+
+## Estimación de Esfuerzo
+
+- 📅 **Duración total**: 15-20 semanas (3.5-5 meses)
+- 👥 **Equipo requerido**: 2-3 desarrolladores full-stack
+- 📊 **Cobertura objetivo**: Backend ≥80%, Frontend ≥80%
+- 🧪 **Testing**: testify (Go), Jasmine + Karma (Angular), Playwright (E2E)
+- 🔧 **DevOps**: GitHub Actions, Docker, Trivy mantenidos
+- 💾 **Infraestructura**: Redis compartido entre backend y frontend
 
 ## Riesgos y Mitigaciones
 
 | Riesgo | Probabilidad | Impacto | Mitigación |
 |--------|-------------|---------|------------|
-| Incompatibilidad FastAPI/HTTPX | Media | Alto | Fijar versiones específicas |
+| Curva de aprendizaje Go | Media | Alto | Capacitación 2-3 semanas |
+| Curva de aprendizaje Angular | Media | Alto | Capacitación 2-3 semanas |
+| Retraso en cronograma | Alta | Alto | Buffer de 20% en estimaciones |
 | Problemas con Google API | Alta | Alto | Modo Mock como fallback |
-| Problemas de performance | Media | Medio | Redis cache + optimización |
+| Problemas de performance | Media | Medio | Redis cache + optimización Go |
 | Problemas de accesibilidad | Alta | Medio | Testing temprano WCAG 2.2 |
 
 ## Referencias a Otros Documentos

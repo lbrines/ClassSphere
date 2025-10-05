@@ -1,8 +1,8 @@
 ---
 title: "ClassSphere - Documentación Completa"
-version: "2.6"
+version: "3.0"
 type: "index"
-date: "2025-10-04"
+date: "2025-10-05"
 author: "Sistema de Contratos LLM"
 files:
   - name: "01_ClassSphere_info_status.md"
@@ -42,33 +42,35 @@ files:
 - **Proyecto**: ClassSphere - Sistema Completo
 - **Fase**: Implementación Unificada - Todas las Funcionalidades
 - **Autor**: Sistema de Contratos LLM
-- **Fecha**: 2025-10-04 (Actualizado con Progreso Fase 1 - Días 1-5 Completados)
-- **Propósito**: Implementar sistema completo de ClassSphere con coherencia semántica optimizada y todas las funcionalidades consolidadas
+- **Fecha**: 2025-10-05 (Migración a nuevo stack tecnológico)
+- **Propósito**: Implementar sistema completo de ClassSphere con stack moderno Go + Angular
 
 ## Estado Actual del Proyecto
 
-### ✅ Fase 1 - Fundaciones (5/12 días completados - 42% progreso)
+### 🔄 Migración de Stack Tecnológico (En Planificación)
 
-**Backend Completamente Funcional**:
-- 🎯 **FastAPI 0.104.1** + Pydantic v2 funcionando en puerto 8000
-- 🔐 **Autenticación JWT** + OAuth 2.0 Google con PKCE + State validation
-- 👥 **Sistema de Roles** completo (admin > coordinator > teacher > student)
-- 💾 **Redis Caché** con degradación elegante
-- 🧪 **78 Tests Unitarios** pasando con cobertura 100%
+**Nuevo Stack Backend**:
+- 🎯 **Go** + Echo framework v4
+- 🔐 **Autenticación JWT** + OAuth 2.0 Google
+- 👥 **Sistema de Roles** (admin > coordinator > teacher > student)
+- 💾 **Redis** (caché)
+- 🧪 **testify/mock** + resty (testing)
 - 🔧 **CI/CD Pipeline** con GitHub Actions
 
-**Frontend Actualizado**:
-- 🚀 **Next.js 15** (actualizado desde 13.5.6)
-- ⚛️ **React 19** (actualizado desde 18.2.0)
-- 🧪 **Vitest + React Testing Library + Playwright** (stack de testing oficial)
+**Nuevo Stack Frontend**:
+- 🚀 **Angular 19** con esbuild oficial
+- 🎨 **TailwindCSS 3.x**
+- 🧹 **Biome** (linter/formatter)
+- 🧪 **Jasmine + Karma** (testing estándar Angular)
+- 🎭 **Playwright** (E2E testing)
 
-**Integración Frontend-Backend Mapeada**:
-- 🔗 **Mapeo Explícito**: Cada endpoint backend → hook frontend → componente
-- ⚡ **React Query v4**: useQuery/useMutation obligatorio en useAuth y dashboards
-- 🎯 **OAuth Completo**: getGoogleAuthUrl() implementado en useAuth hook
-- 🏗️ **Dashboard por Rol**: Contenido específico Admin/Coordinator/Teacher/Student
+**DevOps Mantenido**:
+- 🔧 **GitHub Actions** (CI/CD)
+- 🐳 **Docker** multi-stage
+- 🔒 **Trivy** (security scanning)
+- 💾 **Redis** (caché compartido)
 
-**Endpoints API Disponibles**:
+**Endpoints API Planificados**:
 - `GET /` - Welcome endpoint
 - `GET /health` - Health check
 - `GET /info` - System information
@@ -80,26 +82,23 @@ files:
 - `POST /auth/logout` - Logout
 - `GET /auth/verify` - Token verification
 
-**Próximos Pasos**:
-- ⏳ **Día 6**: Sistema de Roles TDD - middleware seguridad, rate limiting
-- ⏳ **Día 7**: UI Base TDD - Next.js 15, React 19, TypeScript, Tailwind CSS
-- ⏳ **Día 8**: Componentes de Autenticación TDD - LoginForm, OAuthButton, hooks
-- ⏳ **Día 9**: Servicios de API TDD - servicios API, manejo errores, integración
-- ⏳ **Día 10**: Comunicación Frontend-Backend TDD - tests integración, envelope estándar
-- ⏳ **Día 11**: Protección de Rutas TDD - protección por rol, tests E2E Playwright
-- ⏳ **Día 12**: CI/CD y Documentación TDD - pipeline, documentación completa
+**Plan de Migración**:
+- ⏳ **Fase 1**: Capacitación Go + Angular (2-3 semanas)
+- ⏳ **Fase 2**: Backend Go + Echo (4-6 semanas)
+- ⏳ **Fase 3**: Frontend Angular + esbuild (3-5 semanas)
+- ⏳ **Fase 4**: Testing completo (3-4 semanas)
+- ⏳ **Fase 5**: Integración y deployment (2-3 semanas)
 
-**Especificaciones de Implementación Obligatorias**:
-- 🔧 **OAuth Integration**: useAuth.getGoogleAuthUrl() → /api/auth/oauth/google → OAuthButton
-- 📊 **React Query Usage**: useQuery(checkAuth) + useMutation(login/logout) en useAuth
-- 🎭 **Role-Based Dashboard**: AdminDashboard, CoordinatorDashboard, TeacherDashboard, StudentDashboard
+**Especificaciones de Implementación**:
+- 🔧 **OAuth Integration**: Angular services → Go handlers
+- 🎭 **Role-Based Dashboard**: Componentes Angular por rol
 - ✅ **Test Coverage**: Backend ≥80%, Frontend ≥80%, Critical modules ≥95%
-- 🧪 **Verification Commands**: Comandos automáticos para validar cada funcionalidad
+- 🧪 **Testing**: Jasmine + Karma (Angular), testify (Go), Playwright (E2E)
 
 **Documentación de Arquitectura**:
-- 📖 **docs/architecture/testing.md**: Estrategia de testing con Vitest + React Testing Library + Playwright
-- 🛠 **package.json**: Configuración con comentarios para prevenir uso de Jest
-- 📝 **CI/CD**: Actualización de workflows para usar Vitest en lugar de Jest
+- 📖 **docs/architecture/testing.md**: Estrategia de testing con Jasmine + Karma + Playwright
+- 🛠 **go.mod**: Gestión de dependencias Go
+- 📝 **CI/CD**: Workflows para Go + Angular
 
 ## Tabla de Contenidos
 
@@ -169,21 +168,16 @@ files:
 - Estado de sincronización
 
 ### [9. Estrategia de Testing Unificada](09_ClassSphere_testing.md)
-- Estrategia de Testing Frontend (Next.js 15 + React 19)
-- Stack de Testing definido (Vitest + React Testing Library + Playwright)
-- Eliminación de Jest (incompatible con ESM y React 19)
+- Estrategia de Testing Frontend (Angular 19 + Jasmine + Karma)
+- Stack de Testing definido (Jasmine + Karma + Playwright)
 - Metodología TDD consolidada
 - Cobertura de testing requerida
-- Principios TDD con prevención integral
-- Metodología TDD por fase
-- Flujo TDD de resolución
-- Backend tests completos
-- Cobertura TDD 100%
-- Frontend tests completos
+- Backend tests con testify (Go)
+- Frontend tests con Jasmine (Angular)
+- E2E tests con Playwright
 - Templates TDD estándar
 - Scripts TDD automatizados
 - Fixtures y mocks consolidados
-- Protocolos de resolución de errores de tests
 - **Criterios de aceptación medibles**
 - **Comandos de verificación automática**
 
@@ -255,4 +249,4 @@ Esta estructura de documentación ha sido diseñada específicamente para optimi
 
 ---
 
-*Última actualización: 2025-10-04*
+*Última actualización: 2025-10-05*
