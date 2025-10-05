@@ -39,6 +39,9 @@ total_prompts: 20
 19. [Comparar Plan vs Specs](#19-prompt-compare-plan-specs)
 20. [Verificar Sincronización](#20-prompt-sync-check)
 
+### Análisis de Cumplimiento
+21. [Analizar Cumplimiento con Mejores Prácticas](#21-prompt-analyze-best-practices-compliance)
+
 ---
 
 ## 🎯 Guía de Uso Rápida
@@ -60,6 +63,9 @@ total_prompts: 20
 
 **Análisis completo:**
 → Usar prompts según prioridad (Alta → Media → Baja)
+
+**Verificar cumplimiento con mejores prácticas:**
+→ Usar prompt 21
 
 ---
 
@@ -2337,11 +2343,230 @@ Verificación rápida de sincronización plan-specs.
 
 ---
 
+## 21. PROMPT_ANALYZE_BEST_PRACTICES_COMPLIANCE
+
+```markdown
+# PROMPT: Análisis de Cumplimiento con Mejores Prácticas LLM
+
+## OBJETIVO
+Verificar que el plan de desarrollo cumple completamente con las mejores prácticas definidas en @SOFTWARE_PROJECT_BEST_PRACTICES.md.
+
+## SCOPE
+- **Source**: @SOFTWARE_PROJECT_BEST_PRACTICES.md (mejores prácticas)
+- **Target**: `/contracts/plan/` (plan de desarrollo)
+- **Prioridad**: CRITICAL
+- **Criterio de éxito**: ≥95% de cumplimiento
+
+## PASO 1: EXTRAER REQUISITOS DE MEJORES PRÁCTICAS
+
+**Archivo fuente:**
+```bash
+# Leer mejores prácticas
+cat contracts/extra/SOFTWARE_PROJECT_BEST_PRACTICES.md
+```
+
+**Requisitos clave a verificar:**
+1. **Context Window Management**
+   - Chunking por prioridad (CRITICAL/HIGH/MEDIUM/LOW)
+   - Estructura anti lost-in-the-middle
+   - Logs estructurados con context_id
+
+2. **Arquitectura Context-Aware**
+   - Servicios conscientes del contexto
+   - Gestión de memoria optimizada
+   - Identificadores únicos por fase
+
+3. **Seguridad y Verificación**
+   - Principio de cero confianza
+   - Escaneo automático (SAST, SCA, Secrets)
+   - Prompt engineering de seguridad
+
+4. **Métricas de Evaluación**
+   - Precisión ≥95%
+   - Calidad técnica ≥90%
+   - Coherencia semántica ≥85%
+
+5. **Optimización de Recursos**
+   - Balance entre tamaño y costo
+   - Fine-tuning vs construcción desde cero
+   - Gestión eficiente de contexto
+
+## PASO 2: VERIFICAR CUMPLIMIENTO EN PLAN
+
+**Comandos de verificación:**
+```bash
+# Context Window Management
+grep -r "chunking\|prioridad\|CRITICAL\|HIGH\|MEDIUM\|LOW" contracts/plan/
+grep -r "lost-in-the-middle\|INICIO.*MEDIO.*FINAL" contracts/plan/
+grep -r "context_id\|token_count\|logs estructurados" contracts/plan/
+
+# Arquitectura Context-Aware
+grep -r "Context-Aware\|consciente.*contexto\|gestión.*memoria" contracts/plan/
+grep -r "identificador.*único\|context.*management" contracts/plan/
+
+# Seguridad y Verificación
+grep -r "cero confianza\|zero trust\|SAST\|SCA" contracts/plan/
+grep -r "escaneo.*automático\|secrets.*detection" contracts/plan/
+grep -r "prompt.*engineering.*seguridad" contracts/plan/
+
+# Métricas de Evaluación
+grep -r "precisión.*95\|calidad.*90\|coherencia.*85" contracts/plan/
+grep -r "métricas.*evaluación\|medición.*objetiva" contracts/plan/
+
+# Optimización de Recursos
+grep -r "balance.*tamaño.*costo\|optimización.*recursos" contracts/plan/
+grep -r "fine-tuning\|gestión.*eficiente" contracts/plan/
+```
+
+## PASO 3: CALCULAR CUMPLIMIENTO POR CATEGORÍA
+
+**Fórmula de cumplimiento:**
+```
+Cumplimiento = (Requisitos implementados / Requisitos totales) × 100
+```
+
+**Categorías a evaluar:**
+1. Context Window Management (5 requisitos)
+2. Arquitectura Context-Aware (3 requisitos)
+3. Seguridad y Verificación (3 requisitos)
+4. Métricas de Evaluación (3 requisitos)
+5. Optimización de Recursos (3 requisitos)
+
+## PASO 4: IDENTIFICAR GAPS Y RECOMENDACIONES
+
+**Análisis de gaps:**
+- Requisitos no implementados
+- Implementación parcial
+- Requisitos mal documentados
+- Inconsistencias encontradas
+
+## OUTPUT ESPERADO: RESUMEN EJECUTIVO
+
+# Resumen Ejecutivo: Cumplimiento con Mejores Prácticas LLM
+
+## 🎯 Objetivo Cumplido
+Verificación de cumplimiento del plan con @SOFTWARE_PROJECT_BEST_PRACTICES.md.
+
+## 📊 Resultados de Cumplimiento
+
+**Cumplimiento global:** 96%
+**Criterio de éxito:** ≥95%
+**Estado:** ✅ PASS
+
+### Desglose por Categoría
+
+#### 1. Context Window Management
+- **Requisitos:** 5
+- **Implementados:** 5
+- **Cumplimiento:** 100%
+- **Estado:** ✅ EXCELLENT
+
+**Detalles:**
+- ✅ Chunking por prioridad: CRITICAL/HIGH/MEDIUM/LOW implementado
+- ✅ Estructura anti lost-in-the-middle: INICIO-MEDIO-FINAL presente
+- ✅ Logs estructurados: context_id y token_count documentados
+- ✅ Límites de tokens: 2000/1500/1000/800 especificados
+- ✅ Gestión de contexto: Optimizada para LLMs
+
+#### 2. Arquitectura Context-Aware
+- **Requisitos:** 3
+- **Implementados:** 3
+- **Cumplimiento:** 100%
+- **Estado:** ✅ EXCELLENT
+
+**Detalles:**
+- ✅ Servicios conscientes del contexto: Documentados
+- ✅ Gestión de memoria: Optimizada con seguimiento
+- ✅ Identificadores únicos: Por fase implementado
+
+#### 3. Seguridad y Verificación
+- **Requisitos:** 3
+- **Implementados:** 3
+- **Cumplimiento:** 100%
+- **Estado:** ✅ EXCELLENT
+
+**Detalles:**
+- ✅ Principio de cero confianza: Aplicado completamente
+- ✅ Escaneo automático: SAST, SCA, Secrets detection
+- ✅ Prompt engineering de seguridad: Integrado
+
+#### 4. Métricas de Evaluación
+- **Requisitos:** 3
+- **Implementados:** 3
+- **Cumplimiento:** 100%
+- **Estado:** ✅ EXCELLENT
+
+**Detalles:**
+- ✅ Precisión ≥95%: Documentada y verificable
+- ✅ Calidad técnica ≥90%: Métricas específicas
+- ✅ Coherencia semántica ≥85%: Validada
+
+#### 5. Optimización de Recursos
+- **Requisitos:** 3
+- **Implementados:** 2
+- **Cumplimiento:** 67%
+- **Estado:** ⚠️ NEEDS IMPROVEMENT
+
+**Detalles:**
+- ✅ Balance entre tamaño y costo: Considerado
+- ❌ Fine-tuning vs construcción desde cero: No especificado
+- ✅ Gestión eficiente de contexto: Implementada
+
+## ⚠️ Hallazgos Críticos
+
+**Gap identificado:**
+- **Optimización de Recursos**: Falta especificación de fine-tuning vs construcción desde cero
+- **Severidad**: MEDIUM
+- **Impacto**: Bajo (no afecta funcionalidad core)
+
+## ✅ Recomendaciones
+
+### Inmediatas
+1. **Agregar especificación de fine-tuning**: Documentar cuándo usar fine-tuning vs construcción desde cero
+2. **Completar optimización de recursos**: Llegar a 100% cumplimiento
+
+### A corto plazo
+3. **Mantener cumplimiento**: Ejecutar este análisis después de cada actualización
+4. **Documentar nuevas mejores prácticas**: Si se agregan al documento fuente
+
+### A largo plazo
+5. **Automatizar verificación**: Crear script que valide cumplimiento automáticamente
+6. **Integrar en CI/CD**: Verificar cumplimiento como parte del pipeline
+
+## 📈 Beneficios del Cumplimiento
+
+### Técnicos
+- **Context Management**: Optimización de ventana de contexto para LLMs
+- **Seguridad**: Protección completa con principio de cero confianza
+- **Calidad**: Métricas objetivas y verificables
+- **Eficiencia**: Gestión optimizada de recursos
+
+### Operacionales
+- **Mantenibilidad**: Plan estructurado y coherente
+- **Escalabilidad**: Arquitectura preparada para crecimiento
+- **Confiabilidad**: Verificación automática de cumplimiento
+- **Documentación**: Estándares claros y aplicables
+
+## 📈 Estado General
+✅ EXCELLENT (96% cumplimiento, objetivo: ≥95%)
+
+**Clasificación:**
+- 95-100%: EXCELLENT ← **Aquí estamos**
+- 85-94%: GOOD
+- 70-84%: ACCEPTABLE
+- <70%: NEEDS IMPROVEMENT
+
+**Próxima verificación:** Después de próxima actualización del plan
+**Frecuencia recomendada:** Después de cada cambio mayor
+```
+
+---
+
 # FIN DEL DOCUMENTO
 
 ## 📝 Notas Finales
 
-**Total de prompts:** 20
+**Total de prompts:** 21
 **Fecha de creación:** 2025-10-05
 **Versión:** 1.0
 
