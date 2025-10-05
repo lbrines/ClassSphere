@@ -207,3 +207,40 @@ Backend result: {
  ✓ Compiled in 259ms (638 modules)
  ✓ Compiled in 268ms (638 modules)
  ✓ Compiled in 217ms (638 modules)
+ GET /login 200 in 157ms
+ ✓ Compiled /api/auth/login in 116ms (339 modules)
+=== LOGIN API ROUTE START ===
+Request body: { email: 'admin@classsphere.edu', password: 'secret' }
+Calling backend API: http://127.0.0.1:8000/api/v1/auth/login
+Backend response status: 200
+Backend result: {
+  success: true,
+  data: {
+    token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhZG1pbi0wMDEiLCJlbWFpbCI6ImFkbWluQGNsYXNzc3BoZXJlLmVkdSIsInJvbGUiOiJhZG1pbiIsImV4cCI6MTc1OTY1Nzc3OH0.khViU6aJ1YusLNrRqUAUu_Im_yh866HtNFcLfskUBiE',
+    user: {
+      id: 'admin-001',
+      email: 'admin@classsphere.edu',
+      name: 'System Administrator',
+      role: 'admin',
+      is_active: true,
+      created_at: '2024-01-01T00:00:00Z',
+      updated_at: '2024-01-01T00:00:00Z'
+    }
+  },
+  message: 'Login successful'
+}
+=== LOGIN API ROUTE SUCCESS ===
+ POST /api/auth/login 200 in 582ms
+ ✓ Compiled /dashboard in 183ms (343 modules)
+ GET /dashboard 200 in 278ms
+ ✓ Compiled /api/auth/me in 112ms (345 modules)
+ GET /api/auth/me 200 in 147ms
+ GET /api/auth/me 200 in 152ms
+ ✓ Compiled in 1026ms (660 modules)
+ GET /api/auth/me 200 in 39ms
+ ✓ Compiled in 384ms (660 modules)
+ GET /api/auth/me 200 in 33ms
+ ✓ Compiled in 779ms (660 modules)
+ GET /api/auth/me 200 in 63ms
+ ✓ Compiled in 406ms (658 modules)
+ ✓ Compiled in 396ms (658 modules)

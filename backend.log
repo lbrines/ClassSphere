@@ -20,3 +20,9 @@ INFO:     127.0.0.1:52746 - "GET /api/v1/auth/me HTTP/1.1" 200 OK
 INFO:     127.0.0.1:58802 - "GET /api/v1/auth/me HTTP/1.1" 200 OK
 INFO:     127.0.0.1:49184 - "POST /api/v1/auth/login HTTP/1.1" 200 OK
 INFO:     127.0.0.1:37024 - "POST /api/v1/auth/login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:40290 - "POST /api/v1/auth/login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:44414 - "GET /api/v1/auth/me HTTP/1.1" 200 OK
+INFO:     127.0.0.1:44430 - "GET /api/v1/auth/me HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37054 - "GET /api/v1/auth/me HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37066 - "GET /api/v1/auth/me HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56124 - "GET /api/v1/auth/me HTTP/1.1" 200 OK
