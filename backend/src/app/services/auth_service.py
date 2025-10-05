@@ -146,7 +146,7 @@ class AuthService:
     def create_tokens(self, user: User) -> Token:
         """Crear tokens JWT para usuario"""
         token_data = {
-            "sub": user.id,
+            "sub": str(user.id),
             "email": user.email,
             "role": user.role.value
         }

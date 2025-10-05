@@ -33,7 +33,8 @@ def create_access_token(data: Dict[str, Any], expires_delta: Optional[timedelta]
     else:
         expire = datetime.utcnow() + timedelta(minutes=settings.access_token_expire_minutes)
 
-    to_encode.update({"exp": expire, "type": "access"})
+    # Convert datetime to timestamp for proper JWT handling
+    to_encode.update({"exp": int(expire.timestamp()), "type": "access"})
     encoded_jwt = jwt.encode(to_encode, settings.secret_key, algorithm=settings.algorithm)
     return encoded_jwt
 
@@ -43,7 +44,8 @@ def create_refresh_token(data: Dict[str, Any]) -> str:
     to_encode = data.copy()
     expire = datetime.utcnow() + timedelta(days=settings.refresh_token_expire_days)
 
-    to_encode.update({"exp": expire, "type": "refresh"})
+    # Convert datetime to timestamp for proper JWT handling
+    to_encode.update({"exp": int(expire.timestamp()), "type": "refresh"})
     encoded_jwt = jwt.encode(to_encode, settings.secret_key, algorithm=settings.algorithm)
     return encoded_jwt
 
@@ -63,11 +65,16 @@ def verify_token(token: str, token_type: str = "access") -> TokenData:
         if payload.get("type") != token_type:
             raise credentials_exception
 
-        user_id: int = payload.get("sub")
+        user_id_str: str = payload.get("sub")
         email: str = payload.get("email")
         role: str = payload.get("role")
 
-        if user_id is None or email is None:
+        if user_id_str is None or email is None:
+            raise credentials_exception
+
+        try:
+            user_id = int(user_id_str)
+        except (ValueError, TypeError):
             raise credentials_exception
 
         token_data = TokenData(
