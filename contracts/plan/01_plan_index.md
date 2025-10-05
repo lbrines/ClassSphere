@@ -24,6 +24,23 @@ Implementar ClassSphere desde cero siguiendo TDD estricto, con gestión de conte
 4. **Git** - Control de versiones obligatorio
 5. **Docker** - Para deployment y CI/CD
 
+### Integración Frontend-Backend Mapeada
+**Mapeo Explícito Implementado:**
+- **POST /api/v1/auth/login** → `useAuth.login()` → `LoginForm` component
+- **GET /api/v1/auth/me** → `useAuth.checkAuth()` → `AuthGuard` component  
+- **POST /api/v1/oauth/google** → `useAuth.getGoogleAuthUrl()` → `OAuthButton` component
+- **POST /api/v1/auth/logout** → `useAuth.logout()` → Navigation components
+- **Error Handling**: 401 → redirect /login, 403 → access denied, 500 → error boundary
+
+### Patrones de Prevención de Errores LLM
+**6 Patrones Integrados:**
+1. **Pattern 1**: ConfigDict import obligatorio en config.py
+2. **Pattern 2**: Next.js config optimizado para ESM
+3. **Pattern 3**: Zod schemas para validación frontend
+4. **Pattern 4**: AsyncMock para tests async en backend
+5. **Pattern 5**: Frontend mocking correcto con Vitest
+6. **Pattern 6**: E2E coverage obligatorio con Playwright
+
 ### Context Window Management Aplicado
 
 **Chunking por Prioridad Implementado:**

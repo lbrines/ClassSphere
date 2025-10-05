@@ -32,6 +32,37 @@ date: "2025-10-05"
 | Seguridad | ≥95% | ≥85% |
 | API Endpoints | 100% | 100% |
 
+## Criterios de Aceptación Medibles
+
+### Funcional
+- [ ] Login funciona con credenciales demo (admin@classsphere.edu / secret)
+- [ ] OAuth Google redirige a Google y retorna exitosamente
+- [ ] Dashboard muestra contenido específico por rol
+- [ ] API responde en <2 segundos
+- [ ] Tests pasan 100% sin fallos
+
+### Técnico
+- [ ] Cobertura backend ≥80%
+- [ ] Cobertura frontend ≥80%
+- [ ] Módulos críticos ≥90%
+- [ ] Seguridad ≥95%
+- [ ] 0 vulnerabilidades CRITICAL
+
+### Comandos de Verificación Automática
+```bash
+# Backend coverage
+cd backend && python -m pytest --cov=src --cov-report=term-missing --cov-fail-under=80
+
+# Frontend coverage  
+cd frontend && npm run test:coverage
+
+# Security scan
+docker run --rm -v "$(pwd):/app" aquasec/trivy:latest fs /app
+
+# Performance test
+curl -w "@curl-format.txt" -o /dev/null -s http://localhost:8000/health
+```
+
 ## Metodología TDD Estricta
 
 ### Ciclo Red-Green-Refactor
