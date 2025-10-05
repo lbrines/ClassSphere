@@ -20,6 +20,13 @@ related_files:
 - **Matriz Permisos**: Por rol y recurso
 - **Session Management**: Persistencia + Auto-logout + Multi-device
 
+### Mapeo Frontend-Backend Explícito:
+- **POST /api/v1/auth/login** → `useAuth.login()` → `LoginForm` component
+- **GET /api/v1/auth/me** → `useAuth.checkAuth()` → `AuthGuard` component
+- **POST /api/v1/oauth/google** → `useAuth.getGoogleAuthUrl()` → `OAuthButton` component
+- **POST /api/v1/auth/logout** → `useAuth.logout()` → Navigation components
+- **Error Handling**: 401 → redirect /login, 403 → access denied, 500 → error boundary
+
 ## 2. Google Classroom Integration Completa (Stage 2 + 4)
 - **Modo Dual**: Google (producción) + Mock (desarrollo) - Instalación nueva
 - **API Integration**: Courses + Students + Assignments + Grades
@@ -30,6 +37,13 @@ related_files:
 - **Admin Panel**: Control total + Diagnósticos + Monitoreo
 
 ## 3. Dashboards Avanzados por Rol (Stage 2 + 3)
+
+### Implementación Obligatoria por Componente:
+- **DashboardPage.tsx**: Main container con detección de rol
+- **AdminDashboard.tsx**: Contenido específico para administradores
+- **CoordinatorDashboard.tsx**: Contenido específico para coordinadores
+- **TeacherDashboard.tsx**: Contenido específico para profesores
+- **StudentDashboard.tsx**: Contenido específico para estudiantes
 
 ### Admin Dashboard
 - Vista general del sistema + KPIs institucionales
@@ -59,6 +73,12 @@ related_files:
 - Comparativas anónimas + gamificación
 - Recomendaciones de estudio + recursos
 - Notificaciones personalizadas
+
+### Mapeo Frontend-Backend para Dashboards:
+- **GET /api/v1/dashboard/admin** → `useDashboardData(role='admin')` → `AdminDashboard`
+- **GET /api/v1/dashboard/coordinator** → `useDashboardData(role='coordinator')` → `CoordinatorDashboard`
+- **GET /api/v1/dashboard/teacher** → `useDashboardData(role='teacher')` → `TeacherDashboard`
+- **GET /api/v1/dashboard/student** → `useDashboardData(role='student')` → `StudentDashboard`
 
 ## 4. Visualizaciones Avanzadas (Stage 3)
 - **ApexCharts v5.3.5**: Gráficos interactivos + drill-down

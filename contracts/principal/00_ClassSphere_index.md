@@ -62,6 +62,12 @@ files:
 - ⚛️ **React 19** (actualizado desde 18.2.0)
 - 🧪 **Vitest + React Testing Library + Playwright** (stack de testing oficial)
 
+**Integración Frontend-Backend Mapeada**:
+- 🔗 **Mapeo Explícito**: Cada endpoint backend → hook frontend → componente
+- ⚡ **React Query v4**: useQuery/useMutation obligatorio en useAuth y dashboards
+- 🎯 **OAuth Completo**: getGoogleAuthUrl() implementado en useAuth hook
+- 🏗️ **Dashboard por Rol**: Contenido específico Admin/Coordinator/Teacher/Student
+
 **Endpoints API Disponibles**:
 - `GET /` - Welcome endpoint
 - `GET /health` - Health check
@@ -82,6 +88,13 @@ files:
 - ⏳ **Día 10**: Comunicación Frontend-Backend TDD - tests integración, envelope estándar
 - ⏳ **Día 11**: Protección de Rutas TDD - protección por rol, tests E2E Playwright
 - ⏳ **Día 12**: CI/CD y Documentación TDD - pipeline, documentación completa
+
+**Especificaciones de Implementación Obligatorias**:
+- 🔧 **OAuth Integration**: useAuth.getGoogleAuthUrl() → /api/auth/oauth/google → OAuthButton
+- 📊 **React Query Usage**: useQuery(checkAuth) + useMutation(login/logout) en useAuth
+- 🎭 **Role-Based Dashboard**: AdminDashboard, CoordinatorDashboard, TeacherDashboard, StudentDashboard
+- ✅ **Test Coverage**: Backend ≥80%, Frontend ≥80%, Critical modules ≥95%
+- 🧪 **Verification Commands**: Comandos automáticos para validar cada funcionalidad
 
 **Documentación de Arquitectura**:
 - 📖 **docs/architecture/testing.md**: Estrategia de testing con Vitest + React Testing Library + Playwright
@@ -131,6 +144,8 @@ files:
 - Accesibilidad WCAG 2.2 AA
 - Testing completo
 - CI/CD Pipeline
+- **Mapeo Frontend-Backend explícito**
+- **Implementación obligatoria por tecnología**
 
 ### [7. API Endpoints Consolidados](07_ClassSphere_api_endpoints.md)
 - Autenticación
@@ -169,6 +184,8 @@ files:
 - Scripts TDD automatizados
 - Fixtures y mocks consolidados
 - Protocolos de resolución de errores de tests
+- **Criterios de aceptación medibles**
+- **Comandos de verificación automática**
 
 ### [10. Plan de Implementación Unificado](10_ClassSphere_plan_implementacion.md)
 - Metodología TDD consolidada

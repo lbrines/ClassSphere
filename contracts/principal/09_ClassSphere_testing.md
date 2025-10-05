@@ -47,6 +47,29 @@ El sistema completo sigue Test-Driven Development (TDD) estricto:
 - **API Endpoints**: 100% casos de éxito y error
 - **Fase 1 Completa**: ≥100% cobertura en toda la Fase 1 (backend + frontend + tests)
 
+### Criterios de Aceptación Medibles:
+
+#### Funcional:
+- [ ] Login funciona con credenciales demo (admin@classsphere.edu / secret)
+- [ ] OAuth Google redirige a Google y retorna exitosamente
+- [ ] Dashboard muestra contenido específico por rol
+- [ ] Navegación funciona entre todas las páginas
+- [ ] Logout limpia sesión y redirige a login
+
+#### Técnico:
+- [ ] Backend coverage ≥ 80% (medido por `pytest --cov`)
+- [ ] Frontend coverage ≥ 80% (medido por `vitest --coverage`)
+- [ ] Todos los tests pasan 100% (medido por CI/CD pipeline)
+- [ ] Sin errores de consola en navegador (medido manualmente)
+- [ ] Tiempo de carga página < 2 segundos (medido por Lighthouse)
+
+#### Integración:
+- [ ] Frontend se comunica con backend exitosamente
+- [ ] JWT tokens se almacenan y envían correctamente
+- [ ] Flujo OAuth completa sin errores
+- [ ] Manejo de errores muestra mensajes apropiados
+- [ ] Diseño responsivo funciona en móvil/tablet
+
 ## Principios TDD con Prevención Integral
 
 ### 1. Testing Async como Estándar TDD
@@ -633,6 +656,66 @@ global.WebSocket = MockWebSocket
 vi.mock('react-apexcharts', () => ({
   default: MockApexChart,
 }))
+```
+
+## Comandos de Verificación Automática
+
+### OAuth Integration:
+```bash
+# Backend verification
+curl -X GET http://localhost:8000/api/v1/oauth/google
+
+# Frontend testing
+npm run test:oauth
+npm run test:e2e:oauth
+
+# Manual verification
+# Click OAuthButton, verify Google redirect works
+```
+
+### React Query Usage:
+```bash
+# Coverage verification
+npm run test:coverage:frontend
+
+# Hook testing
+npm run test:hooks
+
+# Integration testing
+npm run test:integration:api
+
+# Manual verification
+# Check Network tab for API calls using React Query
+```
+
+### Role-Based Dashboard:
+```bash
+# Unit testing
+npm run test:role-based
+
+# Integration testing
+npm run test:integration:dashboard
+
+# E2E testing
+npm run test:e2e:dashboard
+
+# Manual verification
+# Login as different roles, verify content changes
+```
+
+### Test Coverage:
+```bash
+# Backend coverage
+pytest --cov=src --cov-fail-under=80
+
+# Frontend coverage
+npm run test:coverage
+
+# Combined coverage
+npm run test:coverage:all
+
+# Coverage report
+open coverage/lcov-report/index.html
 ```
 
 ## Referencias a Otros Documentos

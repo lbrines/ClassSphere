@@ -47,6 +47,12 @@ Todo el sistema sigue **Test-Driven Development** estricto:
 - React Query v4 + Tailwind CSS
 - Páginas principales (login, dashboard)
 
+### Implementación Obligatoria por Tecnología:
+- **React Query v4**: useQuery(checkAuth) + useMutation(login/logout) en useAuth hook
+- **OAuth Integration**: getGoogleAuthUrl() implementado en useAuth → OAuthButton funcional
+- **Role-Based Dashboard**: AdminDashboard, CoordinatorDashboard, TeacherDashboard, StudentDashboard
+- **Frontend-Backend Mapping**: Cada endpoint → hook → componente documentado
+
 **Días 7-9: Integración Base**
 - Tests de integración frontend-backend
 - Comunicación API completa
@@ -146,6 +152,14 @@ Todo el sistema sigue **Test-Driven Development** estricto:
 - [x] Testing: ≥80% cobertura + CI básico ✅
 - [ ] Integration: Frontend-Backend comunicación (Pendiente - Día 10)
 - [x] Error Prevention: AsyncMock + CORS tests + Server health + Test Error Resolution Protocols ✅
+
+#### Checklist de Implementación Obligatoria:
+- [ ] **OAuth Integration**: useAuth.getGoogleAuthUrl() → /api/auth/oauth/google → OAuthButton funcional
+- [ ] **React Query Usage**: useQuery(checkAuth) + useMutation(login/logout) implementado en useAuth
+- [ ] **Role-Based Dashboard**: Componentes específicos AdminDashboard, CoordinatorDashboard, TeacherDashboard, StudentDashboard
+- [ ] **Frontend-Backend Mapping**: Documentación explícita de cada endpoint → hook → componente
+- [ ] **Test Coverage**: Backend ≥80%, Frontend ≥80%, Critical modules ≥95%
+- [ ] **Verification Commands**: Comandos automáticos para validar cada funcionalidad
 
 **Detalles de Implementación Completada**:
 - ✅ **Backend Completo**: FastAPI 0.104.1 + Pydantic v2 + JWT + OAuth 2.0 Google
