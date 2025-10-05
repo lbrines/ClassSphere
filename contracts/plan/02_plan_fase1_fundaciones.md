@@ -25,6 +25,14 @@ Establecer la base completa del sistema con backend FastAPI, frontend Next.js 15
 - Git configurado
 - Repositorio inicializado
 
+### Mapeo Frontend-Backend Obligatorio
+**Implementación Requerida:**
+- **useAuth.login()** → `POST /api/v1/auth/login` → `LoginForm` component
+- **useAuth.checkAuth()** → `GET /api/v1/auth/me` → `AuthGuard` component
+- **useAuth.getGoogleAuthUrl()** → `POST /api/v1/oauth/google` → `OAuthButton` component
+- **useAuth.logout()** → `POST /api/v1/auth/logout` → Navigation components
+- **Error Handling**: 401 → redirect /login, 403 → access denied, 500 → error boundary
+
 ### Duración Total
 **12 días** (divididos en 12 tareas diarias específicas)
 

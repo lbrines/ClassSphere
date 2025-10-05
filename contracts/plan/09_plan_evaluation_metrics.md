@@ -42,6 +42,10 @@ Precisión = (Especificaciones cumplidas / Especificaciones totales) × 100
 - [ ] Docker deployment especificado
 - [ ] Mocks Google API especificados
 - [ ] Comandos de verificación especificados
+- [ ] **Mapeo frontend-backend explícito especificado**
+- [ ] **Patrones de prevención LLM especificados**
+- [ ] **Criterios de aceptación medibles especificados**
+- [ ] **Checklist de implementación obligatoria especificado**
 
 **Comando de verificación:**
 ```bash
