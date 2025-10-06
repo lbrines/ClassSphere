@@ -25,6 +25,18 @@ import { DashboardService, DashboardData } from '../../services/dashboard.servic
                 {{ currentUser()?.role | titlecase }}
               </span>
               <button
+                (click)="goToSearch()"
+                class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm font-medium"
+              >
+                Búsqueda Avanzada
+              </button>
+              <button
+                (click)="goToCharts()"
+                class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm font-medium"
+              >
+                Gráficos
+              </button>
+              <button
                 (click)="logout()"
                 class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm font-medium"
               >
@@ -265,5 +277,13 @@ export class DashboardComponent implements OnInit {
   formatDate(dateString: string | undefined): string {
     if (!dateString) return '';
     return new Date(dateString).toLocaleString('es-ES');
+  }
+
+  goToSearch() {
+    this.router.navigate(['/search']);
+  }
+
+  goToCharts() {
+    this.router.navigate(['/charts']);
   }
 }

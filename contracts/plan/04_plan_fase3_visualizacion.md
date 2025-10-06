@@ -22,9 +22,9 @@ Implementar búsqueda avanzada, notificaciones WebSocket y gráficos interactivo
 
 ### Criterios de Aceptación (Coverage 100%)
 - [ ] Búsqueda avanzada: 100% coverage
-- [ ] WebSocket notifications: 100% coverage
+- [ ] ~~WebSocket notifications: 100% coverage~~ (POSPUESTO)
 - [ ] Gráficos interactivos: 100% coverage
-- [ ] E2E: 100% flujos de búsqueda y notificaciones
+- [ ] E2E: 100% flujos de búsqueda (notificaciones pospuestas)
 
 ## 📅 MEDIO: Implementación
 
@@ -48,10 +48,15 @@ func TestSearchWithFilters(t *testing.T) {
 
 **Coverage**: 100% en search_service.go
 
-### Día 5-7: Notificaciones WebSocket (Coverage 100%)
+### Día 5-7: ~~Notificaciones WebSocket~~ (POSPUESTO - Desarrollado por ahora)
 
-**TDD: WebSocket Service**
+**Estado**: ⏸️ **POSPUESTO** - WebSocket notifications marcado para desarrollo futuro
+**Razón**: Priorización de funcionalidades core vs. features avanzadas
+**Alternativa**: Implementar notificaciones via polling HTTP o Server-Sent Events (SSE)
+
+**TDD: WebSocket Service** (Para implementación futura)
 ```go
+// TODO: Implementar en versión futura
 func TestWebSocketConnection(t *testing.T) {
     ws := NewWebSocketService()
     client := ws.Connect("user123")
@@ -65,7 +70,7 @@ func TestBroadcastNotification(t *testing.T) {
 }
 ```
 
-**Coverage**: 100% en websocket_service.go
+**Coverage**: Pendiente - websocket_service.go (futuro)
 
 ### Día 8-10: Gráficos Interactivos (Coverage 100%)
 
@@ -91,18 +96,19 @@ describe('AdvancedChartComponent', () => {
 
 ### Checklist Fase 3
 - [ ] Search: 100% coverage
-- [ ] WebSocket: 100% coverage
+- [ ] ~~WebSocket: 100% coverage~~ (POSPUESTO)
 - [ ] Charts: 100% coverage
-- [ ] E2E: 100% flujos
+- [ ] E2E: 100% flujos (sin WebSocket)
 
 ### Comandos de Verificación
 ```bash
 go test ./search/... -cover
-go test ./websocket/... -cover
+# go test ./websocket/... -cover  # POSPUESTO
 ng test --include='**/charts/**' --code-coverage
 ```
 
 ---
 
-**Estado Fase 3**: ✅ LISTA para Coverage 100%
+**Estado Fase 3**: ✅ LISTA para Coverage 100% (WebSocket POSPUESTO)
 **Próximo**: Fase 4 - Integración Completa
+**Nota**: WebSocket notifications marcado para desarrollo futuro
