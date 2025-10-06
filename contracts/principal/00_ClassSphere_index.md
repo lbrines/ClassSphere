@@ -37,6 +37,8 @@ files:
     title: "Errores Críticos y Prevención"
   - name: "16_ClassSphere_verification_commands.md"
     title: "Comandos de Verificación Críticos"
+  - name: "17_ClassSphere_language_notifications.md"
+    title: "Requisitos de Idioma y Notificaciones"
 ---
 
 # ClassSphere - Documentación Completa
@@ -47,7 +49,7 @@ files:
 - **Fase**: Implementación Unificada - Todas las Funcionalidades
 - **Autor**: Sistema de Contratos LLM
 - **Fecha**: 2025-10-06 (Migración a nuevo stack tecnológico - Fase 1 Completada)
-- **Propósito**: Implementar sistema completo de ClassSphere con stack moderno Go + Angular
+- **Propósito**: Implementar sistema completo de ClassSphere con stack moderno Go + Angular (English as default language)
 
 ## Estado Actual del Proyecto
 
@@ -85,11 +87,12 @@ files:
 - 🔧 **CI/CD Pipeline** con GitHub Actions
 
 **Nuevo Stack Frontend**:
-- 🚀 **Angular 19** con esbuild oficial
+- 🚀 **Angular 19** con esbuild oficial (English UI default)
 - 🎨 **TailwindCSS 3.x**
 - 🧹 **Biome** (linter/formatter)
 - 🧪 **Jasmine + Karma** (testing estándar Angular)
 - 🎭 **Playwright** (E2E testing)
+- 🌐 **i18n Support** (English default, secondary languages optional)
 
 **DevOps Mantenido**:
 - 🔧 **GitHub Actions** (CI/CD)
@@ -112,17 +115,19 @@ files:
 **Plan de Migración Actualizado**:
 - ✅ **Fase 1**: Capacitación Go + Angular (COMPLETADA - 155 min resolución errores)
 - ⏳ **Fase 2**: Backend Go + Echo (4-6 semanas) - Con patrones de prevención validados
-- ⏳ **Fase 3**: Frontend Angular + esbuild (3-5 semanas) - Con patrones TypeScript validados
+- ⏳ **Fase 3**: Frontend Angular + esbuild (3-5 semanas) - Con patrones TypeScript validados + Notificaciones opcionales
 - ⏳ **Fase 4**: Testing completo (3-4 semanas) - Con patrones OAuth tests validados
 - ⏳ **Fase 5**: Integración y deployment (2-3 semanas) - Con patrones server restart validados
 
 **Especificaciones de Implementación**:
 - 🔧 **OAuth Integration**: Angular services → Go handlers
-- 🎭 **Role-Based Dashboard**: Componentes Angular por rol
+- 🎭 **Role-Based Dashboard**: Componentes Angular por rol (English UI default)
 - ✅ **Test Coverage**: Backend ≥80%, Frontend ≥80%, Critical modules ≥95% (ACTUAL: 94.4% sin OAuth)
 - 🧪 **Testing**: Jasmine + Karma (Angular), testify (Go), Playwright (E2E)
 - 🛡️ **Error Prevention**: Patrones validados en producción para evitar errores bloqueadores
 - 🔄 **Server Management**: Comandos de restart y verificación automatizados
+- 🌐 **Language Support**: English as default, i18n as optional feature
+- 🔔 **Notifications**: Optional feature in Phase 3, not mandatory
 
 **Documentación de Arquitectura**:
 - 📖 **docs/architecture/testing.md**: Estrategia de testing con Jasmine + Karma + Playwright
@@ -164,38 +169,39 @@ files:
 - Estructura de directorios completa
 
 ### [6. Funcionalidades Consolidadas](06_ClassSphere_funcionalidades.md)
-- Autenticación y autorización completa
+- Autenticación y autorización completa (English UI default)
 - Google Classroom integration completa
-- Dashboards avanzados por rol
+- Dashboards avanzados por rol (English interface)
 - Visualizaciones avanzadas
 - Sistema de búsqueda avanzada
-- Notificaciones en tiempo real
+- Notificaciones en tiempo real (Opcional en Fase 3)
 - Métricas y analytics avanzados
 - Accesibilidad WCAG 2.2 AA
 - Testing completo
 - CI/CD Pipeline
 - **Mapeo Frontend-Backend explícito**
 - **Implementación obligatoria por tecnología**
+- **i18n Support** (English default, secondary languages optional)
 
 ### [7. API Endpoints Consolidados](07_ClassSphere_api_endpoints.md)
-- Autenticación
+- Autenticación (English responses default)
 - OAuth
 - Health Checks
 - Google Classroom
-- Dashboards
+- Dashboards (English UI default)
 - Métricas
 - Búsqueda
-- Notificaciones
+- Notificaciones (Optional endpoints in Phase 3)
 - Google Sync Avanzado
 - Sincronización y Backup
 - Webhooks
 - Diagnóstico
 
 ### [8. Modelos de Datos Consolidados](08_ClassSphere_modelos_datos.md)
-- Usuario
+- Usuario (English labels default)
 - Curso completo
 - Métrica avanzada
-- Notificación
+- Notificación (Optional model in Phase 3)
 - Estado de sincronización
 
 ### [9. Estrategia de Testing Unificada](09_ClassSphere_testing.md)
@@ -234,15 +240,16 @@ files:
 - Verificación de deployment con prevención de errores
 
 ### [12. Criterios de Aceptación Unificados](12_ClassSphere_criterios_aceptacion.md)
-- Backend completo
-- Frontend completo
+- Backend completo (English responses default)
+- Frontend completo (English UI default)
 - Integración Google completa
-- Dashboards y visualización
-- Búsqueda y notificaciones
+- Dashboards y visualización (English interface)
+- Búsqueda y notificaciones (Notifications optional in Phase 3)
 - Testing y calidad
 - Accesibilidad WCAG 2.2 AA
 - CI/CD y deployment
 - Seguridad y operaciones
+- i18n Support (English default, secondary languages optional)
 
 ### [13. Validación de Coherencia Semántica](13_ClassSphere_validacion_coherencia.md)
 - Métricas de coherencia implementadas
@@ -275,6 +282,13 @@ files:
 - Verificación de cobertura de código
 - Comandos de server management
 
+### [17. Requisitos de Idioma y Notificaciones](17_ClassSphere_language_notifications.md)
+- English como idioma por defecto del sistema
+- Implementación de i18n como característica opcional
+- Notificaciones como funcionalidad opcional en Fase 3
+- Criterios de aceptación para soporte multiidioma
+- Configuración de notificaciones opcionales
+
 ## Guía de Navegación
 
 Esta documentación está diseñada para ser consultada de manera modular. Puede seguir estos enfoques:
@@ -296,4 +310,4 @@ Esta estructura de documentación ha sido diseñada específicamente para optimi
 
 ---
 
-*Última actualización: 2025-10-06 - Fase 1 Completada con Lecciones Aprendidas*
+*Última actualización: 2025-10-06 - Fase 1 Completada con Lecciones Aprendidas - English Default Language & Optional Notifications*
