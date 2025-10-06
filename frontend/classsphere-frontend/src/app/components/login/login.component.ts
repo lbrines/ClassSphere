@@ -4,6 +4,13 @@ import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } 
 import { Router, RouterModule } from '@angular/router';
 import { AuthService, LoginRequest } from '../../services/auth.service';
 
+interface DemoUser {
+  name: string;
+  email: string;
+  password: string;
+  role: string;
+}
+
 @Component({
   selector: 'app-login',
   standalone: true,
@@ -45,7 +52,7 @@ import { AuthService, LoginRequest } from '../../services/auth.service';
         <!-- Divider -->
         <div class="relative">
           <div class="absolute inset-0 flex items-center">
-            <div class="w-full border-t border-gray-300" />
+            <div class="w-full border-t border-gray-300"></div>
           </div>
           <div class="relative flex justify-center text-sm">
             <span class="px-2 bg-gray-50 text-gray-500">Or continue with email</span>
@@ -129,6 +136,51 @@ import { AuthService, LoginRequest } from '../../services/auth.service';
             </p>
           </div>
         </form>
+
+        <!-- Demo Users Section -->
+        <div class="mt-8 border-t border-gray-200 pt-6">
+          <div class="text-center">
+            <button
+              type="button"
+              (click)="showDemoUsers.set(!showDemoUsers())"
+              class="text-sm font-medium text-indigo-600 hover:text-indigo-500 mb-4 flex items-center justify-center mx-auto"
+            >
+              <svg class="w-4 h-4 mr-1" [class.rotate-180]="showDemoUsers()" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+              </svg>
+              Demo Users (Testing Only)
+            </button>
+            
+            @if (showDemoUsers()) {
+              <div class="grid grid-cols-1 gap-3 mb-4">
+                @for (user of demoUsers; track user.email) {
+                  <button
+                    type="button"
+                    (click)="fillDemoUser(user)"
+                    class="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-indigo-50 hover:border-indigo-300 transition-colors"
+                  >
+                    <div class="flex items-center space-x-3">
+                      <div class="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center">
+                        <span class="text-sm font-medium text-indigo-600">{{ user.name.charAt(0) }}</span>
+                      </div>
+                      <div class="text-left">
+                        <p class="text-sm font-medium text-gray-900">{{ user.name }}</p>
+                        <p class="text-xs text-gray-500">{{ user.role }}</p>
+                      </div>
+                    </div>
+                    <div class="text-right">
+                      <p class="text-xs text-gray-500">{{ user.email }}</p>
+                      <p class="text-xs text-indigo-500 font-medium">Click to fill</p>
+                    </div>
+                  </button>
+                }
+              </div>
+              <p class="text-xs text-gray-400">
+                These are demo accounts for testing purposes only
+              </p>
+            }
+          </div>
+        </div>
       </div>
     </div>
   `,
@@ -138,6 +190,34 @@ export class LoginComponent {
   loginForm: FormGroup;
   isLoading = signal(false);
   errorMessage = signal('');
+  showDemoUsers = signal(false);
+
+  demoUsers: DemoUser[] = [
+    {
+      name: 'Admin User',
+      email: 'admin@classsphere.com',
+      password: 'admin123',
+      role: 'Administrator'
+    },
+    {
+      name: 'Teacher Demo',
+      email: 'teacher@classsphere.com',
+      password: 'teacher123',
+      role: 'Teacher'
+    },
+    {
+      name: 'Student Demo',
+      email: 'student@classsphere.com',
+      password: 'student123',
+      role: 'Student'
+    },
+    {
+      name: 'Parent Demo',
+      email: 'parent@classsphere.com',
+      password: 'parent123',
+      role: 'Parent'
+    }
+  ];
 
   constructor(
     private authService: AuthService,
@@ -184,5 +264,19 @@ export class LoginComponent {
     // In a real implementation, this would use Google's OAuth library
     const googleAuthUrl = 'http://localhost:8080/auth/google';
     window.location.href = googleAuthUrl;
+  }
+
+  fillDemoUser(user: DemoUser): void {
+    this.loginForm.patchValue({
+      email: user.email,
+      password: user.password
+    });
+    this.errorMessage.set('');
+    
+    // Show a brief success message
+    console.log(`Demo user filled: ${user.name} (${user.role})`);
+    
+    // Optional: Add visual feedback by marking the form as touched
+    this.loginForm.markAsTouched();
   }
 }

@@ -4,9 +4,11 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestJWTMiddleware(t *testing.T) {
@@ -28,6 +30,94 @@ func TestJWTMiddleware(t *testing.T) {
 	})
 	
 	err := handler(c)
+	assert.NoError(t, err)
+	assert.Equal(t, http.StatusUnauthorized, rec.Code)
+}
+
+func TestJWTMiddleware_WithValidToken(t *testing.T) {
+	// Create JWT manager
+	jwtManager := NewJWTManager("test-secret")
+	
+	// Generate valid token
+	token, err := jwtManager.GenerateToken("1", "user", 1*time.Hour)
+	require.NoError(t, err)
+	
+	// Create middleware
+	middleware := JWTMiddleware(jwtManager)
+	
+	// Create test context
+	e := echo.New()
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	req.Header.Set("Authorization", "Bearer "+token)
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+	
+	// Test middleware with valid token
+	handler := middleware(func(c echo.Context) error {
+		return c.JSON(http.StatusOK, map[string]string{"status": "ok"})
+	})
+	
+	err = handler(c)
+	assert.NoError(t, err)
+	assert.Equal(t, http.StatusOK, rec.Code)
+	
+	// Verify user is set in context
+	user := c.Get("user")
+	assert.NotNil(t, user)
+	claims, ok := user.(*Claims)
+	assert.True(t, ok)
+	assert.Equal(t, "1", claims.UserID)
+	assert.Equal(t, "user", claims.Role)
+}
+
+func TestJWTMiddleware_WithInvalidToken(t *testing.T) {
+	// Create JWT manager
+	jwtManager := NewJWTManager("test-secret")
+	
+	// Create middleware
+	middleware := JWTMiddleware(jwtManager)
+	
+	// Create test context
+	e := echo.New()
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	req.Header.Set("Authorization", "Bearer invalid-token")
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+	
+	// Test middleware with invalid token
+	handler := middleware(func(c echo.Context) error {
+		return c.JSON(http.StatusOK, map[string]string{"status": "ok"})
+	})
+	
+	err := handler(c)
+	assert.NoError(t, err)
+	assert.Equal(t, http.StatusUnauthorized, rec.Code)
+}
+
+func TestJWTMiddleware_WithExpiredToken(t *testing.T) {
+	// Create JWT manager
+	jwtManager := NewJWTManager("test-secret")
+	
+	// Generate expired token
+	token, err := jwtManager.GenerateToken("1", "user", -1*time.Hour)
+	require.NoError(t, err)
+	
+	// Create middleware
+	middleware := JWTMiddleware(jwtManager)
+	
+	// Create test context
+	e := echo.New()
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	req.Header.Set("Authorization", "Bearer "+token)
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+	
+	// Test middleware with expired token
+	handler := middleware(func(c echo.Context) error {
+		return c.JSON(http.StatusOK, map[string]string{"status": "ok"})
+	})
+	
+	err = handler(c)
 	assert.NoError(t, err)
 	assert.Equal(t, http.StatusUnauthorized, rec.Code)
 }

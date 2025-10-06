@@ -62,3 +62,35 @@ func TestValidatePasswordStrength_EdgeCases(t *testing.T) {
 	err = ValidatePasswordStrength("MyStr0ng!P@ssw0rd")
 	assert.NoError(t, err)
 }
+
+func TestGenerateRandomPassword_WithShortLength(t *testing.T) {
+	// Test with length less than 8 (should default to 8)
+	password, err := GenerateRandomPassword(5)
+	assert.NoError(t, err)
+	assert.Len(t, password, 8)
+	assert.NotEmpty(t, password)
+}
+
+func TestGenerateRandomPassword_WithLongLength(t *testing.T) {
+	// Test with length greater than 128 (should cap at 128)
+	password, err := GenerateRandomPassword(200)
+	assert.NoError(t, err)
+	assert.Len(t, password, 128)
+	assert.NotEmpty(t, password)
+}
+
+func TestGenerateRandomPassword_WithZeroLength(t *testing.T) {
+	// Test with zero length (should default to 8)
+	password, err := GenerateRandomPassword(0)
+	assert.NoError(t, err)
+	assert.Len(t, password, 8)
+	assert.NotEmpty(t, password)
+}
+
+func TestGenerateRandomPassword_WithNegativeLength(t *testing.T) {
+	// Test with negative length (should default to 8)
+	password, err := GenerateRandomPassword(-5)
+	assert.NoError(t, err)
+	assert.Len(t, password, 8)
+	assert.NotEmpty(t, password)
+}
