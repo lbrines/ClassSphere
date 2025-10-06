@@ -1,0 +1,18 @@
+# ClassSphere Development Commit Template
+#
+# Use generic terms instead of brand names:
+# - AI Assistant instead of specific LLM names
+# - Development System instead of specific tools
+# - Generated with Development Tools
+#
+# Format:
+# [type] Brief description
+#
+# Detailed description of changes
+# - Feature additions
+# - Bug fixes
+# - Performance improvements
+# - Test coverage updates
+#
+# Generated with Development Tools
+# Co-Authored-By: Dev Assistant <dev@classsphere.local>
