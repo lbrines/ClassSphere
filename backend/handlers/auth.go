@@ -42,6 +42,10 @@ type RefreshTokenRequest struct {
 	Token string `json:"token" validate:"required"`
 }
 
+type LogoutRequest struct {
+	Token string `json:"token" validate:"required"`
+}
+
 type UserResponse struct {
 	ID       uint   `json:"id"`
 	Email    string `json:"email"`
@@ -260,4 +264,30 @@ func (h *AuthHandler) validateLoginRequest(req LoginRequest) error {
 func (h *AuthHandler) isValidEmail(email string) bool {
 	emailRegex := regexp.MustCompile(`^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`)
 	return emailRegex.MatchString(email)
+}
+
+// Logout handles user logout
+func (h *AuthHandler) Logout(c echo.Context) error {
+	var req LogoutRequest
+	if err := c.Bind(&req); err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Invalid request"})
+	}
+
+	// Validate token
+	claims, err := h.jwtManager.ValidateToken(req.Token)
+	if err != nil {
+		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Invalid token"})
+	}
+
+	// In a real implementation, you would:
+	// 1. Add token to blacklist
+	// 2. Clear any server-side sessions
+	// 3. Log the logout event
+	
+	// For now, just return success
+	return c.JSON(http.StatusOK, map[string]interface{}{
+		"message": "Logout successful",
+		"user_id": claims.UserID,
+		"timestamp": time.Now().Format("2006-01-02T15:04:05Z07:00"),
+	})
 }
