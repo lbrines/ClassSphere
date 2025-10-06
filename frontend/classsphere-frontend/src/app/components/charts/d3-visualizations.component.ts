@@ -316,7 +316,7 @@ export class D3VisualizationsComponent implements OnInit, AfterViewInit {
     const root = d3.hierarchy({ children: data })
       .sum((d: any) => d.value);
 
-    treemap(root);
+    treemap(root as any);
 
     // Create cells
     const cells = this.svg.selectAll('g')
@@ -402,8 +402,8 @@ export class D3VisualizationsComponent implements OnInit, AfterViewInit {
     const cells = this.svg.selectAll('rect')
       .data(data)
       .enter().append('rect')
-      .attr('x', (d, i) => (i % cols) * cellSize)
-      .attr('y', (d, i) => Math.floor(i / cols) * cellSize)
+      .attr('x', (d: D3DataPoint, i: number) => (i % cols) * cellSize)
+      .attr('y', (d: D3DataPoint, i: number) => Math.floor(i / cols) * cellSize)
       .attr('width', cellSize)
       .attr('height', cellSize)
       .attr('fill', (d: D3DataPoint) => this.getHeatmapColor(d.value))
@@ -414,8 +414,8 @@ export class D3VisualizationsComponent implements OnInit, AfterViewInit {
     this.svg.selectAll('text')
       .data(data)
       .enter().append('text')
-      .attr('x', (d, i) => (i % cols) * cellSize + cellSize / 2)
-      .attr('y', (d, i) => Math.floor(i / cols) * cellSize + cellSize / 2)
+      .attr('x', (d: D3DataPoint, i: number) => (i % cols) * cellSize + cellSize / 2)
+      .attr('y', (d: D3DataPoint, i: number) => Math.floor(i / cols) * cellSize + cellSize / 2)
       .attr('text-anchor', 'middle')
       .attr('dominant-baseline', 'middle')
       .attr('font-size', '10px')
@@ -536,7 +536,7 @@ export class D3VisualizationsComponent implements OnInit, AfterViewInit {
   }
 
   wrap(text: any, width: number) {
-    text.each(function() {
+    text.each(function(this: any) {
       const text = d3.select(this);
       const words = text.text().split(/\s+/).reverse();
       let word;

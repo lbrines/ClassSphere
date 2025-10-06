@@ -205,7 +205,7 @@ import { Router } from '@angular/router';
 })
 export class StudentDashboardComponent extends BaseDashboardComponent implements OnInit {
   
-  ngOnInit(): void {
+  override ngOnInit(): void {
     super.ngOnInit();
   }
 
