@@ -37,6 +37,7 @@ func main() {
 
 	// Initialize handlers
 	authHandler := handlers.NewAuthHandler(userRepo, jwtManager)
+	dashboardHandler := handlers.NewDashboardHandler(userRepo)
 
 	// Setup Echo
 	e := echo.New()
@@ -55,10 +56,19 @@ func main() {
 	authGroup.POST("/register", authHandler.Register)
 	authGroup.POST("/login", authHandler.Login)
 	authGroup.POST("/refresh", authHandler.RefreshToken)
+	authGroup.POST("/logout", authHandler.Logout)
 
 	// Protected routes
 	protectedGroup := e.Group("/api")
 	protectedGroup.Use(auth.JWTMiddleware(jwtManager))
+	
+	// Dashboard routes (more specific routes first)
+	protectedGroup.GET("/dashboard/student", dashboardHandler.GetStudentDashboard)
+	protectedGroup.GET("/dashboard/teacher", dashboardHandler.GetTeacherDashboard)
+	protectedGroup.GET("/dashboard/coordinator", dashboardHandler.GetCoordinatorDashboard)
+	protectedGroup.GET("/dashboard/admin", dashboardHandler.GetAdminDashboard)
+	
+	// General profile route
 	protectedGroup.GET("/profile", authHandler.GetProfile)
 
 	// Admin routes (require admin role)
