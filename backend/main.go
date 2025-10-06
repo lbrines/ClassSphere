@@ -10,6 +10,7 @@ import (
 	"classsphere-backend/database"
 	"classsphere-backend/handlers"
 	"classsphere-backend/models"
+	"classsphere-backend/oauth"
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -38,6 +39,7 @@ func main() {
 	// Initialize handlers
 	authHandler := handlers.NewAuthHandler(userRepo, jwtManager)
 	dashboardHandler := handlers.NewDashboardHandler(userRepo)
+	googleOAuthHandler := oauth.NewGoogleOAuthHandler(userRepo, jwtManager)
 
 	// Setup Echo
 	e := echo.New()
@@ -57,6 +59,10 @@ func main() {
 	authGroup.POST("/login", authHandler.Login)
 	authGroup.POST("/refresh", authHandler.RefreshToken)
 	authGroup.POST("/logout", authHandler.Logout)
+	
+	// OAuth routes
+	authGroup.GET("/google", googleOAuthHandler.InitiateGoogleAuth)
+	authGroup.GET("/google/callback", googleOAuthHandler.HandleGoogleCallback)
 
 	// Protected routes
 	protectedGroup := e.Group("/api")
