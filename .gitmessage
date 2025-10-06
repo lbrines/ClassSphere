@@ -1,11 +1,58 @@
-# ClassSphere Development Commit Template
+# ClassSphere LLM-Optimized Commit Template
 #
-# Simple commit format without tool/technology mentions:
+# STRUCTURED FORMAT FOR MAXIMUM LLM COMPREHENSION:
 #
-# [type] Brief description
+# [TYPE]: Component - Action taken (State/Progress)
 #
-# Detailed description of changes
-# - Feature additions
-# - Bug fixes
-# - Performance improvements
-# - Test coverage updates
+# ## Context
+# - What was the situation before this change
+# - Why this change was necessary
+# - Which part of the system is affected
+#
+# ## Changes Made
+# - Specific actions taken (be precise)
+# - Files created/modified/deleted
+# - Functions/classes/endpoints added
+#
+# ## Technical Details
+# - Implementation approach used
+# - Dependencies added/removed
+# - Configuration changes
+#
+# ## Testing & Coverage
+# - Tests added/modified
+# - Coverage percentage achieved
+# - Test types (unit/integration/e2e)
+#
+# ## Impact & Status
+# - What functionality is now available/fixed
+# - Current state vs target state
+# - Next steps or dependencies
+#
+# EXAMPLE:
+# [feat]: Auth - Implement JWT authentication system (68.4% coverage)
+#
+# ## Context
+# - Application needed secure user authentication
+# - JWT standard required for stateless auth
+# - Part of Phase 1 Day 4-5 implementation
+#
+# ## Changes Made
+# - Created auth/jwt.go with token generation/validation
+# - Added auth service with 100% test coverage
+# - Implemented middleware for route protection
+#
+# ## Technical Details
+# - Uses golang-jwt/jwt/v5 library
+# - HMAC SHA256 signing method
+# - 24h token expiration configurable
+#
+# ## Testing & Coverage
+# - 8 unit tests covering all auth scenarios
+# - Token generation, validation, expiration tests
+# - Auth service: 100% coverage, Total: 75.2%
+#
+# ## Impact & Status
+# - Secure endpoints now available
+# - Ready for frontend integration
+# - Next: OAuth 2.0 Google integration
