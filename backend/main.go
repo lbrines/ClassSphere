@@ -75,13 +75,7 @@ func main() {
 	protectedGroup := e.Group("/api")
 	protectedGroup.Use(auth.JWTMiddleware(jwtManager))
 	
-	// Dashboard routes (more specific routes first)
-	protectedGroup.GET("/dashboard/student", dashboardHandler.GetStudentDashboard)
-	protectedGroup.GET("/dashboard/teacher", dashboardHandler.GetTeacherDashboard)
-	protectedGroup.GET("/dashboard/coordinator", dashboardHandler.GetCoordinatorDashboard)
-	protectedGroup.GET("/dashboard/admin", dashboardHandler.GetAdminDashboard)
-	
-	// Google Classroom routes
+	// Google Classroom routes - FIXED: Register BEFORE dashboard routes to avoid conflicts
 	googleGroup := protectedGroup.Group("/google")
 	log.Println("Registering Google Classroom routes...")
 	googleGroup.GET("/courses", googleHandler.GetCourses)
@@ -93,6 +87,12 @@ func main() {
 	googleGroup.GET("/system/status", googleHandler.GetSystemStatus)
 	googleGroup.POST("/mock-mode/:enabled", googleHandler.ToggleMockMode)
 	log.Println("Google Classroom routes registered successfully")
+	
+	// Dashboard routes (more specific routes first)
+	protectedGroup.GET("/dashboard/student", dashboardHandler.GetStudentDashboard)
+	protectedGroup.GET("/dashboard/teacher", dashboardHandler.GetTeacherDashboard)
+	protectedGroup.GET("/dashboard/coordinator", dashboardHandler.GetCoordinatorDashboard)
+	protectedGroup.GET("/dashboard/admin", dashboardHandler.GetAdminDashboard)
 	
 	// General profile route
 	protectedGroup.GET("/profile", authHandler.GetProfile)

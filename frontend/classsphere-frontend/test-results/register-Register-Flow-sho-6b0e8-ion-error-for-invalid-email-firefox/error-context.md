@@ -18,8 +18,8 @@
         - textbox "Contraseña" [ref=e19]: password123
         - paragraph [ref=e20]: La contraseña debe tener al menos 8 caracteres y contener letras y números.
     - generic [ref=e22]: code=400, message=Invalid email format
-    - button "Crear cuenta" [ref=e24]:
-      - generic [ref=e25]: Crear cuenta
+    - button "Crear cuenta" [ref=e24] [cursor=pointer]:
+      - generic [ref=e25] [cursor=pointer]: Crear cuenta
     - paragraph [ref=e27]:
       - text: ¿Ya tienes una cuenta?
       - link "Inicia sesión aquí" [ref=e28] [cursor=pointer]:

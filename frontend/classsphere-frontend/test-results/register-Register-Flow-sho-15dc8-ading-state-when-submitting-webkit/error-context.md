@@ -18,8 +18,8 @@
         - textbox "Contraseña" [ref=e18]: password123
         - paragraph [ref=e19]: La contraseña debe tener al menos 8 caracteres y contener letras y números.
     - generic [ref=e21]: code=400, message=password is too common, please choose a stronger password
-    - button "Crear cuenta" [ref=e23]:
-      - generic [ref=e24]: Crear cuenta
+    - button "Crear cuenta" [ref=e23] [cursor=pointer]:
+      - generic [ref=e24] [cursor=pointer]: Crear cuenta
     - paragraph [ref=e26]:
       - text: ¿Ya tienes una cuenta?
       - link "Inicia sesión aquí" [ref=e27]:

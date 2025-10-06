@@ -17,8 +17,8 @@
         - generic [ref=e17]: Contraseña
         - textbox "Contraseña" [ref=e18]
         - paragraph [ref=e19]: La contraseña debe tener al menos 8 caracteres y contener letras y números.
-    - button "Crear cuenta" [ref=e21]:
-      - generic [ref=e22]: Crear cuenta
+    - button "Crear cuenta" [ref=e21] [cursor=pointer]:
+      - generic [ref=e22] [cursor=pointer]: Crear cuenta
     - paragraph [ref=e24]:
       - text: ¿Ya tienes una cuenta?
       - link "Inicia sesión aquí" [ref=e25]:
