@@ -6,21 +6,22 @@ import (
 
 type Config struct {
 	JWTSecret      string
-	RedisURL       string
+	DatabasePath   string
+	RedisAddr      string
+	RedisPassword  string
+	RedisDB        int
 	GoogleClientID string
 	GoogleSecret   string
 	Port           string
 }
 
-func LoadConfig() *Config {
-	jwtSecret := os.Getenv("JWT_SECRET")
-	if jwtSecret == "" {
-		panic("JWT_SECRET is required")
-	}
-
+func Load() *Config {
 	return &Config{
-		JWTSecret:      jwtSecret,
-		RedisURL:       getEnv("REDIS_URL", "localhost:6379"),
+		JWTSecret:      getEnv("JWT_SECRET", "default-secret-key-for-development"),
+		DatabasePath:   getEnv("DATABASE_PATH", "./classsphere.db"),
+		RedisAddr:      getEnv("REDIS_ADDR", "localhost:6379"),
+		RedisPassword:  getEnv("REDIS_PASSWORD", ""),
+		RedisDB:        0,
 		GoogleClientID: os.Getenv("GOOGLE_CLIENT_ID"),
 		GoogleSecret:   os.Getenv("GOOGLE_SECRET"),
 		Port:           getEnv("PORT", "8080"),

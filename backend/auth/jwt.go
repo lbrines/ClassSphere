@@ -4,13 +4,13 @@ import (
 	"errors"
 	"time"
 
-	"github.com/golang-jwt/jwt/v5"
+	"github.com/golang-jwt/jwt/v4"
 )
 
 type Claims struct {
 	UserID string `json:"user_id"`
 	Role   string `json:"role"`
-	jwt.RegisteredClaims
+	jwt.StandardClaims
 }
 
 type JWTManager struct {
@@ -27,10 +27,10 @@ func (j *JWTManager) GenerateToken(userID, role string, duration time.Duration) 
 	claims := &Claims{
 		UserID: userID,
 		Role:   role,
-		RegisteredClaims: jwt.RegisteredClaims{
+		StandardClaims: jwt.StandardClaims{
 			Subject:   userID,
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(duration)),
-			IssuedAt:  jwt.NewNumericDate(time.Now()),
+			ExpiresAt: time.Now().Add(duration).Unix(),
+			IssuedAt:  time.Now().Unix(),
 		},
 	}
 
