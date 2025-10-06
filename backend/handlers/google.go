@@ -25,6 +25,9 @@ type GoogleClassroomService interface {
 	ListAssignments(courseID string) ([]services.Assignment, error)
 	SetMockMode(enabled bool)
 	GetCourseStats(courseID string) (map[string]interface{}, error)
+	GetRandomCourse() services.Course
+	GetRandomStudent() services.Student
+	GetRandomAssignment() services.Assignment
 }
 
 // MetricsService interface for dependency injection
@@ -319,4 +322,52 @@ func (h *GoogleHandler) GetPerformanceMetrics(c echo.Context) error {
 	}
 	
 	return c.JSON(http.StatusOK, performanceMetrics)
+}
+
+
+// GetStudents retrieves students for a specific course
+func (h *GoogleHandler) GetStudents(c echo.Context) error {
+	courseID := c.Param("courseId")
+	if courseID == "" {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "course ID is required"})
+	}
+
+	students, err := h.googleService.ListStudents(courseID)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+	}
+
+	return c.JSON(http.StatusOK, map[string]interface{}{
+		"students": students,
+	})
+}
+
+// GetAssignments retrieves assignments for a specific course
+func (h *GoogleHandler) GetAssignments(c echo.Context) error {
+	courseID := c.Param("courseId")
+	if courseID == "" {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "course ID is required"})
+	}
+
+	assignments, err := h.googleService.ListAssignments(courseID)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+	}
+
+	return c.JSON(http.StatusOK, map[string]interface{}{
+		"assignments": assignments,
+	})
+}
+
+// GetRandomData returns random course, student, and assignment data
+func (h *GoogleHandler) GetRandomData(c echo.Context) error {
+	course := h.googleService.GetRandomCourse()
+	student := h.googleService.GetRandomStudent()
+	assignment := h.googleService.GetRandomAssignment()
+
+	return c.JSON(http.StatusOK, map[string]interface{}{
+		"course":     course,
+		"student":    student,
+		"assignment": assignment,
+	})
 }

@@ -1,7 +1,10 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { RouterTestingModule } from '@angular/router/testing';
 import { StudentDashboardComponent } from './student-dashboard.component';
 import { AuthService } from '../../services/auth.service';
 import { DashboardService } from '../../services/dashboard.service';
+import { MetricsService } from '../../services/metrics.service';
 import { Router } from '@angular/router';
 import { of } from 'rxjs';
 
@@ -10,6 +13,7 @@ describe('StudentDashboardComponent', () => {
   let fixture: ComponentFixture<StudentDashboardComponent>;
   let mockAuthService: jasmine.SpyObj<AuthService>;
   let mockDashboardService: jasmine.SpyObj<DashboardService>;
+  let mockMetricsService: jasmine.SpyObj<MetricsService>;
   let mockRouter: jasmine.SpyObj<Router>;
 
   const mockStudentMetrics = {
@@ -39,13 +43,19 @@ describe('StudentDashboardComponent', () => {
   beforeEach(async () => {
     const authServiceSpy = jasmine.createSpyObj('AuthService', ['currentUser', 'isAuthenticated']);
     const dashboardServiceSpy = jasmine.createSpyObj('DashboardService', ['getDashboardData']);
+    const metricsServiceSpy = jasmine.createSpyObj('MetricsService', ['getDashboardMetrics', 'getPerformanceMetrics', 'getRoleMetrics']);
     const routerSpy = jasmine.createSpyObj('Router', ['navigate']);
 
     await TestBed.configureTestingModule({
-      imports: [StudentDashboardComponent],
+      imports: [
+        StudentDashboardComponent,
+        HttpClientTestingModule,
+        RouterTestingModule
+      ],
       providers: [
         { provide: AuthService, useValue: authServiceSpy },
         { provide: DashboardService, useValue: dashboardServiceSpy },
+        { provide: MetricsService, useValue: metricsServiceSpy },
         { provide: Router, useValue: routerSpy }
       ]
     }).compileComponents();
@@ -54,12 +64,50 @@ describe('StudentDashboardComponent', () => {
     component = fixture.componentInstance;
     mockAuthService = TestBed.inject(AuthService) as jasmine.SpyObj<AuthService>;
     mockDashboardService = TestBed.inject(DashboardService) as jasmine.SpyObj<DashboardService>;
+    mockMetricsService = TestBed.inject(MetricsService) as jasmine.SpyObj<MetricsService>;
     mockRouter = TestBed.inject(Router) as jasmine.SpyObj<Router>;
 
     // Setup default mocks
     mockAuthService.currentUser.and.returnValue({ id: 1, role: 'student', name: 'Student User', email: 'student@test.com', is_active: true });
     mockAuthService.isAuthenticated.and.returnValue(true);
     mockDashboardService.getDashboardData.and.returnValue(of(mockStudentMetrics));
+    mockMetricsService.getDashboardMetrics.and.returnValue(of({
+      course_metrics: {
+        total_courses: 4,
+        active_courses: 4,
+        archived_courses: 0,
+        total_students: 1,
+        average_grade: 88.5,
+        total_assignments: 20
+      },
+      student_metrics: {
+        total_students: 1,
+        active_students: 1
+      },
+      assignment_metrics: {
+        total_assignments: 20,
+        published_assignments: 15,
+        draft_assignments: 5,
+        total_points: 2000,
+        average_points: 100
+      },
+      role_specific: mockStudentMetrics.dashboard.stats
+    }));
+    mockMetricsService.getPerformanceMetrics.and.returnValue(of({
+      completion_rate: 88.5,
+      average_grade: 88.5,
+      engagement_score: 90.2,
+      productivity_index: 85.8,
+      trends: {
+        grade_trend: 'up',
+        participation: 'stable',
+        completion_rate: 'up'
+      }
+    }));
+    mockMetricsService.getRoleMetrics.and.returnValue(of([
+      { title: 'Total Courses', value: 4, icon: 'book', color: 'bg-blue-500' },
+      { title: 'Average Grade', value: 88.5, icon: 'star', color: 'bg-green-500' }
+    ]));
   });
 
   it('should create', () => {

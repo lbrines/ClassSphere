@@ -28,9 +28,20 @@ type UserRepository interface {
 }
 
 type DashboardHandler struct {
-	userRepo       UserRepository
-	googleService  GoogleClassroomService
-	metricsService MetricsService
+	userRepo         UserRepository
+	googleService    GoogleClassroomService
+	metricsService   MetricsService
+	dashboardService DashboardService
+}
+
+// DashboardService interface for dependency injection
+type DashboardService interface {
+	GetDashboardData(userID string, role string) (map[string]interface{}, error)
+	GetAdminMetrics() (map[string]interface{}, error)
+	GetTeacherMetrics(userID string) (map[string]interface{}, error)
+	GetStudentMetrics(userID string) (map[string]interface{}, error)
+	GetCoordinatorMetrics(userID string) (map[string]interface{}, error)
+	ExportDashboardData(userID string, role string, format string) ([]byte, error)
 }
 
 func NewDashboardHandler(userRepo UserRepository) *DashboardHandler {
@@ -51,6 +62,26 @@ func NewEnhancedDashboardHandler(userRepo UserRepository, googleService GoogleCl
 // GetStudentDashboard returns student-specific dashboard data
 func (h *DashboardHandler) GetStudentDashboard(c echo.Context) error {
 	// Get user from context
+	userID, ok := c.Get("user_id").(string)
+	if !ok {
+		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "User not authenticated"})
+	}
+	
+	userRole, ok := c.Get("user_role").(string)
+	if !ok {
+		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "User role not found"})
+	}
+	
+	// If dashboardService is available, use it
+	if h.dashboardService != nil {
+		data, err := h.dashboardService.GetStudentMetrics(userID)
+		if err != nil {
+			return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+		}
+		return c.JSON(http.StatusOK, data)
+	}
+	
+	// Fallback to original implementation
 	user := c.Get("user")
 	if user == nil {
 		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "User not authenticated"})
@@ -61,7 +92,8 @@ func (h *DashboardHandler) GetStudentDashboard(c echo.Context) error {
 		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Invalid user context"})
 	}
 	
-	userID := claims.UserID
+	_ = userRole // Avoid unused variable warning
+	userID = claims.UserID
 	
 	// Convert string to uint
 	id, err := strconv.ParseUint(userID, 10, 32)
@@ -259,6 +291,26 @@ func (h *DashboardHandler) getFallbackStudentDashboard(c echo.Context, dbUser *m
 // GetTeacherDashboard returns teacher-specific dashboard data
 func (h *DashboardHandler) GetTeacherDashboard(c echo.Context) error {
 	// Get user from context
+	userID, ok := c.Get("user_id").(string)
+	if !ok {
+		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "User not authenticated"})
+	}
+	
+	userRole, ok := c.Get("user_role").(string)
+	if !ok {
+		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "User role not found"})
+	}
+	
+	// If dashboardService is available, use it
+	if h.dashboardService != nil {
+		data, err := h.dashboardService.GetTeacherMetrics(userID)
+		if err != nil {
+			return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+		}
+		return c.JSON(http.StatusOK, data)
+	}
+	
+	// Fallback to original implementation
 	user := c.Get("user")
 	if user == nil {
 		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "User not authenticated"})
@@ -269,7 +321,8 @@ func (h *DashboardHandler) GetTeacherDashboard(c echo.Context) error {
 		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Invalid user context"})
 	}
 	
-	userID := claims.UserID
+	_ = userRole // Avoid unused variable warning
+	userID = claims.UserID
 	
 	// Convert string to uint
 	id, err := strconv.ParseUint(userID, 10, 32)
@@ -295,6 +348,26 @@ func (h *DashboardHandler) GetTeacherDashboard(c echo.Context) error {
 // GetCoordinatorDashboard returns coordinator-specific dashboard data
 func (h *DashboardHandler) GetCoordinatorDashboard(c echo.Context) error {
 	// Get user from context
+	userID, ok := c.Get("user_id").(string)
+	if !ok {
+		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "User not authenticated"})
+	}
+	
+	userRole, ok := c.Get("user_role").(string)
+	if !ok {
+		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "User role not found"})
+	}
+	
+	// If dashboardService is available, use it
+	if h.dashboardService != nil {
+		data, err := h.dashboardService.GetCoordinatorMetrics(userID)
+		if err != nil {
+			return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+		}
+		return c.JSON(http.StatusOK, data)
+	}
+	
+	// Fallback to original implementation
 	user := c.Get("user")
 	if user == nil {
 		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "User not authenticated"})
@@ -305,7 +378,8 @@ func (h *DashboardHandler) GetCoordinatorDashboard(c echo.Context) error {
 		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Invalid user context"})
 	}
 	
-	userID := claims.UserID
+	_ = userRole // Avoid unused variable warning
+	userID = claims.UserID
 	
 	// Convert string to uint
 	id, err := strconv.ParseUint(userID, 10, 32)
@@ -331,6 +405,26 @@ func (h *DashboardHandler) GetCoordinatorDashboard(c echo.Context) error {
 // GetAdminDashboard returns admin-specific dashboard data
 func (h *DashboardHandler) GetAdminDashboard(c echo.Context) error {
 	// Get user from context
+	userID, ok := c.Get("user_id").(string)
+	if !ok {
+		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "User not authenticated"})
+	}
+	
+	userRole, ok := c.Get("user_role").(string)
+	if !ok {
+		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "User role not found"})
+	}
+	
+	// If dashboardService is available, use it
+	if h.dashboardService != nil {
+		data, err := h.dashboardService.GetAdminMetrics()
+		if err != nil {
+			return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+		}
+		return c.JSON(http.StatusOK, data)
+	}
+	
+	// Fallback to original implementation
 	user := c.Get("user")
 	if user == nil {
 		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "User not authenticated"})
@@ -341,7 +435,8 @@ func (h *DashboardHandler) GetAdminDashboard(c echo.Context) error {
 		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Invalid user context"})
 	}
 	
-	userID := claims.UserID
+	_ = userRole // Avoid unused variable warning
+	userID = claims.UserID
 	
 	// Convert string to uint
 	id, err := strconv.ParseUint(userID, 10, 32)
@@ -650,4 +745,141 @@ func (h *DashboardHandler) getFallbackAdminDashboard(c echo.Context, dbUser *mod
 	}
 
 	return c.JSON(http.StatusOK, dashboardData)
+}
+
+
+// ExportDashboard exports dashboard data in specified format
+func (h *DashboardHandler) ExportDashboard(c echo.Context) error {
+	// Get user from context
+	userID, ok := c.Get("user_id").(string)
+	if !ok {
+		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "user not authenticated"})
+	}
+
+	userRole, ok := c.Get("user_role").(string)
+	if !ok {
+		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "user role not found"})
+	}
+
+	// Parse request body
+	var requestBody struct {
+		Format string `json:"format"`
+	}
+	if err := c.Bind(&requestBody); err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid request body"})
+	}
+
+	// Validate format
+	if requestBody.Format != "pdf" && requestBody.Format != "csv" && requestBody.Format != "json" {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid export format"})
+	}
+
+	// Export data
+	exportData, err := h.dashboardService.ExportDashboardData(userID, userRole, requestBody.Format)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+	}
+
+	// Set appropriate headers
+	contentType := "application/octet-stream"
+	filename := "dashboard_export." + requestBody.Format
+	
+	switch requestBody.Format {
+	case "pdf":
+		contentType = "application/pdf"
+	case "csv":
+		contentType = "text/csv"
+	case "json":
+		contentType = "application/json"
+	}
+
+	c.Response().Header().Set("Content-Type", contentType)
+	c.Response().Header().Set("Content-Disposition", "attachment; filename="+filename)
+
+	return c.Blob(http.StatusOK, contentType, exportData)
+}
+
+// GetCourseStats returns course statistics
+func (h *DashboardHandler) GetCourseStats(c echo.Context) error {
+	courseID := c.Param("courseId")
+	if courseID == "" {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "course ID is required"})
+	}
+
+	stats, err := h.googleService.GetCourseStats(courseID)
+	if err != nil {
+		return c.JSON(http.StatusNotFound, map[string]string{"error": err.Error()})
+	}
+
+	return c.JSON(http.StatusOK, stats)
+}
+
+
+// GetGoogleCourses retrieves courses using Google service
+func (h *DashboardHandler) GetGoogleCourses(c echo.Context) error {
+	// Get user from context
+	userID, ok := c.Get("user_id").(string)
+	if !ok {
+		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "user not authenticated"})
+	}
+
+	courses, err := h.googleService.ListCourses(userID)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+	}
+
+	return c.JSON(http.StatusOK, map[string]interface{}{
+		"courses": courses,
+	})
+}
+
+// GetGoogleStudents retrieves students for a specific course
+func (h *DashboardHandler) GetGoogleStudents(c echo.Context) error {
+	courseID := c.Param("courseId")
+	if courseID == "" {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "course ID is required"})
+	}
+
+	students, err := h.googleService.ListStudents(courseID)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+	}
+
+	return c.JSON(http.StatusOK, map[string]interface{}{
+		"students": students,
+	})
+}
+
+// GetGoogleAssignments retrieves assignments for a specific course
+func (h *DashboardHandler) GetGoogleAssignments(c echo.Context) error {
+	courseID := c.Param("courseId")
+	if courseID == "" {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "course ID is required"})
+	}
+
+	assignments, err := h.googleService.ListAssignments(courseID)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+	}
+
+	return c.JSON(http.StatusOK, map[string]interface{}{
+		"assignments": assignments,
+	})
+}
+
+// ToggleMockMode toggles the mock mode for Google service
+func (h *DashboardHandler) ToggleMockMode(c echo.Context) error {
+	// Parse request body
+	var requestBody struct {
+		Enabled bool `json:"enabled"`
+	}
+	if err := c.Bind(&requestBody); err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid request body"})
+	}
+
+	h.googleService.SetMockMode(requestBody.Enabled)
+
+	return c.JSON(http.StatusOK, map[string]interface{}{
+		"mock_mode_enabled": requestBody.Enabled,
+	})
 }

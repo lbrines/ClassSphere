@@ -42,6 +42,21 @@ func (m *MockGoogleClassroomService) GetCourseStats(courseID string) (map[string
 	return args.Get(0).(map[string]interface{}), args.Error(1)
 }
 
+func (m *MockGoogleClassroomService) GetRandomCourse() services.Course {
+	args := m.Called()
+	return args.Get(0).(services.Course)
+}
+
+func (m *MockGoogleClassroomService) GetRandomStudent() services.Student {
+	args := m.Called()
+	return args.Get(0).(services.Student)
+}
+
+func (m *MockGoogleClassroomService) GetRandomAssignment() services.Assignment {
+	args := m.Called()
+	return args.Get(0).(services.Assignment)
+}
+
 // MockMetricsService is a mock implementation for testing
 type MockMetricsService struct {
 	mock.Mock
