@@ -7,6 +7,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"classsphere-backend/auth"
 	"classsphere-backend/models"
 	"classsphere-backend/services"
 
@@ -169,16 +170,24 @@ func TestSearchHandler_SearchAll(t *testing.T) {
 			reqBody, _ := json.Marshal(tt.requestBody)
 			req := httptest.NewRequest(http.MethodPost, "/search", bytes.NewReader(reqBody))
 			req.Header.Set("Content-Type", "application/json")
+			rec := httptest.NewRecorder()
 			
-			// Add user ID to context (simulating JWT middleware)
-			c := e.NewContext(req, httptest.NewRecorder())
-			c.Set("user_id", uint(1))
+			// Add user to context (simulating JWT middleware)
+			c := e.NewContext(req, rec)
+			if tt.name != "unauthorized - no user" {
+				claims := &auth.Claims{UserID: "1", Role: "admin"}
+				c.Set("user", claims)
+			}
 			
 			// Execute
 			err := handler.SearchAll(c)
 			
 			// Assertions
-			if tt.expectedError != "" {
+			if tt.expectedStatus == http.StatusUnauthorized {
+				// For unauthorized, check HTTP status code
+				assert.NoError(t, err) // Echo doesn't return error for HTTP responses
+				assert.Equal(t, tt.expectedStatus, rec.Code)
+			} else if tt.expectedError != "" {
 				assert.Error(t, err)
 			} else {
 				assert.NoError(t, err)
@@ -249,9 +258,11 @@ func TestSearchHandler_SearchStudents(t *testing.T) {
 			}
 			req.URL.RawQuery = q.Encode()
 			
-			// Add user ID to context
-			c := e.NewContext(req, httptest.NewRecorder())
-			c.Set("user_id", uint(1))
+			// Add user to context
+			rec := httptest.NewRecorder()
+			c := e.NewContext(req, rec)
+			claims := &auth.Claims{UserID: "1", Role: "admin"}
+			c.Set("user", claims)
 			
 			// Execute
 			err := handler.SearchStudents(c)
@@ -323,9 +334,11 @@ func TestSearchHandler_SearchCourses(t *testing.T) {
 			}
 			req.URL.RawQuery = q.Encode()
 			
-			// Add user ID to context
-			c := e.NewContext(req, httptest.NewRecorder())
-			c.Set("user_id", uint(1))
+			// Add user to context
+			rec := httptest.NewRecorder()
+			c := e.NewContext(req, rec)
+			claims := &auth.Claims{UserID: "1", Role: "admin"}
+			c.Set("user", claims)
 			
 			// Execute
 			err := handler.SearchCourses(c)
@@ -398,9 +411,11 @@ func TestSearchHandler_SearchAssignments(t *testing.T) {
 			}
 			req.URL.RawQuery = q.Encode()
 			
-			// Add user ID to context
-			c := e.NewContext(req, httptest.NewRecorder())
-			c.Set("user_id", uint(1))
+			// Add user to context
+			rec := httptest.NewRecorder()
+			c := e.NewContext(req, rec)
+			claims := &auth.Claims{UserID: "1", Role: "admin"}
+			c.Set("user", claims)
 			
 			// Execute
 			err := handler.SearchAssignments(c)
@@ -467,9 +482,11 @@ func TestSearchHandler_GetSearchSuggestions(t *testing.T) {
 			q.Add("q", tt.query)
 			req.URL.RawQuery = q.Encode()
 			
-			// Add user ID to context
-			c := e.NewContext(req, httptest.NewRecorder())
-			c.Set("user_id", uint(1))
+			// Add user to context
+			rec := httptest.NewRecorder()
+			c := e.NewContext(req, rec)
+			claims := &auth.Claims{UserID: "1", Role: "admin"}
+			c.Set("user", claims)
 			
 			// Execute
 			err := handler.GetSearchSuggestions(c)

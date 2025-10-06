@@ -57,7 +57,7 @@ interface ChartOptions {
             >
               {{ getChartTypeLabel() }}
             </button>
-            @if (showDrillDown()) {
+            @if (showDrillDown) {
               <button
                 (click)="resetDrillDown()"
                 class="text-sm text-gray-600 hover:text-gray-500"
@@ -85,9 +85,9 @@ interface ChartOptions {
         </div>
 
         <!-- Chart Legend -->
-        @if (chartData() && chartData().datasets.length > 0) {
+        @if (chartData() && chartData()?.datasets && chartData()!.datasets.length > 0) {
           <div class="flex flex-wrap gap-2 mb-4">
-            @for (dataset of chartData().datasets; track dataset.label) {
+            @for (dataset of chartData()!.datasets; track dataset.label) {
               <div class="flex items-center space-x-2">
                 <div 
                   class="w-3 h-3 rounded-full"
