@@ -222,7 +222,7 @@ import { Router } from '@angular/router';
 })
 export class TeacherDashboardComponent extends BaseDashboardComponent implements OnInit {
   
-  ngOnInit(): void {
+  override ngOnInit(): void {
     super.ngOnInit();
   }
 

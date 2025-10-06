@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug Browser Simulation</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .log { background: #f5f5f5; padding: 10px; margin: 10px 0; border-radius: 5px; }
+        .error { background: #ffebee; color: #c62828; }
+        .success { background: #e8f5e8; color: #2e7d32; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>Debug Browser Simulation - ClassSphere F5 Problem</h1>
+    <div id="logs"></div>
+    <button onclick="simulateLogin()">1. Simular Login</button>
+    <button onclick="simulateF5()">2. Simular F5 (Refresh)</button>
+    <button onclick="clearLogs()">Limpiar Logs</button>
+
+    <script>
+        let currentToken = null;
+        
+        function log(message, type = 'info') {
+            const logsDiv = document.getElementById('logs');
+            const logDiv = document.createElement('div');
+            logDiv.className = `log ${type}`;
+            logDiv.innerHTML = `<strong>${new Date().toLocaleTimeString()}</strong>: ${message}`;
+            logsDiv.appendChild(logDiv);
+            console.log(message);
+        }
+
+        function clearLogs() {
+            document.getElementById('logs').innerHTML = '';
+        }
+
+        async function simulateLogin() {
+            log('=== INICIANDO SIMULACIÓN DE LOGIN ===');
+            
+            try {
+                log('Enviando request de login...');
+                const response = await fetch('http://localhost:8080/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        email: 'admin@classsphere.com',
+                        password: 'admin123'
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const data = await response.json();
+                log(`Login exitoso: ${data.user.email} (${data.user.role})`, 'success');
+                
+                // Guardar token en localStorage (como hace el navegador)
+                currentToken = data.token;
+                localStorage.setItem('token', currentToken);
+                log('Token guardado en localStorage', 'success');
+                
+            } catch (error) {
+                log(`Error en login: ${error.message}`, 'error');
+            }
+        }
+
+        async function simulateF5() {
+            log('=== INICIANDO SIMULACIÓN DE F5 (REFRESH) ===');
+            
+            try {
+                // Simular lo que hace el navegador al cargar la página
+                log('1. Navegador recarga la página...');
+                
+                // Verificar token en localStorage
+                const storedToken = localStorage.getItem('token');
+                if (!storedToken) {
+                    log('ERROR: No hay token en localStorage', 'error');
+                    return;
+                }
+                
+                log('2. Token encontrado en localStorage', 'success');
+                currentToken = storedToken;
+                
+                // Simular llamada a getProfile() (como hace AuthService.checkAuthStatus())
+                log('3. Llamando a /api/profile para validar token...');
+                const profileResponse = await fetch('http://localhost:8080/api/profile', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${currentToken}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (!profileResponse.ok) {
+                    throw new Error(`Profile HTTP ${profileResponse.status}: ${profileResponse.statusText}`);
+                }
+
+                const profileData = await profileResponse.json();
+                log(`4. Perfil obtenido: ${profileData.email} (${profileData.role})`, 'success');
+                
+                // Simular llamada a dashboard
+                log('5. Llamando a /api/dashboard/admin...');
+                const dashboardResponse = await fetch('http://localhost:8080/api/dashboard/admin', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${currentToken}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (!dashboardResponse.ok) {
+                    throw new Error(`Dashboard HTTP ${dashboardResponse.status}: ${dashboardResponse.statusText}`);
+                }
+
+                const dashboardData = await dashboardResponse.json();
+                log(`6. Dashboard obtenido para: ${dashboardData.user.email}`, 'success');
+                
+                log('=== SIMULACIÓN F5 COMPLETADA CON ÉXITO ===', 'success');
+                
+            } catch (error) {
+                log(`ERROR en simulación F5: ${error.message}`, 'error');
+                log('Este es el error que debería aparecer en el navegador', 'error');
+            }
+        }
+
+        // Auto-ejecutar al cargar la página
+        window.onload = function() {
+            log('Página cargada. Listo para simular el problema F5.');
+            log('Instrucciones:');
+            log('1. Hacer clic en "Simular Login"');
+            log('2. Hacer clic en "Simular F5 (Refresh)"');
+            log('3. Observar si hay errores');
+        };
+    </script>
+</body>
+</html>

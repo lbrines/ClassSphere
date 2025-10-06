@@ -171,10 +171,115 @@ import { ExportPanelComponent } from '../export/export-panel.component';
         </div>
       }
 
+      <!-- Charts Section -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        <!-- Users Distribution Chart -->
+        <div class="bg-white shadow rounded-lg">
+          <div class="px-4 py-5 sm:p-6">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">Distribución de Usuarios</h3>
+            <div class="space-y-4">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center">
+                  <div class="w-4 h-4 bg-blue-500 rounded-full mr-3"></div>
+                  <span class="text-sm text-gray-600">Estudiantes</span>
+                </div>
+                <div class="flex items-center">
+                  <div class="w-32 bg-gray-200 rounded-full h-2 mr-3">
+                    <div class="bg-blue-500 h-2 rounded-full" [style.width.%]="getUserPercentage('students')"></div>
+                  </div>
+                  <span class="text-sm font-medium text-gray-900">{{ getTotalStudents() }}</span>
+                </div>
+              </div>
+              <div class="flex items-center justify-between">
+                <div class="flex items-center">
+                  <div class="w-4 h-4 bg-green-500 rounded-full mr-3"></div>
+                  <span class="text-sm text-gray-600">Profesores</span>
+                </div>
+                <div class="flex items-center">
+                  <div class="w-32 bg-gray-200 rounded-full h-2 mr-3">
+                    <div class="bg-green-500 h-2 rounded-full" [style.width.%]="getUserPercentage('teachers')"></div>
+                  </div>
+                  <span class="text-sm font-medium text-gray-900">{{ getTotalTeachers() }}</span>
+                </div>
+              </div>
+              <div class="flex items-center justify-between">
+                <div class="flex items-center">
+                  <div class="w-4 h-4 bg-yellow-500 rounded-full mr-3"></div>
+                  <span class="text-sm text-gray-600">Coordinadores</span>
+                </div>
+                <div class="flex items-center">
+                  <div class="w-32 bg-gray-200 rounded-full h-2 mr-3">
+                    <div class="bg-yellow-500 h-2 rounded-full" [style.width.%]="getUserPercentage('coordinators')"></div>
+                  </div>
+                  <span class="text-sm font-medium text-gray-900">2</span>
+                </div>
+              </div>
+              <div class="flex items-center justify-between">
+                <div class="flex items-center">
+                  <div class="w-4 h-4 bg-red-500 rounded-full mr-3"></div>
+                  <span class="text-sm text-gray-600">Administradores</span>
+                </div>
+                <div class="flex items-center">
+                  <div class="w-32 bg-gray-200 rounded-full h-2 mr-3">
+                    <div class="bg-red-500 h-2 rounded-full" [style.width.%]="getUserPercentage('admins')"></div>
+                  </div>
+                  <span class="text-sm font-medium text-gray-900">1</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- System Performance Chart -->
+        <div class="bg-white shadow rounded-lg">
+          <div class="px-4 py-5 sm:p-6">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">Rendimiento del Sistema</h3>
+            <div class="space-y-4">
+              <div class="flex items-center justify-between">
+                <span class="text-sm text-gray-600">CPU Usage</span>
+                <div class="flex items-center">
+                  <div class="w-32 bg-gray-200 rounded-full h-2 mr-3">
+                    <div class="bg-blue-500 h-2 rounded-full" style="width: 45%"></div>
+                  </div>
+                  <span class="text-sm font-medium text-gray-900">45%</span>
+                </div>
+              </div>
+              <div class="flex items-center justify-between">
+                <span class="text-sm text-gray-600">Memory Usage</span>
+                <div class="flex items-center">
+                  <div class="w-32 bg-gray-200 rounded-full h-2 mr-3">
+                    <div class="bg-green-500 h-2 rounded-full" style="width: 62%"></div>
+                  </div>
+                  <span class="text-sm font-medium text-gray-900">62%</span>
+                </div>
+              </div>
+              <div class="flex items-center justify-between">
+                <span class="text-sm text-gray-600">Disk Usage</span>
+                <div class="flex items-center">
+                  <div class="w-32 bg-gray-200 rounded-full h-2 mr-3">
+                    <div class="bg-yellow-500 h-2 rounded-full" style="width: 78%"></div>
+                  </div>
+                  <span class="text-sm font-medium text-gray-900">78%</span>
+                </div>
+              </div>
+              <div class="flex items-center justify-between">
+                <span class="text-sm text-gray-600">Network I/O</span>
+                <div class="flex items-center">
+                  <div class="w-32 bg-gray-200 rounded-full h-2 mr-3">
+                    <div class="bg-purple-500 h-2 rounded-full" style="width: 34%"></div>
+                  </div>
+                  <span class="text-sm font-medium text-gray-900">34%</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- Export Panel -->
       <div class="mt-6">
         <app-export-panel
-          [dashboardElement]="dashboardElement"
+          [dashboardElement]="dashboardElement?.nativeElement"
           [dashboardData]="dashboardData()"
           (exportComplete)="onExportComplete($event)"
         ></app-export-panel>
@@ -186,12 +291,40 @@ import { ExportPanelComponent } from '../export/export-panel.component';
 export class AdminDashboardComponent extends BaseDashboardComponent implements OnInit {
   @ViewChild('dashboardContainer', { static: false }) dashboardElement?: ElementRef;
 
-  ngOnInit(): void {
+  override ngOnInit(): void {
     super.ngOnInit();
   }
 
   onExportComplete(result: { success: boolean; filename?: string; error?: string }): void {
     console.log('Export completed:', result);
+  }
+
+  getTotalStudents(): number {
+    const data = this.dashboardData();
+    return data?.dashboard?.stats?.total_students || 0;
+  }
+
+  getTotalTeachers(): number {
+    const data = this.dashboardData();
+    return data?.dashboard?.stats?.total_teachers || 0;
+  }
+
+  getUserPercentage(type: string): number {
+    const total = this.getTotalStudents() + this.getTotalTeachers() + 2 + 1; // +2 coordinators +1 admin
+    if (total === 0) return 0;
+    
+    switch (type) {
+      case 'students':
+        return Math.round((this.getTotalStudents() / total) * 100);
+      case 'teachers':
+        return Math.round((this.getTotalTeachers() / total) * 100);
+      case 'coordinators':
+        return Math.round((2 / total) * 100);
+      case 'admins':
+        return Math.round((1 / total) * 100);
+      default:
+        return 0;
+    }
   }
 
   getSystemStats() {

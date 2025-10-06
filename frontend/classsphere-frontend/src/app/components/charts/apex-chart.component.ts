@@ -1,5 +1,6 @@
 import { Component, OnInit, Input, signal, computed, OnChanges, SimpleChanges, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { NgApexchartsModule, ChartComponent } from 'ng-apexcharts';
 import { ApexOptions } from 'ng-apexcharts';
 
@@ -16,7 +17,7 @@ export interface ApexChartData {
 @Component({
   selector: 'app-apex-chart',
   standalone: true,
-  imports: [CommonModule, NgApexchartsModule],
+  imports: [CommonModule, FormsModule, NgApexchartsModule],
   template: `
     <div class="bg-white shadow rounded-lg">
       <div class="px-4 py-5 sm:p-6">
@@ -27,7 +28,7 @@ export interface ApexChartData {
               {{ chartData()?.title || 'Gráfico' }}
             </h3>
             @if (chartData()?.subtitle) {
-              <p class="text-sm text-gray-500">{{ chartData().subtitle }}</p>
+              <p class="text-sm text-gray-500">{{ chartData()?.subtitle }}</p>
             }
           </div>
           <div class="flex items-center space-x-2">
@@ -72,24 +73,24 @@ export interface ApexChartData {
                 {{ errorMessage() }}
               </div>
             </div>
-          } @else {
+          } @else if (chartOptions && chartOptions.series) {
             <apx-chart
               #chart
-              [series]="chartOptions.series"
-              [chart]="chartOptions.chart"
-              [labels]="chartOptions.labels"
-              [colors]="chartOptions.colors"
-              [xaxis]="chartOptions.xaxis"
-              [yaxis]="chartOptions.yaxis"
-              [title]="chartOptions.title"
-              [subtitle]="chartOptions.subtitle"
-              [legend]="chartOptions.legend"
-              [tooltip]="chartOptions.tooltip"
-              [plotOptions]="chartOptions.plotOptions"
-              [dataLabels]="chartOptions.dataLabels"
-              [stroke]="chartOptions.stroke"
-              [fill]="chartOptions.fill"
-              [responsive]="chartOptions.responsive"
+              [series]="chartOptions.series || []"
+              [chart]="chartOptions.chart || { type: 'line', height: 350 }"
+              [labels]="chartOptions.labels || []"
+              [colors]="chartOptions.colors || []"
+              [xaxis]="chartOptions.xaxis || {}"
+              [yaxis]="chartOptions.yaxis || {}"
+              [title]="chartOptions.title || {}"
+              [subtitle]="chartOptions.subtitle || {}"
+              [legend]="chartOptions.legend || {}"
+              [tooltip]="chartOptions.tooltip || {}"
+              [plotOptions]="chartOptions.plotOptions || {}"
+              [dataLabels]="chartOptions.dataLabels || {}"
+              [stroke]="chartOptions.stroke || {}"
+              [fill]="chartOptions.fill || {}"
+              [responsive]="chartOptions.responsive || []"
               (dataPointSelection)="onDataPointSelection($event)"
             ></apx-chart>
           }
@@ -197,7 +198,6 @@ export class ApexChartComponent implements OnInit, OnChanges {
         },
         animations: {
           enabled: true,
-          easing: 'easeinout',
           speed: 800
         }
       },
@@ -371,7 +371,8 @@ export class ApexChartComponent implements OnInit, OnChanges {
 
   exportChart(format: 'png' | 'svg'): void {
     if (this.chart) {
-      this.chart.dataURI().then((uri: string) => {
+      this.chart.dataURI().then((result: { imgURI: string; } | { blob: Blob; }) => {
+        const uri = 'imgURI' in result ? result.imgURI : URL.createObjectURL(result.blob);
         const link = document.createElement('a');
         link.download = `chart-${Date.now()}.${format}`;
         link.href = uri;

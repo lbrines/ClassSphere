@@ -244,7 +244,7 @@ import { Router } from '@angular/router';
 })
 export class CoordinatorDashboardComponent extends BaseDashboardComponent implements OnInit {
   
-  ngOnInit(): void {
+  override ngOnInit(): void {
     super.ngOnInit();
   }
 

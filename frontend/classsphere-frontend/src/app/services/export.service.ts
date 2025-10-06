@@ -28,7 +28,7 @@ export class ExportService {
   /**
    * Export element to PDF
    */
-  async exportToPDF(element: HTMLElement, options: ExportOptions = {}): Promise<ExportResult> {
+  async exportToPDF(element: HTMLElement, options: ExportOptions = { format: 'pdf' }): Promise<ExportResult> {
     try {
       const {
         filename = 'export',
@@ -91,7 +91,7 @@ export class ExportService {
   /**
    * Export element to PNG
    */
-  async exportToPNG(element: HTMLElement, options: ExportOptions = {}): Promise<ExportResult> {
+  async exportToPNG(element: HTMLElement, options: ExportOptions = { format: 'png' }): Promise<ExportResult> {
     try {
       const {
         filename = 'export',
@@ -137,7 +137,7 @@ export class ExportService {
   /**
    * Export SVG element
    */
-  async exportToSVG(element: HTMLElement, options: ExportOptions = {}): Promise<ExportResult> {
+  async exportToSVG(element: HTMLElement, options: ExportOptions = { format: 'svg' }): Promise<ExportResult> {
     try {
       const {
         filename = 'export',
@@ -275,7 +275,7 @@ export class ExportService {
   /**
    * Export multiple elements as a combined PDF
    */
-  async exportMultipleToPDF(elements: HTMLElement[], options: ExportOptions = {}): Promise<ExportResult> {
+  async exportMultipleToPDF(elements: HTMLElement[], options: ExportOptions = { format: 'pdf' }): Promise<ExportResult> {
     try {
       const {
         filename = 'export',

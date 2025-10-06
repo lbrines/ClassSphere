@@ -344,12 +344,12 @@ export class ExportPanelComponent {
       // Export data
       if (this.dashboardData || this.chartData) {
         const dataResult = this.exportData();
-        if (dataResult) {
+        if (dataResult !== null) {
           results.push(dataResult);
         }
       }
 
-      const successCount = results.filter(r => r.success).length;
+      const successCount = results.filter(r => r && r.success).length;
       const totalCount = results.length;
 
       this.setStatus(
