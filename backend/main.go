@@ -11,6 +11,7 @@ import (
 	"classsphere-backend/handlers"
 	"classsphere-backend/models"
 	"classsphere-backend/oauth"
+	"classsphere-backend/services"
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -36,10 +37,16 @@ func main() {
 	// Initialize repositories
 	userRepo := models.NewUserRepository(db)
 
+	// Initialize services
+	googleClassroomService := services.NewGoogleClassroomService(nil) // nil for mock mode by default
+	metricsService := services.NewMetricsService()
+
 	// Initialize handlers
 	authHandler := handlers.NewAuthHandler(userRepo, jwtManager)
 	dashboardHandler := handlers.NewDashboardHandler(userRepo)
 	googleOAuthHandler := oauth.NewGoogleOAuthHandler(userRepo, jwtManager)
+	googleHandler := handlers.NewGoogleHandler(userRepo, googleClassroomService, metricsService)
+	log.Println("GoogleHandler initialized successfully")
 
 	// Setup Echo
 	e := echo.New()
@@ -73,6 +80,19 @@ func main() {
 	protectedGroup.GET("/dashboard/teacher", dashboardHandler.GetTeacherDashboard)
 	protectedGroup.GET("/dashboard/coordinator", dashboardHandler.GetCoordinatorDashboard)
 	protectedGroup.GET("/dashboard/admin", dashboardHandler.GetAdminDashboard)
+	
+	// Google Classroom routes
+	googleGroup := protectedGroup.Group("/google")
+	log.Println("Registering Google Classroom routes...")
+	googleGroup.GET("/courses", googleHandler.GetCourses)
+	googleGroup.GET("/courses/:courseId/students", googleHandler.GetCourseStudents)
+	googleGroup.GET("/courses/:courseId/assignments", googleHandler.GetCourseAssignments)
+	googleGroup.GET("/courses/:courseId/stats", googleHandler.GetCourseStats)
+	googleGroup.GET("/dashboard/metrics", googleHandler.GetDashboardMetrics)
+	googleGroup.GET("/performance/metrics", googleHandler.GetPerformanceMetrics)
+	googleGroup.GET("/system/status", googleHandler.GetSystemStatus)
+	googleGroup.POST("/mock-mode/:enabled", googleHandler.ToggleMockMode)
+	log.Println("Google Classroom routes registered successfully")
 	
 	// General profile route
 	protectedGroup.GET("/profile", authHandler.GetProfile)
