@@ -431,18 +431,18 @@ func TestGoogleClassroomService_GetRandomMethods(t *testing.T) {
 }
 
 func TestGoogleClassroomService_NewGoogleClassroomService(t *testing.T) {
-	// Test with nil client
+	// Test with nil client (should enable mock mode)
 	service := NewGoogleClassroomService(nil)
 	assert.NotNil(t, service)
 	assert.Nil(t, service.client)
-	assert.False(t, service.mockMode)
+	assert.True(t, service.mockMode) // Mock mode should be enabled when client is nil
 
-	// Test with mock client
+	// Test with mock client (should disable mock mode)
 	mockClient := &MockGoogleClient{}
 	service = NewGoogleClassroomService(mockClient)
 	assert.NotNil(t, service)
 	assert.Equal(t, mockClient, service.client)
-	assert.False(t, service.mockMode)
+	assert.False(t, service.mockMode) // Mock mode should be disabled when client is provided
 }
 
 func TestGoogleClassroomService_ListCourses_EdgeCases(t *testing.T) {
