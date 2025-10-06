@@ -32,6 +32,67 @@ func TestJWTMiddleware(t *testing.T) {
 	assert.Equal(t, http.StatusUnauthorized, rec.Code)
 }
 
+func TestRequireRole(t *testing.T) {
+	// Create middleware
+	middleware := RequireRole("admin")
+	
+	// Create test context
+	e := echo.New()
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+	
+	// Test without user in context
+	handler := middleware(func(c echo.Context) error {
+		return c.JSON(http.StatusOK, map[string]string{"status": "ok"})
+	})
+	
+	err := handler(c)
+	assert.NoError(t, err)
+	assert.Equal(t, http.StatusUnauthorized, rec.Code)
+	
+	// Test with user but wrong role
+	rec = httptest.NewRecorder()
+	c = e.NewContext(req, rec)
+	c.Set("user", &Claims{UserID: "1", Role: "user"})
+	
+	err = handler(c)
+	assert.NoError(t, err)
+	assert.Equal(t, http.StatusForbidden, rec.Code)
+	
+	// Test with correct role
+	rec = httptest.NewRecorder()
+	c = e.NewContext(req, rec)
+	c.Set("user", &Claims{UserID: "1", Role: "admin"})
+	
+	err = handler(c)
+	assert.NoError(t, err)
+	assert.Equal(t, http.StatusOK, rec.Code)
+}
+
+func TestGetCurrentUser(t *testing.T) {
+	// Create test context
+	e := echo.New()
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+	
+	// Test without user in context
+	user, ok := GetCurrentUser(c)
+	assert.Nil(t, user)
+	assert.False(t, ok)
+	
+	// Test with user in context
+	claims := &Claims{UserID: "1", Role: "user"}
+	c.Set("user", claims)
+	
+	user, ok = GetCurrentUser(c)
+	assert.NotNil(t, user)
+	assert.True(t, ok)
+	assert.Equal(t, "1", user.UserID)
+	assert.Equal(t, "user", user.Role)
+}
+
 func TestHashPassword(t *testing.T) {
 	password := "testpassword123"
 	
