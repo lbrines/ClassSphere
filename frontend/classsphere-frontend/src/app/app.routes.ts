@@ -23,6 +23,14 @@ export const routes: Routes = [
     loadComponent: () => import('./components/auth-callback/auth-callback.component').then(m => m.AuthCallbackComponent)
   },
   {
+    path: 'search',
+    loadComponent: () => import('./components/search/search.component').then(m => m.SearchComponent)
+  },
+  {
+    path: 'charts',
+    loadComponent: () => import('./components/charts/chart.component').then(m => m.ChartComponent)
+  },
+  {
     path: '**',
     redirectTo: '/login'
   }
