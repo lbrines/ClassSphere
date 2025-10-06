@@ -345,6 +345,7 @@ export class SearchComponent implements OnInit {
 
   // Computed properties
   Math = Math;
+  Object = Object;
 
   constructor(
     private http: HttpClient,

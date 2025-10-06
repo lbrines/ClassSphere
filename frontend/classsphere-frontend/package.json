@@ -30,6 +30,12 @@
     "@angular/material": "^20.2.7",
     "@angular/platform-browser": "^20.3.0",
     "@angular/router": "^20.3.0",
+    "@types/d3": "^7.4.3",
+    "apexcharts": "^5.3.5",
+    "d3": "^7.9.0",
+    "html2canvas": "^1.4.1",
+    "jspdf": "^3.0.3",
+    "ng-apexcharts": "^2.0.3",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0",
     "zone.js": "~0.15.0"

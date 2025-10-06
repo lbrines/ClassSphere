@@ -28,7 +28,11 @@ export const routes: Routes = [
   },
   {
     path: 'charts',
-    loadComponent: () => import('./components/charts/chart.component').then(m => m.ChartComponent)
+    loadComponent: () => import('./components/charts/advanced-charts.component').then(m => m.AdvancedChartsComponent)
+  },
+  {
+    path: 'd3-visualizations',
+    loadComponent: () => import('./components/charts/d3-visualizations.component').then(m => m.D3VisualizationsComponent)
   },
   {
     path: '**',

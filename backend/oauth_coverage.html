@@ -1,0 +1,333 @@
+
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+		<title>oauth: Go Coverage Report</title>
+		<style>
+			body {
+				background: black;
+				color: rgb(80, 80, 80);
+			}
+			body, pre, #legend span {
+				font-family: Menlo, monospace;
+				font-weight: bold;
+			}
+			#topbar {
+				background: black;
+				position: fixed;
+				top: 0; left: 0; right: 0;
+				height: 42px;
+				border-bottom: 1px solid rgb(80, 80, 80);
+			}
+			#content {
+				margin-top: 50px;
+			}
+			#nav, #legend {
+				float: left;
+				margin-left: 10px;
+			}
+			#legend {
+				margin-top: 12px;
+			}
+			#nav {
+				margin-top: 10px;
+			}
+			#legend span {
+				margin: 0 5px;
+			}
+			.cov0 { color: rgb(192, 0, 0) }
+.cov1 { color: rgb(128, 128, 128) }
+.cov2 { color: rgb(116, 140, 131) }
+.cov3 { color: rgb(104, 152, 134) }
+.cov4 { color: rgb(92, 164, 137) }
+.cov5 { color: rgb(80, 176, 140) }
+.cov6 { color: rgb(68, 188, 143) }
+.cov7 { color: rgb(56, 200, 146) }
+.cov8 { color: rgb(44, 212, 149) }
+.cov9 { color: rgb(32, 224, 152) }
+.cov10 { color: rgb(20, 236, 155) }
+
+		</style>
+	</head>
+	<body>
+		<div id="topbar">
+			<div id="nav">
+				<select id="files">
+				
+				<option value="file0">classsphere-backend/oauth/google.go (65.8%)</option>
+				
+				</select>
+			</div>
+			<div id="legend">
+				<span>not tracked</span>
+			
+				<span class="cov0">not covered</span>
+				<span class="cov8">covered</span>
+			
+			</div>
+		</div>
+		<div id="content">
+		
+		<pre class="file" id="file0" style="display: none">package oauth
+
+import (
+        "encoding/json"
+        "fmt"
+        "io"
+        "net/http"
+        "net/url"
+        "os"
+        "time"
+
+        "classsphere-backend/auth"
+        "classsphere-backend/models"
+
+        "github.com/labstack/echo/v4"
+)
+
+// GoogleOAuthService handles Google OAuth authentication
+type GoogleOAuthService struct {
+        clientID     string
+        clientSecret string
+        redirectURI  string
+        authURL      string
+        tokenURL     string
+        userInfoURL  string
+}
+
+// GoogleTokenResponse represents the response from Google's token endpoint
+type GoogleTokenResponse struct {
+        AccessToken  string `json:"access_token"`
+        TokenType    string `json:"token_type"`
+        ExpiresIn    int    `json:"expires_in"`
+        RefreshToken string `json:"refresh_token"`
+        Scope        string `json:"scope"`
+}
+
+// GoogleUserInfo represents user information from Google
+type GoogleUserInfo struct {
+        ID            string `json:"id"`
+        Email         string `json:"email"`
+        VerifiedEmail bool   `json:"verified_email"`
+        Name          string `json:"name"`
+        GivenName     string `json:"given_name"`
+        FamilyName    string `json:"family_name"`
+        Picture       string `json:"picture"`
+        Locale        string `json:"locale"`
+}
+
+// NewGoogleOAuthService creates a new Google OAuth service
+func NewGoogleOAuthService() *GoogleOAuthService <span class="cov8" title="1">{
+        return &amp;GoogleOAuthService{
+                clientID:     os.Getenv("GOOGLE_CLIENT_ID"),
+                clientSecret: os.Getenv("GOOGLE_CLIENT_SECRET"),
+                redirectURI:  os.Getenv("GOOGLE_REDIRECT_URI"),
+                authURL:      "https://accounts.google.com/o/oauth2/v2/auth",
+                tokenURL:     "https://oauth2.googleapis.com/token",
+                userInfoURL:  "https://www.googleapis.com/oauth2/v2/userinfo",
+        }
+}</span>
+
+// GetAuthURL generates the Google OAuth authorization URL
+func (g *GoogleOAuthService) GetAuthURL(state string) string <span class="cov8" title="1">{
+        params := url.Values{}
+        params.Add("client_id", g.clientID)
+        params.Add("redirect_uri", g.redirectURI)
+        params.Add("scope", "openid email profile")
+        params.Add("response_type", "code")
+        params.Add("state", state)
+        params.Add("access_type", "offline")
+        params.Add("prompt", "consent")
+
+        return fmt.Sprintf("%s?%s", g.authURL, params.Encode())
+}</span>
+
+// ExchangeCode exchanges authorization code for access token
+func (g *GoogleOAuthService) ExchangeCode(code string) (*GoogleTokenResponse, error) <span class="cov8" title="1">{
+        data := url.Values{}
+        data.Set("client_id", g.clientID)
+        data.Set("client_secret", g.clientSecret)
+        data.Set("code", code)
+        data.Set("grant_type", "authorization_code")
+        data.Set("redirect_uri", g.redirectURI)
+
+        resp, err := http.PostForm(g.tokenURL, data)
+        if err != nil </span><span class="cov8" title="1">{
+                return nil, fmt.Errorf("failed to exchange code: %v", err)
+        }</span>
+        <span class="cov8" title="1">defer resp.Body.Close()
+
+        if resp.StatusCode != http.StatusOK </span><span class="cov8" title="1">{
+                body, _ := io.ReadAll(resp.Body)
+                return nil, fmt.Errorf("token exchange failed: %s", string(body))
+        }</span>
+
+        <span class="cov0" title="0">var tokenResp GoogleTokenResponse
+        if err := json.NewDecoder(resp.Body).Decode(&amp;tokenResp); err != nil </span><span class="cov0" title="0">{
+                return nil, fmt.Errorf("failed to decode token response: %v", err)
+        }</span>
+
+        <span class="cov0" title="0">return &amp;tokenResp, nil</span>
+}
+
+// GetUserInfo retrieves user information from Google
+func (g *GoogleOAuthService) GetUserInfo(accessToken string) (*GoogleUserInfo, error) <span class="cov8" title="1">{
+        req, err := http.NewRequest("GET", g.userInfoURL, nil)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, fmt.Errorf("failed to create request: %v", err)
+        }</span>
+
+        <span class="cov8" title="1">req.Header.Set("Authorization", "Bearer "+accessToken)
+
+        client := &amp;http.Client{Timeout: 10 * time.Second}
+        resp, err := client.Do(req)
+        if err != nil </span><span class="cov8" title="1">{
+                return nil, fmt.Errorf("failed to get user info: %v", err)
+        }</span>
+        <span class="cov8" title="1">defer resp.Body.Close()
+
+        if resp.StatusCode != http.StatusOK </span><span class="cov8" title="1">{
+                body, _ := io.ReadAll(resp.Body)
+                return nil, fmt.Errorf("user info request failed: %s", string(body))
+        }</span>
+
+        <span class="cov0" title="0">var userInfo GoogleUserInfo
+        if err := json.NewDecoder(resp.Body).Decode(&amp;userInfo); err != nil </span><span class="cov0" title="0">{
+                return nil, fmt.Errorf("failed to decode user info: %v", err)
+        }</span>
+
+        <span class="cov0" title="0">return &amp;userInfo, nil</span>
+}
+
+// GoogleOAuthHandler handles Google OAuth requests
+type GoogleOAuthHandler struct {
+        oauthService *GoogleOAuthService
+        userRepo     *models.UserRepository
+        jwtManager   *auth.JWTManager
+}
+
+// NewGoogleOAuthHandler creates a new Google OAuth handler
+func NewGoogleOAuthHandler(userRepo *models.UserRepository, jwtManager *auth.JWTManager) *GoogleOAuthHandler <span class="cov8" title="1">{
+        return &amp;GoogleOAuthHandler{
+                oauthService: NewGoogleOAuthService(),
+                userRepo:     userRepo,
+                jwtManager:   jwtManager,
+        }
+}</span>
+
+// InitiateGoogleAuth initiates Google OAuth flow
+func (h *GoogleOAuthHandler) InitiateGoogleAuth(c echo.Context) error <span class="cov8" title="1">{
+        // Generate a random state for security
+        state := fmt.Sprintf("state_%d", time.Now().Unix())
+        
+        // Store state in session/cache for validation (simplified for now)
+        // In production, store this in Redis or session store
+        
+        authURL := h.oauthService.GetAuthURL(state)
+        return c.Redirect(http.StatusTemporaryRedirect, authURL)
+}</span>
+
+// HandleGoogleCallback handles Google OAuth callback
+func (h *GoogleOAuthHandler) HandleGoogleCallback(c echo.Context) error <span class="cov8" title="1">{
+        code := c.QueryParam("code")
+        _ = c.QueryParam("state") // State validation would be implemented here
+        error := c.QueryParam("error")
+
+        if error != "" </span><span class="cov8" title="1">{
+                return c.JSON(http.StatusBadRequest, map[string]string{
+                        "error": "OAuth error: " + error,
+                })
+        }</span>
+
+        <span class="cov8" title="1">if code == "" </span><span class="cov8" title="1">{
+                return c.JSON(http.StatusBadRequest, map[string]string{
+                        "error": "Authorization code not provided",
+                })
+        }</span>
+
+        // Exchange code for token
+        <span class="cov8" title="1">tokenResp, err := h.oauthService.ExchangeCode(code)
+        if err != nil </span><span class="cov8" title="1">{
+                return c.JSON(http.StatusInternalServerError, map[string]string{
+                        "error": "Failed to exchange authorization code",
+                })
+        }</span>
+
+        // Get user info from Google
+        <span class="cov0" title="0">userInfo, err := h.oauthService.GetUserInfo(tokenResp.AccessToken)
+        if err != nil </span><span class="cov0" title="0">{
+                return c.JSON(http.StatusInternalServerError, map[string]string{
+                        "error": "Failed to get user information",
+                })
+        }</span>
+
+        // Check if user exists in our database
+        <span class="cov0" title="0">user, err := h.userRepo.GetUserByEmail(userInfo.Email)
+        if err != nil </span><span class="cov0" title="0">{
+                // User doesn't exist, create new user
+                user = &amp;models.User{
+                        Email:    userInfo.Email,
+                        Name:     userInfo.Name,
+                        Role:     "user", // Default role
+                        IsActive: true,
+                        // No password for OAuth users
+                }
+
+                if err := h.userRepo.CreateUser(user); err != nil </span><span class="cov0" title="0">{
+                        return c.JSON(http.StatusInternalServerError, map[string]string{
+                                "error": "Failed to create user",
+                        })
+                }</span>
+        }
+
+        // Generate JWT token
+        <span class="cov0" title="0">token, err := h.jwtManager.GenerateToken(fmt.Sprintf("%d", user.ID), user.Role, 24*time.Hour)
+        if err != nil </span><span class="cov0" title="0">{
+                return c.JSON(http.StatusInternalServerError, map[string]string{
+                        "error": "Failed to generate token",
+                })
+        }</span>
+
+        // Redirect to frontend with token
+        // In production, use a secure method to pass the token
+        <span class="cov0" title="0">frontendURL := os.Getenv("FRONTEND_URL")
+        if frontendURL == "" </span><span class="cov0" title="0">{
+                frontendURL = "http://localhost:4200"
+        }</span>
+
+        <span class="cov0" title="0">redirectURL := fmt.Sprintf("%s/auth/callback?token=%s", frontendURL, token)
+        return c.Redirect(http.StatusTemporaryRedirect, redirectURL)</span>
+}
+</pre>
+		
+		</div>
+	</body>
+	<script>
+	(function() {
+		var files = document.getElementById('files');
+		var visible;
+		files.addEventListener('change', onChange, false);
+		function select(part) {
+			if (visible)
+				visible.style.display = 'none';
+			visible = document.getElementById(part);
+			if (!visible)
+				return;
+			files.value = part;
+			visible.style.display = 'block';
+			location.hash = part;
+		}
+		function onChange() {
+			select(files.value);
+			window.scrollTo(0, 0);
+		}
+		if (location.hash != "") {
+			select(location.hash.substr(1));
+		}
+		if (!visible) {
+			select("file0");
+		}
+	})();
+	</script>
+</html>

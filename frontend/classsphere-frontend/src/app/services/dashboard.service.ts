@@ -13,11 +13,30 @@ export interface DashboardData {
   dashboard: {
     type: string;
     welcome_message: string;
-    stats: any;
+    stats: {
+      total_users?: number;
+      total_courses?: number;
+      total_students?: number;
+      total_teachers?: number;
+      total_assignments?: number;
+      completed_assignments?: number;
+      pending_assignments?: number;
+      average_grade?: string;
+      system_uptime?: string;
+      active_sessions?: number;
+      storage_used?: string;
+      api_calls?: string;
+    };
     recent_activities: any[];
     upcoming_deadlines?: any[];
     upcoming_tasks?: any[];
     system_alerts?: any[];
+    courses?: any[];
+    students_at_risk?: any[];
+    teacher_performance?: any[];
+    programs?: any[];
+    grade_distribution?: any[];
+    study_recommendations?: any[];
   };
   timestamp: string;
 }
@@ -70,5 +89,13 @@ export class DashboardService {
       default:
         return this.getStudentDashboard();
     }
+  }
+
+  getDashboardData(): Observable<DashboardData> {
+    const currentUser = this.authService.currentUser();
+    if (!currentUser) {
+      throw new Error('No user logged in');
+    }
+    return this.getDashboardByRole(currentUser.role);
   }
 }
