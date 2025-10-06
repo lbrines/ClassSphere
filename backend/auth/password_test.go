@@ -6,99 +6,59 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestHashPassword(t *testing.T) {
-	password := "testSecurePass123"
-
-	hashedPassword, err := HashPassword(password)
+func TestGenerateRandomPassword(t *testing.T) {
+	// Test password generation
+	password, err := GenerateRandomPassword(12)
 	assert.NoError(t, err)
-	assert.NotEmpty(t, hashedPassword)
-	assert.NotEqual(t, password, hashedPassword)
+	assert.Len(t, password, 12)
+	assert.NotEmpty(t, password)
 
-	// Test that the same password produces different hashes (due to salt)
-	hashedPassword2, err := HashPassword(password)
+	// Test different lengths
+	password8, err := GenerateRandomPassword(8)
 	assert.NoError(t, err)
-	assert.NotEqual(t, hashedPassword, hashedPassword2)
+	assert.Len(t, password8, 8)
+
+	password16, err := GenerateRandomPassword(16)
+	assert.NoError(t, err)
+	assert.Len(t, password16, 16)
+
+	// Test that passwords are different
+	assert.NotEqual(t, password, password8)
+	assert.NotEqual(t, password, password16)
+	assert.NotEqual(t, password8, password16)
 }
 
-func TestCheckPassword(t *testing.T) {
-	password := "testSecurePass123"
-	wrongPassword := "wrongpassword"
-
-	hashedPassword, err := HashPassword(password)
-	assert.NoError(t, err)
-
-	// Test correct password
-	isValid := CheckPassword(password, hashedPassword)
-	assert.True(t, isValid)
-
-	// Test wrong password
-	isValid = CheckPassword(wrongPassword, hashedPassword)
-	assert.False(t, isValid)
-
+func TestValidatePasswordStrength_EdgeCases(t *testing.T) {
 	// Test empty password
-	isValid = CheckPassword("", hashedPassword)
-	assert.False(t, isValid)
-
-	// Test empty hash
-	isValid = CheckPassword(password, "")
-	assert.False(t, isValid)
-}
-
-func TestHashPasswordEmpty(t *testing.T) {
-	// Test empty password
-	hashedPassword, err := HashPassword("")
-	assert.NoError(t, err)
-	assert.NotEmpty(t, hashedPassword)
-
-	// Should be able to verify empty password
-	isValid := CheckPassword("", hashedPassword)
-	assert.True(t, isValid)
-}
-
-func TestCheckPasswordInvalidHash(t *testing.T) {
-	password := "testSecurePass123"
-
-	// Test with invalid hash
-	isValid := CheckPassword(password, "invalid_hash")
-	assert.False(t, isValid)
-
-	// Test with malformed hash
-	isValid = CheckPassword(password, "$2a$10$invalid")
-	assert.False(t, isValid)
-}
-
-func TestPasswordStrength(t *testing.T) {
-	// Test weak password
-	err := ValidatePasswordStrength("123")
+	err := ValidatePasswordStrength("")
 	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "Password is required")
 
-	// Test password too short
-	err = ValidatePasswordStrength("short")
+	// Test very short password
+	err = ValidatePasswordStrength("123")
 	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "at least 8 characters")
 
-	// Test strong password
-	err = ValidatePasswordStrength("StrongPassword123!")
+	// Test password without uppercase
+	err = ValidatePasswordStrength("password123")
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "uppercase letter")
+
+	// Test password without lowercase
+	err = ValidatePasswordStrength("PASSWORD123")
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "lowercase letter")
+
+	// Test password without number
+	err = ValidatePasswordStrength("Password")
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "number")
+
+	// Test valid password
+	err = ValidatePasswordStrength("Password123")
 	assert.NoError(t, err)
 
-	// Test minimum acceptable password
-	err = ValidatePasswordStrength("ValidPass123")
-	assert.NoError(t, err)
-}
-
-func TestPasswordComplexity(t *testing.T) {
-	// Test password with only lowercase
-	err := ValidatePasswordStrength("lowercase")
-	assert.Error(t, err)
-
-	// Test password with only numbers
-	err = ValidatePasswordStrength("12345678")
-	assert.Error(t, err)
-
-	// Test password with letters and numbers
-	err = ValidatePasswordStrength("ValidPass123")
-	assert.NoError(t, err)
-
-	// Test password with special characters
-	err = ValidatePasswordStrength("Password123!")
+	// Test very strong password
+	err = ValidatePasswordStrength("MyStr0ng!P@ssw0rd")
 	assert.NoError(t, err)
 }

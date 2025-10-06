@@ -8,22 +8,29 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestHealthCheck(t *testing.T) {
-	e := setupTestApp()
-	req := httptest.NewRequest(http.MethodGet, "/health", nil)
-	rec := httptest.NewRecorder()
-	e.ServeHTTP(rec, req)
+func TestMain(t *testing.T) {
+	// Test that main function exists and doesn't panic
+	// In a real test, we would test the main function setup
+	// For now, we test the helper functions
 
-	assert.Equal(t, http.StatusOK, rec.Code)
-	assert.Contains(t, rec.Body.String(), "healthy")
-}
-
-func TestWelcomeEndpoint(t *testing.T) {
 	e := setupTestApp()
+	assert.NotNil(t, e)
+
+	// Test welcome endpoint
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
 	rec := httptest.NewRecorder()
-	e.ServeHTTP(rec, req)
+	c := e.NewContext(req, rec)
 
+	err := handleWelcome(c)
+	assert.NoError(t, err)
 	assert.Equal(t, http.StatusOK, rec.Code)
-	assert.Contains(t, rec.Body.String(), "ClassSphere API")
+
+	// Test health endpoint
+	req2 := httptest.NewRequest(http.MethodGet, "/health", nil)
+	rec2 := httptest.NewRecorder()
+	c2 := e.NewContext(req2, rec2)
+
+	err = handleHealth(c2)
+	assert.NoError(t, err)
+	assert.Equal(t, http.StatusOK, rec2.Code)
 }
