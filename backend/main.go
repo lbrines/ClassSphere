@@ -43,7 +43,7 @@ func main() {
 
 	// Initialize handlers
 	authHandler := handlers.NewAuthHandler(userRepo, jwtManager)
-	dashboardHandler := handlers.NewDashboardHandler(userRepo)
+	dashboardHandler := handlers.NewEnhancedDashboardHandler(userRepo, googleClassroomService, metricsService)
 	googleOAuthHandler := oauth.NewGoogleOAuthHandler(userRepo, jwtManager)
 	googleHandler := handlers.NewGoogleHandler(userRepo, googleClassroomService, metricsService)
 	log.Println("GoogleHandler initialized successfully")
