@@ -61,16 +61,14 @@ func NewEnhancedDashboardHandler(userRepo UserRepository, googleService GoogleCl
 
 // GetStudentDashboard returns student-specific dashboard data
 func (h *DashboardHandler) GetStudentDashboard(c echo.Context) error {
-	// Get user from context
-	userID, ok := c.Get("user_id").(string)
+	// Get user from context (set by JWT middleware)
+	userClaims, ok := c.Get("user").(*auth.Claims)
 	if !ok {
 		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "User not authenticated"})
 	}
 	
-	userRole, ok := c.Get("user_role").(string)
-	if !ok {
-		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "User role not found"})
-	}
+	userID := userClaims.UserID
+	userRole := userClaims.Role
 	
 	// If dashboardService is available, use it
 	if h.dashboardService != nil {
@@ -290,16 +288,14 @@ func (h *DashboardHandler) getFallbackStudentDashboard(c echo.Context, dbUser *m
 
 // GetTeacherDashboard returns teacher-specific dashboard data
 func (h *DashboardHandler) GetTeacherDashboard(c echo.Context) error {
-	// Get user from context
-	userID, ok := c.Get("user_id").(string)
+	// Get user from context (set by JWT middleware)
+	userClaims, ok := c.Get("user").(*auth.Claims)
 	if !ok {
 		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "User not authenticated"})
 	}
 	
-	userRole, ok := c.Get("user_role").(string)
-	if !ok {
-		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "User role not found"})
-	}
+	userID := userClaims.UserID
+	userRole := userClaims.Role
 	
 	// If dashboardService is available, use it
 	if h.dashboardService != nil {
@@ -347,16 +343,14 @@ func (h *DashboardHandler) GetTeacherDashboard(c echo.Context) error {
 
 // GetCoordinatorDashboard returns coordinator-specific dashboard data
 func (h *DashboardHandler) GetCoordinatorDashboard(c echo.Context) error {
-	// Get user from context
-	userID, ok := c.Get("user_id").(string)
+	// Get user from context (set by JWT middleware)
+	userClaims, ok := c.Get("user").(*auth.Claims)
 	if !ok {
 		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "User not authenticated"})
 	}
 	
-	userRole, ok := c.Get("user_role").(string)
-	if !ok {
-		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "User role not found"})
-	}
+	userID := userClaims.UserID
+	userRole := userClaims.Role
 	
 	// If dashboardService is available, use it
 	if h.dashboardService != nil {
@@ -404,16 +398,14 @@ func (h *DashboardHandler) GetCoordinatorDashboard(c echo.Context) error {
 
 // GetAdminDashboard returns admin-specific dashboard data
 func (h *DashboardHandler) GetAdminDashboard(c echo.Context) error {
-	// Get user from context
-	userID, ok := c.Get("user_id").(string)
+	// Get user from context (set by JWT middleware)
+	userClaims, ok := c.Get("user").(*auth.Claims)
 	if !ok {
 		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "User not authenticated"})
 	}
 	
-	userRole, ok := c.Get("user_role").(string)
-	if !ok {
-		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "User role not found"})
-	}
+	userID := userClaims.UserID
+	userRole := userClaims.Role
 	
 	// If dashboardService is available, use it
 	if h.dashboardService != nil {
