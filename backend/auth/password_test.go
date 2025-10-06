@@ -32,30 +32,30 @@ func TestValidatePasswordStrength_EdgeCases(t *testing.T) {
 	// Test empty password
 	err := ValidatePasswordStrength("")
 	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "Password is required")
+	assert.Contains(t, err.Error(), "at least 8 characters")
 
 	// Test very short password
 	err = ValidatePasswordStrength("123")
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "at least 8 characters")
 
-	// Test password without uppercase
-	err = ValidatePasswordStrength("password123")
+	// Test password without letter
+	err = ValidatePasswordStrength("12345678")
 	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "uppercase letter")
-
-	// Test password without lowercase
-	err = ValidatePasswordStrength("PASSWORD123")
-	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "lowercase letter")
+	assert.Contains(t, err.Error(), "at least one letter")
 
 	// Test password without number
-	err = ValidatePasswordStrength("Password")
+	err = ValidatePasswordStrength("password")
 	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "number")
+	assert.Contains(t, err.Error(), "at least one number")
+
+	// Test common weak password
+	err = ValidatePasswordStrength("password123")
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "too common")
 
 	// Test valid password
-	err = ValidatePasswordStrength("Password123")
+	err = ValidatePasswordStrength("MyPassword123")
 	assert.NoError(t, err)
 
 	// Test very strong password

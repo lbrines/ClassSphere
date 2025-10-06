@@ -86,8 +86,8 @@ func TestRequireRole_InvalidRole(t *testing.T) {
 	})
 
 	err := handler(c)
-	assert.Error(t, err)
-	assert.Equal(t, http.StatusForbidden, err.(*echo.HTTPError).Code)
+	assert.NoError(t, err) // The middleware returns JSON, not an error
+	assert.Equal(t, http.StatusForbidden, rec.Code)
 }
 
 func TestRequireRole_NoUser(t *testing.T) {
@@ -106,6 +106,6 @@ func TestRequireRole_NoUser(t *testing.T) {
 	})
 
 	err := handler(c)
-	assert.Error(t, err)
-	assert.Equal(t, http.StatusUnauthorized, err.(*echo.HTTPError).Code)
+	assert.NoError(t, err) // The middleware returns JSON, not an error
+	assert.Equal(t, http.StatusUnauthorized, rec.Code)
 }
