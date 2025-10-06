@@ -19,6 +19,10 @@ export const routes: Routes = [
     loadComponent: () => import('./components/dashboard/dashboard.component').then(m => m.DashboardComponent)
   },
   {
+    path: 'auth/callback',
+    loadComponent: () => import('./components/auth-callback/auth-callback.component').then(m => m.AuthCallbackComponent)
+  },
+  {
     path: '**',
     redirectTo: '/login'
   }
