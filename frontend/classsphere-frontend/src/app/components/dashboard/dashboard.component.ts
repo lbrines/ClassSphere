@@ -82,6 +82,15 @@ export class DashboardComponent implements OnInit {
       },
       error: (error) => {
         console.error('Error loading dashboard data:', error);
+        
+        // If it's an authentication error, redirect to login
+        if (error.status === 401) {
+          console.log('Authentication error, redirecting to login');
+          this.authService.logout();
+          this.router.navigate(['/auth/login']);
+          return;
+        }
+        
         this.errorMessage.set('Error al cargar los datos del dashboard');
         this.isLoading.set(false);
       }

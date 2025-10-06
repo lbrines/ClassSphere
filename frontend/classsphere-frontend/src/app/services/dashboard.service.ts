@@ -96,6 +96,13 @@ export class DashboardService {
     if (!currentUser) {
       throw new Error('No user logged in');
     }
+    
+    // Check if token is available
+    const token = localStorage.getItem('token');
+    if (!token) {
+      throw new Error('No authentication token available');
+    }
+    
     return this.getDashboardByRole(currentUser.role);
   }
 }
