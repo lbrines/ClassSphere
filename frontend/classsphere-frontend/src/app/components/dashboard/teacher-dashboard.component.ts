@@ -3,12 +3,15 @@ import { CommonModule } from '@angular/common';
 import { BaseDashboardComponent } from './base-dashboard.component';
 import { AuthService } from '../../services/auth.service';
 import { DashboardService } from '../../services/dashboard.service';
+import { MetricsService, MetricCardData, ChartData } from '../../services/metrics.service';
+import { MetricsCardComponent } from '../../shared/components/metrics-card/metrics-card.component';
+import { MetricsChartComponent } from '../../shared/components/metrics-chart/metrics-chart.component';
 import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-teacher-dashboard',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, MetricsCardComponent, MetricsChartComponent],
   template: `
     <div class="px-4 py-6 sm:px-0">
       <!-- Teacher Welcome Message -->
@@ -23,29 +26,30 @@ import { Router } from '@angular/router';
         </div>
       </div>
 
-      <!-- Teacher Stats -->
+      <!-- Teacher Stats with Enhanced Metrics Cards -->
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-        @for (stat of getTeacherStats(); track stat.key) {
-          <div class="bg-white overflow-hidden shadow rounded-lg">
-            <div class="p-5">
-              <div class="flex items-center">
-                <div class="flex-shrink-0">
-                  <div class="w-8 h-8 rounded-md flex items-center justify-center"
-                       [class]="getStatIconClass(stat.key)">
-                    <span class="text-white text-sm font-medium">{{ stat.value }}</span>
-                  </div>
-                </div>
-                <div class="ml-5 w-0 flex-1">
-                  <dl>
-                    <dt class="text-sm font-medium text-gray-500 truncate">
-                      {{ stat.label }}
-                    </dt>
-                  </dl>
-                </div>
-              </div>
-            </div>
-          </div>
+        @for (metric of getEnhancedMetrics(); track metric.title) {
+          <app-metrics-card [data]="metric"></app-metrics-card>
         }
+      </div>
+
+      <!-- Teacher Performance Charts -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        <!-- Student Performance Chart -->
+        <app-metrics-chart
+          [chartData]="getStudentPerformanceChart()"
+          chartType="bar"
+          title="Rendimiento de Estudiantes"
+          subtitle="Promedio por curso">
+        </app-metrics-chart>
+
+        <!-- Assignment Completion Chart -->
+        <app-metrics-chart
+          [chartData]="getAssignmentCompletionChart()"
+          chartType="doughnut"
+          title="Estado de Tareas"
+          subtitle="Completadas vs Pendientes">
+        </app-metrics-chart>
       </div>
 
       <!-- My Courses & Students at Risk -->
@@ -222,8 +226,104 @@ import { Router } from '@angular/router';
 })
 export class TeacherDashboardComponent extends BaseDashboardComponent implements OnInit {
   
+  constructor(
+    authService: AuthService,
+    dashboardService: DashboardService,
+    router: Router,
+    private metricsService: MetricsService
+  ) {
+    super(authService, dashboardService, router);
+  }
+  
   override ngOnInit(): void {
     super.ngOnInit();
+    this.loadMetrics();
+  }
+
+  private loadMetrics() {
+    this.metricsService.getDashboardMetrics().subscribe();
+    this.metricsService.getPerformanceMetrics().subscribe();
+  }
+
+  getEnhancedMetrics(): MetricCardData[] {
+    const data = this.dashboardData();
+    const stats = data?.dashboard?.stats;
+    
+    return [
+      {
+        title: 'Mis Cursos',
+        value: this.getMyCourses().length,
+        icon: 'fas fa-chalkboard-teacher',
+        color: 'blue',
+        trend: {
+          value: 15,
+          direction: 'up',
+          label: 'vs semestre anterior'
+        }
+      },
+      {
+        title: 'Total Estudiantes',
+        value: stats?.total_students || this.getTotalStudents(),
+        icon: 'fas fa-users',
+        color: 'green',
+        trend: {
+          value: 8,
+          direction: 'up',
+          label: 'nuevos estudiantes'
+        }
+      },
+      {
+        title: 'Tareas Calificadas',
+        value: this.getGradedAssignments(),
+        icon: 'fas fa-check-double',
+        color: 'purple',
+        trend: {
+          value: 12,
+          direction: 'up',
+          label: 'esta semana'
+        }
+      },
+      {
+        title: 'Calificaciones Pendientes',
+        value: this.getPendingGrades(),
+        icon: 'fas fa-clock',
+        color: 'yellow',
+        trend: {
+          value: -25,
+          direction: 'down',
+          label: 'vs semana anterior'
+        }
+      }
+    ];
+  }
+
+  getStudentPerformanceChart(): ChartData {
+    const courses = this.getMyCourses();
+    
+    return {
+      labels: courses.map(c => c.name),
+      datasets: [{
+        label: 'Promedio (%)',
+        data: courses.map(c => c.average_grade || 85),
+        backgroundColor: ['#10B981', '#3B82F6', '#F59E0B', '#EF4444'],
+        borderWidth: 2
+      }]
+    };
+  }
+
+  getAssignmentCompletionChart(): ChartData {
+    const completed = this.getGradedAssignments();
+    const pending = this.getPendingGrades();
+    
+    return {
+      labels: ['Completadas', 'Pendientes'],
+      datasets: [{
+        label: 'Tareas',
+        data: [completed, pending],
+        backgroundColor: ['#10B981', '#F59E0B'],
+        borderWidth: 2
+      }]
+    };
   }
 
   getTeacherStats() {
@@ -257,10 +357,18 @@ export class TeacherDashboardComponent extends BaseDashboardComponent implements
   getMyCourses() {
     // Mock data - in real implementation, this would come from the API
     return [
-      { id: 1, name: 'Matemáticas 101', students: 25, status: 'Activo' },
-      { id: 2, name: 'Física 201', students: 18, status: 'Activo' },
-      { id: 3, name: 'Álgebra Lineal', students: 22, status: 'Activo' }
+      { id: 1, name: 'Matemáticas 101', students: 25, status: 'Activo', average_grade: 87 },
+      { id: 2, name: 'Física 201', students: 18, status: 'Activo', average_grade: 82 },
+      { id: 3, name: 'Álgebra Lineal', students: 22, status: 'Activo', average_grade: 89 }
     ];
+  }
+
+  getTotalStudents(): number {
+    return this.getTotalMyStudents();
+  }
+
+  getGradedAssignments(): number {
+    return 45; // Mock data - assignments already graded
   }
 
   getTotalMyStudents(): number {

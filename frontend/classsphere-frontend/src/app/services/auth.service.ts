@@ -37,6 +37,7 @@ export class AuthService {
   
   public isAuthenticated = signal(false);
   public currentUser = signal<User | null>(null);
+  public currentUser$ = new BehaviorSubject<User | null>(null);
 
   constructor(private http: HttpClient) {
     this.checkAuthStatus();
@@ -62,7 +63,10 @@ export class AuthService {
       this.isAuthenticated.set(true);
       // Get user profile to set current user
       this.getProfile().subscribe({
-        next: (user) => this.currentUser.set(user),
+        next: (user) => {
+          this.currentUser.set(user);
+          this.currentUser$.next(user);
+        },
         error: () => this.logout()
       });
     }
@@ -75,6 +79,7 @@ export class AuthService {
           this.setToken(response.token);
           this.isAuthenticated.set(true);
           this.currentUser.set(response.user);
+          this.currentUser$.next(response.user);
         })
       );
   }
@@ -86,6 +91,7 @@ export class AuthService {
           this.setToken(response.token);
           this.isAuthenticated.set(true);
           this.currentUser.set(response.user);
+          this.currentUser$.next(response.user);
         })
       );
   }
@@ -94,6 +100,7 @@ export class AuthService {
     this.removeToken();
     this.isAuthenticated.set(false);
     this.currentUser.set(null);
+    this.currentUser$.next(null);
   }
 
   getProfile(): Observable<User> {

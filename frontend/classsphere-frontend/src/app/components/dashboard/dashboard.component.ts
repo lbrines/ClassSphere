@@ -59,8 +59,16 @@ export class DashboardComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.currentUser.set(this.authService.currentUser());
-    this.loadDashboardData();
+    // Subscribe to user changes
+    this.authService.currentUser$.subscribe(user => {
+      if (user) {
+        this.currentUser.set(user);
+        this.loadDashboardData();
+      } else {
+        // User not logged in, redirect to login
+        this.router.navigate(['/auth/login']);
+      }
+    });
   }
 
   private loadDashboardData(): void {

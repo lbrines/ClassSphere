@@ -38,8 +38,8 @@ test.describe('Google Classroom Integration E2E Tests', () => {
   test('should toggle Google Classroom mock mode', async ({ page }) => {
     // Login as admin user
     await page.goto('/login');
-    await page.fill('input[name="email"]', 'admin@test.com');
-    await page.fill('input[name="password"]', 'StrongPassword123!');
+    await page.fill('input[formControlName="email"]', 'admin@test.com');
+    await page.fill('input[formControlName="password"]', 'StrongPassword123!');
     await page.click('button[type="submit"]');
     await page.waitForLoadState('networkidle');
     
@@ -59,8 +59,8 @@ test.describe('Google Classroom Integration E2E Tests', () => {
   test('should display Google Classroom courses', async ({ page }) => {
     // Login as teacher
     await page.goto('/login');
-    await page.fill('input[name="email"]', 'teacher@test.com');
-    await page.fill('input[name="password"]', 'StrongPassword123!');
+    await page.fill('input[formControlName="email"]', 'teacher@test.com');
+    await page.fill('input[formControlName="password"]', 'StrongPassword123!');
     await page.click('button[type="submit"]');
     await page.waitForLoadState('networkidle');
     
@@ -93,8 +93,8 @@ test.describe('Google Classroom Integration E2E Tests', () => {
   test('should display Google Classroom students', async ({ page }) => {
     // Login as teacher
     await page.goto('/login');
-    await page.fill('input[name="email"]', 'teacher@test.com');
-    await page.fill('input[name="password"]', 'StrongPassword123!');
+    await page.fill('input[formControlName="email"]', 'teacher@test.com');
+    await page.fill('input[formControlName="password"]', 'StrongPassword123!');
     await page.click('button[type="submit"]');
     await page.waitForLoadState('networkidle');
     
@@ -123,8 +123,8 @@ test.describe('Google Classroom Integration E2E Tests', () => {
   test('should display Google Classroom assignments', async ({ page }) => {
     // Login as teacher
     await page.goto('/login');
-    await page.fill('input[name="email"]', 'teacher@test.com');
-    await page.fill('input[name="password"]', 'StrongPassword123!');
+    await page.fill('input[formControlName="email"]', 'teacher@test.com');
+    await page.fill('input[formControlName="password"]', 'StrongPassword123!');
     await page.click('button[type="submit"]');
     await page.waitForLoadState('networkidle');
     
@@ -157,8 +157,8 @@ test.describe('Google Classroom Integration E2E Tests', () => {
   test('should handle Google Classroom data synchronization', async ({ page }) => {
     // Login as admin
     await page.goto('/login');
-    await page.fill('input[name="email"]', 'admin@test.com');
-    await page.fill('input[name="password"]', 'StrongPassword123!');
+    await page.fill('input[formControlName="email"]', 'admin@test.com');
+    await page.fill('input[formControlName="password"]', 'StrongPassword123!');
     await page.click('button[type="submit"]');
     await page.waitForLoadState('networkidle');
     
@@ -183,8 +183,8 @@ test.describe('Google Classroom Integration E2E Tests', () => {
   test('should handle Google Classroom error states', async ({ page }) => {
     // Login as teacher
     await page.goto('/login');
-    await page.fill('input[name="email"]', 'teacher@test.com');
-    await page.fill('input[name="password"]', 'StrongPassword123!');
+    await page.fill('input[formControlName="email"]', 'teacher@test.com');
+    await page.fill('input[formControlName="password"]', 'StrongPassword123!');
     await page.click('button[type="submit"]');
     await page.waitForLoadState('networkidle');
     
@@ -214,8 +214,8 @@ test.describe('Google Classroom Integration E2E Tests', () => {
   test('should handle Google Classroom permissions', async ({ page }) => {
     // Login as student (should have limited access)
     await page.goto('/login');
-    await page.fill('input[name="email"]', 'student@test.com');
-    await page.fill('input[name="password"]', 'StrongPassword123!');
+    await page.fill('input[formControlName="email"]', 'student@test.com');
+    await page.fill('input[formControlName="password"]', 'StrongPassword123!');
     await page.click('button[type="submit"]');
     await page.waitForLoadState('networkidle');
     

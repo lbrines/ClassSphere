@@ -3,12 +3,22 @@ import { CommonModule } from '@angular/common';
 import { BaseDashboardComponent } from './base-dashboard.component';
 import { AuthService } from '../../services/auth.service';
 import { DashboardService } from '../../services/dashboard.service';
+import { MetricsService, MetricCardData, ChartData } from '../../services/metrics.service';
+import { MetricsCardComponent } from '../../shared/components/metrics-card/metrics-card.component';
+import { MetricsChartComponent } from '../../shared/components/metrics-chart/metrics-chart.component';
+import { ActivityHeatmapComponent } from '../../shared/components/activity-heatmap/activity-heatmap.component';
+import { CircularProgressComponent } from '../../shared/components/circular-progress/circular-progress.component';
+import { TimelineChartComponent } from '../../shared/components/timeline-chart/timeline-chart.component';
+import { RadarChartComponent } from '../../shared/components/radar-chart/radar-chart.component';
+import { MobileHeaderComponent } from '../../shared/components/mobile-header/mobile-header.component';
+import { MobileNavigationComponent } from '../../shared/components/mobile-navigation/mobile-navigation.component';
+import { TouchInteractionsComponent } from '../../shared/components/touch-interactions/touch-interactions.component';
 import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-student-dashboard',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, MetricsCardComponent, MetricsChartComponent, ActivityHeatmapComponent, CircularProgressComponent, TimelineChartComponent, RadarChartComponent, MobileHeaderComponent, MobileNavigationComponent, TouchInteractionsComponent],
   template: `
     <div class="px-4 py-6 sm:px-0">
       <!-- Student Welcome Message -->
@@ -23,29 +33,67 @@ import { Router } from '@angular/router';
         </div>
       </div>
 
-      <!-- Student Stats -->
+      <!-- Student Stats with Enhanced Metrics Cards -->
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-        @for (stat of getStudentStats(); track stat.key) {
-          <div class="bg-white overflow-hidden shadow rounded-lg">
-            <div class="p-5">
-              <div class="flex items-center">
-                <div class="flex-shrink-0">
-                  <div class="w-8 h-8 rounded-md flex items-center justify-center"
-                       [class]="getStatIconClass(stat.key)">
-                    <span class="text-white text-sm font-medium">{{ stat.value }}</span>
-                  </div>
-                </div>
-                <div class="ml-5 w-0 flex-1">
-                  <dl>
-                    <dt class="text-sm font-medium text-gray-500 truncate">
-                      {{ stat.label }}
-                    </dt>
-                  </dl>
-                </div>
-              </div>
-            </div>
-          </div>
+        @for (metric of getEnhancedMetrics(); track metric.title) {
+          <app-metrics-card [data]="metric"></app-metrics-card>
         }
+      </div>
+
+      <!-- Performance Charts -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        <!-- Grade Distribution Chart -->
+        <app-metrics-chart
+          [chartData]="getGradeDistributionChart()"
+          chartType="doughnut"
+          title="Distribución de Calificaciones"
+          subtitle="Rendimiento por categoría de nota">
+        </app-metrics-chart>
+
+        <!-- Progress Chart -->
+        <app-metrics-chart
+          [chartData]="getProgressChart()"
+          chartType="bar"
+          title="Progreso por Curso"
+          subtitle="Completitud de tareas y actividades">
+        </app-metrics-chart>
+      </div>
+
+      <!-- Advanced Visualizations -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+        <!-- Overall Progress -->
+        <app-circular-progress
+          [value]="getOverallProgress()"
+          [max]="100"
+          [label]="'Progreso General'"
+          [config]="getProgressConfig()">
+        </app-circular-progress>
+
+        <!-- Activity Heatmap -->
+        <app-activity-heatmap
+          [data]="getActivityData()"
+          title="Actividad de Estudio"
+          subtitle="Últimos 6 meses"
+          [config]="getHeatmapConfig()">
+        </app-activity-heatmap>
+
+        <!-- Performance Radar -->
+        <app-radar-chart
+          [datasets]="getPerformanceRadarData()"
+          title="Habilidades"
+          subtitle="Evaluación por materia"
+          [config]="getRadarConfig()">
+        </app-radar-chart>
+      </div>
+
+      <!-- Timeline Chart -->
+      <div class="mb-6">
+        <app-timeline-chart
+          [data]="getGradeTimelineData()"
+          title="Evolución de Calificaciones"
+          subtitle="Progreso a lo largo del tiempo"
+          [config]="getTimelineConfig()">
+        </app-timeline-chart>
       </div>
 
       <!-- My Courses & Progress -->
@@ -205,8 +253,214 @@ import { Router } from '@angular/router';
 })
 export class StudentDashboardComponent extends BaseDashboardComponent implements OnInit {
   
+  constructor(
+    authService: AuthService,
+    dashboardService: DashboardService,
+    router: Router,
+    private metricsService: MetricsService
+  ) {
+    super(authService, dashboardService, router);
+  }
+  
   override ngOnInit(): void {
     super.ngOnInit();
+    this.loadMetrics();
+  }
+
+  private loadMetrics() {
+    this.metricsService.getDashboardMetrics().subscribe();
+    this.metricsService.getPerformanceMetrics().subscribe();
+  }
+
+  getEnhancedMetrics(): MetricCardData[] {
+    const data = this.dashboardData();
+    const stats = data?.dashboard?.stats;
+    
+    return [
+      {
+        title: 'Mis Cursos',
+        value: this.getMyCourses().length,
+        icon: 'fas fa-graduation-cap',
+        color: 'blue',
+        trend: {
+          value: 12,
+          direction: 'up',
+          label: 'vs mes anterior'
+        }
+      },
+      {
+        title: 'Tareas Completadas',
+        value: this.getCompletedAssignments(),
+        icon: 'fas fa-check-circle',
+        color: 'green',
+        trend: {
+          value: 8,
+          direction: 'up',
+          label: 'esta semana'
+        }
+      },
+      {
+        title: 'Tareas Pendientes',
+        value: this.getPendingAssignments(),
+        icon: 'fas fa-clock',
+        color: 'yellow',
+        trend: {
+          value: -15,
+          direction: 'down',
+          label: 'vs semana anterior'
+        }
+      },
+      {
+        title: 'Promedio General',
+        value: stats?.average_grade || 85.5,
+        subtitle: 'B+',
+        icon: 'fas fa-chart-line',
+        color: 'purple',
+        format: 'number',
+        trend: {
+          value: 3.2,
+          direction: 'up',
+          label: 'puntos mejorados'
+        }
+      }
+    ];
+  }
+
+  getGradeDistributionChart(): ChartData {
+    const gradeData = this.metricsService.getGradeDistributionData();
+    
+    return {
+      labels: gradeData.map(item => item.label),
+      datasets: [{
+        label: 'Estudiantes',
+        data: gradeData.map(item => item.value),
+        backgroundColor: gradeData.map(item => item.color || '#3B82F6'),
+        borderWidth: 2
+      }]
+    };
+  }
+
+  getProgressChart(): ChartData {
+    const progress = this.getMyProgress();
+    
+    return {
+      labels: progress.map(p => p.course),
+      datasets: [{
+        label: 'Progreso (%)',
+        data: progress.map(p => p.percentage),
+        backgroundColor: ['#3B82F6'],
+        borderColor: ['#1D4ED8'],
+        borderWidth: 2
+      }]
+    };
+  }
+
+  // Advanced Visualizations Methods
+  getOverallProgress(): number {
+    const progress = this.getMyProgress();
+    return Math.round(progress.reduce((sum, p) => sum + p.percentage, 0) / progress.length);
+  }
+
+  getProgressConfig() {
+    return {
+      size: 120,
+      strokeWidth: 8,
+      color: '#10B981',
+      backgroundColor: '#E5E7EB',
+      animationDuration: 1000,
+      showPercentage: true,
+      showValue: false,
+      format: 'percentage' as const
+    };
+  }
+
+  getActivityData() {
+    // Generate mock activity data for the last 6 months
+    const data = [];
+    const startDate = new Date();
+    startDate.setMonth(startDate.getMonth() - 6);
+    
+    for (let d = new Date(startDate); d <= new Date(); d.setDate(d.getDate() + 1)) {
+      data.push({
+        date: d.toISOString().split('T')[0],
+        value: Math.floor(Math.random() * 5) // 0-4 activities per day
+      });
+    }
+    
+    return data;
+  }
+
+  getHeatmapConfig() {
+    return {
+      startDate: new Date(Date.now() - 180 * 24 * 60 * 60 * 1000), // 6 months ago
+      endDate: new Date(),
+      colorScale: {
+        min: '#ebedf0',
+        max: '#216e39'
+      },
+      showTooltip: true,
+      showLegend: true
+    };
+  }
+
+  getPerformanceRadarData() {
+    return [{
+      label: 'Mis Habilidades',
+      data: [
+        { label: 'Matemáticas', value: 85, maxValue: 100 },
+        { label: 'Física', value: 78, maxValue: 100 },
+        { label: 'Química', value: 82, maxValue: 100 },
+        { label: 'Programación', value: 90, maxValue: 100 },
+        { label: 'Comunicación', value: 88, maxValue: 100 },
+        { label: 'Trabajo en Equipo', value: 85, maxValue: 100 }
+      ],
+      color: '#3B82F6',
+      backgroundColor: '#3B82F6',
+      borderWidth: 2
+    }];
+  }
+
+  getRadarConfig() {
+    return {
+      size: 200,
+      levels: 5,
+      showGrid: true,
+      showLabels: true,
+      showLegend: false,
+      animation: true
+    };
+  }
+
+  getGradeTimelineData() {
+    // Generate mock timeline data for grades over time
+    const data = [];
+    const startDate = new Date();
+    startDate.setMonth(startDate.getMonth() - 3);
+    
+    for (let i = 0; i < 12; i++) {
+      const date = new Date(startDate);
+      date.setDate(date.getDate() + (i * 7)); // Weekly data
+      
+      data.push({
+        date: date.toISOString().split('T')[0],
+        value: 70 + Math.random() * 30, // Grades between 70-100
+        label: `Semana ${i + 1}`
+      });
+    }
+    
+    return data;
+  }
+
+  getTimelineConfig() {
+    return {
+      height: 200,
+      showGrid: true,
+      showPoints: true,
+      showArea: true,
+      curveType: 'smooth' as const,
+      color: '#10B981',
+      areaOpacity: 0.2
+    };
   }
 
   getStudentStats() {

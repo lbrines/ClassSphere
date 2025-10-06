@@ -3,12 +3,15 @@ import { CommonModule } from '@angular/common';
 import { BaseDashboardComponent } from './base-dashboard.component';
 import { AuthService } from '../../services/auth.service';
 import { DashboardService } from '../../services/dashboard.service';
+import { MetricsService, MetricCardData, ChartData } from '../../services/metrics.service';
+import { MetricsCardComponent } from '../../shared/components/metrics-card/metrics-card.component';
+import { MetricsChartComponent } from '../../shared/components/metrics-chart/metrics-chart.component';
 import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-coordinator-dashboard',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, MetricsCardComponent, MetricsChartComponent],
   template: `
     <div class="px-4 py-6 sm:px-0">
       <!-- Coordinator Welcome Message -->
@@ -23,29 +26,30 @@ import { Router } from '@angular/router';
         </div>
       </div>
 
-      <!-- Coordinator Stats -->
+      <!-- Coordinator Stats with Enhanced Metrics Cards -->
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-        @for (stat of getCoordinatorStats(); track stat.key) {
-          <div class="bg-white overflow-hidden shadow rounded-lg">
-            <div class="p-5">
-              <div class="flex items-center">
-                <div class="flex-shrink-0">
-                  <div class="w-8 h-8 rounded-md flex items-center justify-center"
-                       [class]="getStatIconClass(stat.key)">
-                    <span class="text-white text-sm font-medium">{{ stat.value }}</span>
-                  </div>
-                </div>
-                <div class="ml-5 w-0 flex-1">
-                  <dl>
-                    <dt class="text-sm font-medium text-gray-500 truncate">
-                      {{ stat.label }}
-                    </dt>
-                  </dl>
-                </div>
-              </div>
-            </div>
-          </div>
+        @for (metric of getEnhancedMetrics(); track metric.title) {
+          <app-metrics-card [data]="metric"></app-metrics-card>
         }
+      </div>
+
+      <!-- Coordinator Analytics Charts -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        <!-- Program Performance Chart -->
+        <app-metrics-chart
+          [chartData]="getProgramPerformanceChart()"
+          chartType="bar"
+          title="Rendimiento por Programa"
+          subtitle="Promedio de calificaciones">
+        </app-metrics-chart>
+
+        <!-- Faculty Distribution Chart -->
+        <app-metrics-chart
+          [chartData]="getFacultyDistributionChart()"
+          chartType="doughnut"
+          title="Distribución de Profesores"
+          subtitle="Por departamento">
+        </app-metrics-chart>
       </div>
 
       <!-- Program Overview & Teacher Performance -->
@@ -244,8 +248,103 @@ import { Router } from '@angular/router';
 })
 export class CoordinatorDashboardComponent extends BaseDashboardComponent implements OnInit {
   
+  constructor(
+    authService: AuthService,
+    dashboardService: DashboardService,
+    router: Router,
+    private metricsService: MetricsService
+  ) {
+    super(authService, dashboardService, router);
+  }
+  
   override ngOnInit(): void {
     super.ngOnInit();
+    this.loadMetrics();
+  }
+
+  private loadMetrics() {
+    this.metricsService.getDashboardMetrics().subscribe();
+    this.metricsService.getPerformanceMetrics().subscribe();
+  }
+
+  getEnhancedMetrics(): MetricCardData[] {
+    const data = this.dashboardData();
+    const stats = data?.dashboard?.stats;
+    
+    return [
+      {
+        title: 'Total Cursos',
+        value: stats?.total_courses || this.getTotalCourses(),
+        icon: 'fas fa-graduation-cap',
+        color: 'blue',
+        trend: {
+          value: 18,
+          direction: 'up',
+          label: 'vs semestre anterior'
+        }
+      },
+      {
+        title: 'Total Profesores',
+        value: stats?.total_teachers || this.getTotalTeachers(),
+        icon: 'fas fa-chalkboard-teacher',
+        color: 'green',
+        trend: {
+          value: 5,
+          direction: 'up',
+          label: 'nuevos profesores'
+        }
+      },
+      {
+        title: 'Total Estudiantes',
+        value: stats?.total_students || this.getTotalStudents(),
+        icon: 'fas fa-users',
+        color: 'purple',
+        trend: {
+          value: 45,
+          direction: 'up',
+          label: 'nuevos estudiantes'
+        }
+      },
+      {
+        title: 'Programas Activos',
+        value: this.getActivePrograms(),
+        icon: 'fas fa-project-diagram',
+        color: 'indigo',
+        trend: {
+          value: 1,
+          direction: 'up',
+          label: 'nuevo programa'
+        }
+      }
+    ];
+  }
+
+  getProgramPerformanceChart(): ChartData {
+    const programs = this.getPrograms();
+    
+    return {
+      labels: programs.map(p => p.name),
+      datasets: [{
+        label: 'Promedio (%)',
+        data: programs.map(p => 85), // Mock average grade
+        backgroundColor: ['#10B981', '#3B82F6', '#F59E0B', '#EF4444', '#8B5CF6'],
+        borderWidth: 2
+      }]
+    };
+  }
+
+  getFacultyDistributionChart(): ChartData {
+    const departments = this.getFacultyByDepartment();
+    
+    return {
+      labels: departments.map(d => d.name),
+      datasets: [{
+        label: 'Profesores',
+        data: departments.map(d => d.count),
+        backgroundColor: ['#10B981', '#3B82F6', '#F59E0B', '#EF4444'],
+        borderWidth: 2
+      }]
+    };
   }
 
   getCoordinatorStats() {
@@ -296,6 +395,28 @@ export class CoordinatorDashboardComponent extends BaseDashboardComponent implem
 
   getTotalCourses(): number {
     return this.getPrograms().reduce((total, program) => total + program.courses, 0);
+  }
+
+  getTotalTeachers(): number {
+    return this.getFacultyByDepartment().reduce((total, dept) => total + dept.count, 0);
+  }
+
+  getTotalStudents(): number {
+    return 450; // Mock data
+  }
+
+  getActivePrograms(): number {
+    return this.getPrograms().length;
+  }
+
+
+  getFacultyByDepartment() {
+    return [
+      { name: 'Matemáticas', count: 8 },
+      { name: 'Física', count: 6 },
+      { name: 'Química', count: 5 },
+      { name: 'Ingeniería', count: 12 }
+    ];
   }
 
   getStudentsAtRisk(): number {

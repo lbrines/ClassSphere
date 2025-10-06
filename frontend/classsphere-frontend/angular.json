@@ -22,6 +22,21 @@
               {
                 "glob": "**/*",
                 "input": "public"
+              },
+              {
+                "glob": "manifest.json",
+                "input": "src",
+                "output": "/"
+              },
+              {
+                "glob": "service-worker.js",
+                "input": "src",
+                "output": "/"
+              },
+              {
+                "glob": "assets/icons/**/*",
+                "input": "src",
+                "output": "/assets/icons"
               }
             ],
             "styles": [
