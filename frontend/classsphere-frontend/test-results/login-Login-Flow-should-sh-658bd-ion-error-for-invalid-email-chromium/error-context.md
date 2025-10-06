@@ -1,32 +1,29 @@
 # Page snapshot
 
 ```yaml
-- generic [ref=e1]:
-  - generic [ref=e5]:
-    - generic [ref=e6]:
-      - heading "ClassSphere" [level=2] [ref=e7]
-      - paragraph [ref=e8]: Inicia sesión en tu cuenta
-    - generic [ref=e9]:
-      - generic [ref=e10]:
-        - generic [ref=e11]:
-          - generic [ref=e12]: Email
-          - textbox "Email" [ref=e13]: invalid-email
-        - generic [ref=e14]:
-          - generic [ref=e15]: Contraseña
-          - textbox "Contraseña" [active] [ref=e16]: password123
-      - button "Iniciar sesión" [ref=e18]:
-        - generic [ref=e19]: Iniciar sesión
-      - paragraph [ref=e21]:
-        - text: ¿No tienes una cuenta?
-        - link "Regístrate aquí" [ref=e22] [cursor=pointer]:
-          - /url: /register
-  - generic [ref=e25]:
-    - generic [ref=e27]: "NG5002: Only void, custom and foreign elements can be self closed \"div\""
-    - generic [ref=e28]:
-      - text: src
-      - generic [ref=e29] [cursor=pointer]: /app/components/login/login.component.ts:48:12
-    - generic [ref=e30]:
-      - text: Click outside, press
-      - generic [ref=e31]: Esc
-      - text: key, or fix the code to dismiss.
+- generic [ref=e5]:
+  - generic [ref=e6]:
+    - heading "ClassSphere" [level=2] [ref=e7]
+    - paragraph [ref=e8]: Sign in to your account
+  - button "Sign in with Google" [ref=e10] [cursor=pointer]:
+    - img [ref=e11] [cursor=pointer]
+    - generic [ref=e16] [cursor=pointer]: Sign in with Google
+  - generic [ref=e21]: Or continue with email
+  - generic [ref=e22]:
+    - generic [ref=e23]:
+      - generic [ref=e24]:
+        - generic [ref=e25]: Email address
+        - textbox "Email address" [ref=e26]
+      - generic [ref=e27]:
+        - generic [ref=e28]: Password
+        - textbox "Password" [ref=e29]
+    - button "Sign in" [disabled] [ref=e31]:
+      - generic [ref=e32]: Sign in
+    - paragraph [ref=e34]:
+      - text: Don't have an account?
+      - link "Sign up here" [ref=e35] [cursor=pointer]:
+        - /url: /register
+  - button "Demo Users (Testing Only)" [ref=e38] [cursor=pointer]:
+    - img [ref=e39] [cursor=pointer]
+    - text: Demo Users (Testing Only)
 ```

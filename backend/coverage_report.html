@@ -57,21 +57,31 @@
 				
 				<option value="file0">classsphere-backend/auth/jwt.go (88.5%)</option>
 				
-				<option value="file1">classsphere-backend/auth/middleware.go (80.0%)</option>
+				<option value="file1">classsphere-backend/auth/middleware.go (93.3%)</option>
 				
-				<option value="file2">classsphere-backend/auth/password.go (62.1%)</option>
+				<option value="file2">classsphere-backend/auth/password.go (96.6%)</option>
 				
 				<option value="file3">classsphere-backend/cache/redis.go (100.0%)</option>
 				
 				<option value="file4">classsphere-backend/config/config.go (100.0%)</option>
 				
-				<option value="file5">classsphere-backend/database/database.go (71.9%)</option>
+				<option value="file5">classsphere-backend/database/database.go (87.5%)</option>
 				
-				<option value="file6">classsphere-backend/handlers/auth.go (86.1%)</option>
+				<option value="file6">classsphere-backend/handlers/auth.go (92.4%)</option>
 				
-				<option value="file7">classsphere-backend/main.go (16.7%)</option>
+				<option value="file7">classsphere-backend/handlers/dashboard.go (98.4%)</option>
 				
-				<option value="file8">classsphere-backend/models/user.go (63.8%)</option>
+				<option value="file8">classsphere-backend/handlers/google.go (41.4%)</option>
+				
+				<option value="file9">classsphere-backend/main.go (10.5%)</option>
+				
+				<option value="file10">classsphere-backend/models/user.go (97.9%)</option>
+				
+				<option value="file11">classsphere-backend/oauth/google.go (65.8%)</option>
+				
+				<option value="file12">classsphere-backend/services/google.go (35.4%)</option>
+				
+				<option value="file13">classsphere-backend/services/metrics.go (50.7%)</option>
 				
 				</select>
 			</div>
@@ -195,7 +205,7 @@ func JWTMiddleware(jwtManager *JWTManager) echo.MiddlewareFunc <span class="cov8
 
                         // Check Bearer format (case insensitive)
                         <span class="cov8" title="1">parts := strings.Split(authHeader, " ")
-                        if len(parts) != 2 || strings.ToLower(parts[0]) != "bearer" </span><span class="cov8" title="1">{
+                        if len(parts) != 2 || strings.ToLower(parts[0]) != "bearer" </span><span class="cov0" title="0">{
                                 return c.JSON(http.StatusUnauthorized, map[string]string{
                                         "error": "invalid authorization format",
                                 })
@@ -251,13 +261,13 @@ func RequireRole(requiredRole string) echo.MiddlewareFunc <span class="cov8" tit
 }
 
 // GetCurrentUser extracts the current user from the context
-func GetCurrentUser(c echo.Context) (*Claims, bool) <span class="cov0" title="0">{
+func GetCurrentUser(c echo.Context) (*Claims, bool) <span class="cov8" title="1">{
         user := c.Get("user")
-        if user == nil </span><span class="cov0" title="0">{
+        if user == nil </span><span class="cov8" title="1">{
                 return nil, false
         }</span>
 
-        <span class="cov0" title="0">claims, ok := user.(*Claims)
+        <span class="cov8" title="1">claims, ok := user.(*Claims)
         return claims, ok</span>
 }</pre>
 		
@@ -312,7 +322,7 @@ func ValidatePasswordStrength(password string) error <span class="cov8" title="1
 
         lowercasePassword := regexp.MustCompile(`[A-Z]`).ReplaceAllString(password, "")
         for _, weak := range weakPasswords </span><span class="cov8" title="1">{
-                if lowercasePassword == weak </span><span class="cov0" title="0">{
+                if lowercasePassword == weak </span><span class="cov8" title="1">{
                         return errors.New("password is too common, please choose a stronger password")
                 }</span>
         }
@@ -321,24 +331,24 @@ func ValidatePasswordStrength(password string) error <span class="cov8" title="1
 }
 
 // GenerateRandomPassword generates a secure random password
-func GenerateRandomPassword(length int) (string, error) <span class="cov0" title="0">{
-        if length &lt; 8 </span><span class="cov0" title="0">{
+func GenerateRandomPassword(length int) (string, error) <span class="cov8" title="1">{
+        if length &lt; 8 </span><span class="cov8" title="1">{
                 length = 8
         }</span>
-        <span class="cov0" title="0">if length &gt; 128 </span><span class="cov0" title="0">{
+        <span class="cov8" title="1">if length &gt; 128 </span><span class="cov8" title="1">{
                 length = 128
         }</span>
 
-        <span class="cov0" title="0">const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&amp;*"
+        <span class="cov8" title="1">const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&amp;*"
         password := make([]byte, length)
 
         // This is a simplified random generation for testing
         // In production, use crypto/rand for secure random generation
-        for i := range password </span><span class="cov0" title="0">{
+        for i := range password </span><span class="cov8" title="1">{
                 password[i] = charset[i%len(charset)]
         }</span>
 
-        <span class="cov0" title="0">return string(password), nil</span>
+        <span class="cov8" title="1">return string(password), nil</span>
 }</pre>
 		
 		<pre class="file" id="file3" style="display: none">package cache
@@ -476,7 +486,7 @@ func NewConnection(databasePath string) (*gorm.DB, error) <span class="cov8" tit
 // GetDatabaseConfig returns GORM configuration
 func GetDatabaseConfig() *gorm.Config <span class="cov8" title="1">{
         logLevel := logger.Error
-        if os.Getenv("APP_ENV") == "development" </span><span class="cov0" title="0">{
+        if os.Getenv("APP_ENV") == "development" </span><span class="cov8" title="1">{
                 logLevel = logger.Info
         }</span>
 
@@ -507,7 +517,7 @@ func AutoMigrate(db *gorm.DB) error <span class="cov8" title="1">{
 // InitializeDatabase creates connection and runs migrations
 func InitializeDatabase(databasePath string) (*gorm.DB, error) <span class="cov8" title="1">{
         db, err := NewConnection(databasePath)
-        if err != nil </span><span class="cov0" title="0">{
+        if err != nil </span><span class="cov8" title="1">{
                 return nil, err
         }</span>
 
@@ -529,12 +539,12 @@ func CloseDatabase(db *gorm.DB) error <span class="cov8" title="1">{
 }
 
 // HealthCheck performs a database health check
-func HealthCheck(db *gorm.DB) error <span class="cov0" title="0">{
+func HealthCheck(db *gorm.DB) error <span class="cov8" title="1">{
         sqlDB, err := db.DB()
         if err != nil </span><span class="cov0" title="0">{
                 return err
         }</span>
-        <span class="cov0" title="0">return sqlDB.Ping()</span>
+        <span class="cov8" title="1">return sqlDB.Ping()</span>
 }</pre>
 		
 		<pre class="file" id="file6" style="display: none">package handlers
@@ -581,6 +591,10 @@ type RefreshTokenRequest struct {
         Token string `json:"token" validate:"required"`
 }
 
+type LogoutRequest struct {
+        Token string `json:"token" validate:"required"`
+}
+
 type UserResponse struct {
         ID       uint   `json:"id"`
         Email    string `json:"email"`
@@ -610,7 +624,7 @@ type ErrorResponse struct {
 // Register handles user registration
 func (h *AuthHandler) Register(c echo.Context) error <span class="cov8" title="1">{
         var req RegisterRequest
-        if err := c.Bind(&amp;req); err != nil </span><span class="cov0" title="0">{
+        if err := c.Bind(&amp;req); err != nil </span><span class="cov8" title="1">{
                 return c.JSON(http.StatusBadRequest, ErrorResponse{Error: "Invalid request format"})
         }</span>
 
@@ -640,7 +654,7 @@ func (h *AuthHandler) Register(c echo.Context) error <span class="cov8" title="1
                 IsActive: true,
         }
 
-        if err := h.userRepo.CreateUser(user); err != nil </span><span class="cov0" title="0">{
+        if err := h.userRepo.CreateUser(user); err != nil </span><span class="cov8" title="1">{
                 return c.JSON(http.StatusInternalServerError, ErrorResponse{Error: "Failed to create user"})
         }</span>
 
@@ -667,7 +681,7 @@ func (h *AuthHandler) Register(c echo.Context) error <span class="cov8" title="1
 // Login handles user authentication
 func (h *AuthHandler) Login(c echo.Context) error <span class="cov8" title="1">{
         var req LoginRequest
-        if err := c.Bind(&amp;req); err != nil </span><span class="cov0" title="0">{
+        if err := c.Bind(&amp;req); err != nil </span><span class="cov8" title="1">{
                 return c.JSON(http.StatusBadRequest, ErrorResponse{Error: "Invalid request format"})
         }</span>
 
@@ -683,7 +697,7 @@ func (h *AuthHandler) Login(c echo.Context) error <span class="cov8" title="1">{
         }</span>
 
         // Check password
-        <span class="cov8" title="1">if !auth.CheckPassword(req.Password, user.Password) </span><span class="cov8" title="1">{
+        <span class="cov8" title="1">if !auth.CheckPassword(req.Password, user.Password) </span><span class="cov0" title="0">{
                 return c.JSON(http.StatusUnauthorized, ErrorResponse{Error: "Invalid credentials"})
         }</span>
 
@@ -723,7 +737,7 @@ func (h *AuthHandler) GetProfile(c echo.Context) error <span class="cov8" title=
 
         // Get user from database
         <span class="cov8" title="1">user, err := h.userRepo.GetUserByID(uint(userID))
-        if err != nil </span><span class="cov0" title="0">{
+        if err != nil </span><span class="cov8" title="1">{
                 return c.JSON(http.StatusNotFound, ErrorResponse{Error: "User not found"})
         }</span>
 
@@ -741,7 +755,7 @@ func (h *AuthHandler) GetProfile(c echo.Context) error <span class="cov8" title=
 // RefreshToken generates a new token from an existing valid token
 func (h *AuthHandler) RefreshToken(c echo.Context) error <span class="cov8" title="1">{
         var req RefreshTokenRequest
-        if err := c.Bind(&amp;req); err != nil </span><span class="cov0" title="0">{
+        if err := c.Bind(&amp;req); err != nil </span><span class="cov8" title="1">{
                 return c.JSON(http.StatusBadRequest, ErrorResponse{Error: "Invalid request format"})
         }</span>
 
@@ -799,9 +813,701 @@ func (h *AuthHandler) validateLoginRequest(req LoginRequest) error <span class="
 func (h *AuthHandler) isValidEmail(email string) bool <span class="cov8" title="1">{
         emailRegex := regexp.MustCompile(`^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`)
         return emailRegex.MatchString(email)
+}</span>
+
+// Logout handles user logout
+func (h *AuthHandler) Logout(c echo.Context) error <span class="cov8" title="1">{
+        var req LogoutRequest
+        if err := c.Bind(&amp;req); err != nil </span><span class="cov8" title="1">{
+                return c.JSON(http.StatusBadRequest, map[string]string{"error": "Invalid request"})
+        }</span>
+
+        // Validate token
+        <span class="cov8" title="1">claims, err := h.jwtManager.ValidateToken(req.Token)
+        if err != nil </span><span class="cov8" title="1">{
+                return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Invalid token"})
+        }</span>
+
+        // In a real implementation, you would:
+        // 1. Add token to blacklist
+        // 2. Clear any server-side sessions
+        // 3. Log the logout event
+        
+        // For now, just return success
+        <span class="cov8" title="1">return c.JSON(http.StatusOK, map[string]interface{}{
+                "message": "Logout successful",
+                "user_id": claims.UserID,
+                "timestamp": time.Now().Format("2006-01-02T15:04:05Z07:00"),
+        })</span>
 }</pre>
 		
-		<pre class="file" id="file7" style="display: none">package main
+		<pre class="file" id="file7" style="display: none">package handlers
+
+import (
+        "net/http"
+        "strconv"
+        "time"
+
+        "classsphere-backend/auth"
+        "classsphere-backend/models"
+
+        "github.com/labstack/echo/v4"
+)
+
+type DashboardHandler struct {
+        userRepo *models.UserRepository
+}
+
+func NewDashboardHandler(userRepo *models.UserRepository) *DashboardHandler <span class="cov8" title="1">{
+        return &amp;DashboardHandler{
+                userRepo: userRepo,
+        }
+}</span>
+
+// GetStudentDashboard returns student-specific dashboard data
+func (h *DashboardHandler) GetStudentDashboard(c echo.Context) error <span class="cov8" title="1">{
+        // Get user from context
+        user := c.Get("user")
+        if user == nil </span><span class="cov8" title="1">{
+                return c.JSON(http.StatusUnauthorized, map[string]string{"error": "User not authenticated"})
+        }</span>
+        
+        <span class="cov8" title="1">claims, ok := user.(*auth.Claims)
+        if !ok </span><span class="cov8" title="1">{
+                return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Invalid user context"})
+        }</span>
+        
+        <span class="cov8" title="1">userID := claims.UserID
+        
+        // Convert string to uint
+        id, err := strconv.ParseUint(userID, 10, 32)
+        if err != nil </span><span class="cov8" title="1">{
+                return c.JSON(http.StatusBadRequest, map[string]string{"error": "Invalid user ID"})
+        }</span>
+        
+        // Get user info
+        <span class="cov8" title="1">dbUser, err := h.userRepo.GetUserByID(uint(id))
+        if err != nil </span><span class="cov8" title="1">{
+                return c.JSON(http.StatusNotFound, map[string]string{"error": "User not found"})
+        }</span>
+
+        // Mock student dashboard data
+        <span class="cov8" title="1">dashboardData := map[string]interface{}{
+                "user": map[string]interface{}{
+                        "id":    dbUser.ID,
+                        "name":  dbUser.Name,
+                        "email": dbUser.Email,
+                        "role":  dbUser.Role,
+                },
+                "dashboard": map[string]interface{}{
+                        "type": "student",
+                        "welcome_message": "Welcome to your student dashboard!",
+                        "stats": map[string]interface{}{
+                                "total_courses": 3,
+                                "assignments_pending": 5,
+                                "assignments_completed": 12,
+                                "average_grade": 85.5,
+                        },
+                        "recent_activities": []map[string]interface{}{
+                                {
+                                        "type": "assignment_submitted",
+                                        "title": "Math Homework #3",
+                                        "date": time.Now().AddDate(0, 0, -1).Format("2006-01-02"),
+                                        "status": "submitted",
+                                },
+                                {
+                                        "type": "grade_received",
+                                        "title": "Science Quiz",
+                                        "date": time.Now().AddDate(0, 0, -2).Format("2006-01-02"),
+                                        "grade": 92,
+                                },
+                        },
+                        "upcoming_deadlines": []map[string]interface{}{
+                                {
+                                        "title": "History Essay",
+                                        "due_date": time.Now().AddDate(0, 0, 3).Format("2006-01-02"),
+                                        "course": "World History",
+                                },
+                                {
+                                        "title": "Math Test",
+                                        "due_date": time.Now().AddDate(0, 0, 5).Format("2006-01-02"),
+                                        "course": "Algebra II",
+                                },
+                        },
+                },
+                "timestamp": time.Now().Format("2006-01-02T15:04:05Z07:00"),
+        }
+
+        return c.JSON(http.StatusOK, dashboardData)</span>
+}
+
+// GetTeacherDashboard returns teacher-specific dashboard data
+func (h *DashboardHandler) GetTeacherDashboard(c echo.Context) error <span class="cov8" title="1">{
+        // Get user from context
+        user := c.Get("user")
+        if user == nil </span><span class="cov8" title="1">{
+                return c.JSON(http.StatusUnauthorized, map[string]string{"error": "User not authenticated"})
+        }</span>
+        
+        <span class="cov8" title="1">claims, ok := user.(*auth.Claims)
+        if !ok </span><span class="cov8" title="1">{
+                return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Invalid user context"})
+        }</span>
+        
+        <span class="cov8" title="1">userID := claims.UserID
+        
+        // Convert string to uint
+        id, err := strconv.ParseUint(userID, 10, 32)
+        if err != nil </span><span class="cov8" title="1">{
+                return c.JSON(http.StatusBadRequest, map[string]string{"error": "Invalid user ID"})
+        }</span>
+        
+        // Get user info
+        <span class="cov8" title="1">dbUser, err := h.userRepo.GetUserByID(uint(id))
+        if err != nil </span><span class="cov8" title="1">{
+                return c.JSON(http.StatusNotFound, map[string]string{"error": "User not found"})
+        }</span>
+
+        // Mock teacher dashboard data
+        <span class="cov8" title="1">dashboardData := map[string]interface{}{
+                "user": map[string]interface{}{
+                        "id":    dbUser.ID,
+                        "name":  dbUser.Name,
+                        "email": dbUser.Email,
+                        "role":  dbUser.Role,
+                },
+                "dashboard": map[string]interface{}{
+                        "type": "teacher",
+                        "welcome_message": "Welcome to your teacher dashboard!",
+                        "stats": map[string]interface{}{
+                                "total_courses": 4,
+                                "total_students": 120,
+                                "assignments_graded": 45,
+                                "assignments_pending": 8,
+                        },
+                        "recent_activities": []map[string]interface{}{
+                                {
+                                        "type": "assignment_graded",
+                                        "title": "Math Homework #3",
+                                        "date": time.Now().AddDate(0, 0, -1).Format("2006-01-02"),
+                                        "students_graded": 25,
+                                },
+                                {
+                                        "type": "new_assignment",
+                                        "title": "Science Lab Report",
+                                        "date": time.Now().AddDate(0, 0, -2).Format("2006-01-02"),
+                                        "course": "Chemistry",
+                                },
+                        },
+                        "upcoming_tasks": []map[string]interface{}{
+                                {
+                                        "title": "Grade History Essays",
+                                        "due_date": time.Now().AddDate(0, 0, 2).Format("2006-01-02"),
+                                        "course": "World History",
+                                        "students": 30,
+                                },
+                                {
+                                        "title": "Prepare Math Test",
+                                        "due_date": time.Now().AddDate(0, 0, 4).Format("2006-01-02"),
+                                        "course": "Algebra II",
+                                },
+                        },
+                },
+                "timestamp": time.Now().Format("2006-01-02T15:04:05Z07:00"),
+        }
+
+        return c.JSON(http.StatusOK, dashboardData)</span>
+}
+
+// GetCoordinatorDashboard returns coordinator-specific dashboard data
+func (h *DashboardHandler) GetCoordinatorDashboard(c echo.Context) error <span class="cov8" title="1">{
+        // Get user from context
+        user := c.Get("user")
+        if user == nil </span><span class="cov8" title="1">{
+                return c.JSON(http.StatusUnauthorized, map[string]string{"error": "User not authenticated"})
+        }</span>
+        
+        <span class="cov8" title="1">claims, ok := user.(*auth.Claims)
+        if !ok </span><span class="cov8" title="1">{
+                return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Invalid user context"})
+        }</span>
+        
+        <span class="cov8" title="1">userID := claims.UserID
+        
+        // Convert string to uint
+        id, err := strconv.ParseUint(userID, 10, 32)
+        if err != nil </span><span class="cov8" title="1">{
+                return c.JSON(http.StatusBadRequest, map[string]string{"error": "Invalid user ID"})
+        }</span>
+        
+        // Get user info
+        <span class="cov8" title="1">dbUser, err := h.userRepo.GetUserByID(uint(id))
+        if err != nil </span><span class="cov8" title="1">{
+                return c.JSON(http.StatusNotFound, map[string]string{"error": "User not found"})
+        }</span>
+
+        // Mock coordinator dashboard data
+        <span class="cov8" title="1">dashboardData := map[string]interface{}{
+                "user": map[string]interface{}{
+                        "id":    dbUser.ID,
+                        "name":  dbUser.Name,
+                        "email": dbUser.Email,
+                        "role":  dbUser.Role,
+                },
+                "dashboard": map[string]interface{}{
+                        "type": "coordinator",
+                        "welcome_message": "Welcome to your coordinator dashboard!",
+                        "stats": map[string]interface{}{
+                                "total_courses": 15,
+                                "total_teachers": 8,
+                                "total_students": 300,
+                                "active_programs": 3,
+                        },
+                        "recent_activities": []map[string]interface{}{
+                                {
+                                        "type": "course_created",
+                                        "title": "Advanced Mathematics",
+                                        "date": time.Now().AddDate(0, 0, -1).Format("2006-01-02"),
+                                        "teacher": "Dr. Smith",
+                                },
+                                {
+                                        "type": "teacher_assigned",
+                                        "title": "Chemistry Lab",
+                                        "date": time.Now().AddDate(0, 0, -2).Format("2006-01-02"),
+                                        "teacher": "Prof. Johnson",
+                                },
+                        },
+                        "upcoming_tasks": []map[string]interface{}{
+                                {
+                                        "title": "Review Course Schedules",
+                                        "due_date": time.Now().AddDate(0, 0, 3).Format("2006-01-02"),
+                                        "priority": "high",
+                                },
+                                {
+                                        "title": "Teacher Performance Review",
+                                        "due_date": time.Now().AddDate(0, 0, 7).Format("2006-01-02"),
+                                        "teachers": 8,
+                                },
+                        },
+                },
+                "timestamp": time.Now().Format("2006-01-02T15:04:05Z07:00"),
+        }
+
+        return c.JSON(http.StatusOK, dashboardData)</span>
+}
+
+// GetAdminDashboard returns admin-specific dashboard data
+func (h *DashboardHandler) GetAdminDashboard(c echo.Context) error <span class="cov8" title="1">{
+        // Get user from context
+        user := c.Get("user")
+        if user == nil </span><span class="cov8" title="1">{
+                return c.JSON(http.StatusUnauthorized, map[string]string{"error": "User not authenticated"})
+        }</span>
+        
+        <span class="cov8" title="1">claims, ok := user.(*auth.Claims)
+        if !ok </span><span class="cov8" title="1">{
+                return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Invalid user context"})
+        }</span>
+        
+        <span class="cov8" title="1">userID := claims.UserID
+        
+        // Convert string to uint
+        id, err := strconv.ParseUint(userID, 10, 32)
+        if err != nil </span><span class="cov8" title="1">{
+                return c.JSON(http.StatusBadRequest, map[string]string{"error": "Invalid user ID"})
+        }</span>
+        
+        // Get user info
+        <span class="cov8" title="1">dbUser, err := h.userRepo.GetUserByID(uint(id))
+        if err != nil </span><span class="cov8" title="1">{
+                return c.JSON(http.StatusNotFound, map[string]string{"error": "User not found"})
+        }</span>
+
+        // Get system stats
+        <span class="cov8" title="1">allUsers, err := h.userRepo.ListUsers(0, 100)
+        if err != nil </span><span class="cov0" title="0">{
+                allUsers = []*models.User{}
+        }</span>
+
+        // Mock admin dashboard data
+        <span class="cov8" title="1">dashboardData := map[string]interface{}{
+                "user": map[string]interface{}{
+                        "id":    dbUser.ID,
+                        "name":  dbUser.Name,
+                        "email": dbUser.Email,
+                        "role":  dbUser.Role,
+                },
+                "dashboard": map[string]interface{}{
+                        "type": "admin",
+                        "welcome_message": "Welcome to your admin dashboard!",
+                        "stats": map[string]interface{}{
+                                "total_users": len(allUsers),
+                                "total_courses": 25,
+                                "total_teachers": 12,
+                                "total_students": 450,
+                                "system_uptime": "99.9%",
+                        },
+                        "recent_activities": []map[string]interface{}{
+                                {
+                                        "type": "user_registered",
+                                        "title": "New Student Registration",
+                                        "date": time.Now().AddDate(0, 0, -1).Format("2006-01-02"),
+                                        "user": "john.doe@example.com",
+                                },
+                                {
+                                        "type": "system_backup",
+                                        "title": "Daily Backup Completed",
+                                        "date": time.Now().AddDate(0, 0, -1).Format("2006-01-02"),
+                                        "status": "success",
+                                },
+                        },
+                        "system_alerts": []map[string]interface{}{
+                                {
+                                        "type": "warning",
+                                        "title": "High Server Load",
+                                        "message": "Server CPU usage above 80%",
+                                        "date": time.Now().AddDate(0, 0, -1).Format("2006-01-02"),
+                                },
+                                {
+                                        "type": "info",
+                                        "title": "Scheduled Maintenance",
+                                        "message": "System maintenance scheduled for Sunday",
+                                        "date": time.Now().AddDate(0, 0, 2).Format("2006-01-02"),
+                                },
+                        },
+                },
+                "timestamp": time.Now().Format("2006-01-02T15:04:05Z07:00"),
+        }
+
+        return c.JSON(http.StatusOK, dashboardData)</span>
+}
+</pre>
+		
+		<pre class="file" id="file8" style="display: none">package handlers
+
+import (
+        "net/http"
+        "strconv"
+
+        "classsphere-backend/auth"
+        "classsphere-backend/models"
+        "classsphere-backend/services"
+
+        "github.com/labstack/echo/v4"
+)
+
+// GoogleHandler handles Google Classroom API requests
+type GoogleHandler struct {
+        userRepo        *models.UserRepository
+        googleService   GoogleClassroomService
+        metricsService  MetricsService
+}
+
+// GoogleClassroomService interface for dependency injection
+type GoogleClassroomService interface {
+        ListCourses(userID string) ([]services.Course, error)
+        ListStudents(courseID string) ([]services.Student, error)
+        ListAssignments(courseID string) ([]services.Assignment, error)
+        SetMockMode(enabled bool)
+        GetCourseStats(courseID string) (map[string]interface{}, error)
+}
+
+// MetricsService interface for dependency injection
+type MetricsService interface {
+        CalculateCourseMetrics(courses []services.Course) services.CourseMetrics
+        CalculateStudentMetrics(students []services.Student) services.StudentMetrics
+        CalculateAssignmentMetrics(assignments []services.Assignment) services.AssignmentMetrics
+        GetDashboardMetrics(courses []services.Course, students []services.Student, assignments []services.Assignment) services.DashboardMetrics
+        GetRoleSpecificMetrics(role string, courses []services.Course, students []services.Student, assignments []services.Assignment) map[string]interface{}
+}
+
+// NewGoogleHandler creates a new Google Classroom handler
+func NewGoogleHandler(userRepo *models.UserRepository, googleService GoogleClassroomService, metricsService MetricsService) *GoogleHandler <span class="cov0" title="0">{
+        return &amp;GoogleHandler{
+                userRepo:       userRepo,
+                googleService:  googleService,
+                metricsService: metricsService,
+        }
+}</span>
+
+// GetCourses retrieves courses for the authenticated user
+func (h *GoogleHandler) GetCourses(c echo.Context) error <span class="cov8" title="1">{
+        // Get user from context
+        user := c.Get("user")
+        if user == nil </span><span class="cov0" title="0">{
+                return c.JSON(http.StatusUnauthorized, map[string]string{"error": "User not authenticated"})
+        }</span>
+        
+        <span class="cov8" title="1">claims, ok := user.(*auth.Claims)
+        if !ok </span><span class="cov0" title="0">{
+                return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Invalid user context"})
+        }</span>
+        
+        <span class="cov8" title="1">userID := claims.UserID
+        
+        // Get courses from Google Classroom service
+        courses, err := h.googleService.ListCourses(userID)
+        if err != nil </span><span class="cov8" title="1">{
+                return c.JSON(http.StatusInternalServerError, map[string]string{
+                        "error": "Failed to retrieve courses",
+                })
+        }</span>
+        
+        // Calculate course metrics
+        <span class="cov8" title="1">courseMetrics := h.metricsService.CalculateCourseMetrics(courses)
+        
+        response := map[string]interface{}{
+                "courses": courses,
+                "metrics": courseMetrics,
+                "count":   len(courses),
+        }
+        
+        return c.JSON(http.StatusOK, response)</span>
+}
+
+// GetCourseStudents retrieves students for a specific course
+func (h *GoogleHandler) GetCourseStudents(c echo.Context) error <span class="cov8" title="1">{
+        courseID := c.Param("courseId")
+        if courseID == "" </span><span class="cov0" title="0">{
+                return c.JSON(http.StatusBadRequest, map[string]string{
+                        "error": "Course ID is required",
+                })
+        }</span>
+        
+        // Get students from Google Classroom service
+        <span class="cov8" title="1">students, err := h.googleService.ListStudents(courseID)
+        if err != nil </span><span class="cov8" title="1">{
+                return c.JSON(http.StatusInternalServerError, map[string]string{
+                        "error": "Failed to retrieve students",
+                })
+        }</span>
+        
+        // Calculate student metrics
+        <span class="cov8" title="1">studentMetrics := h.metricsService.CalculateStudentMetrics(students)
+        
+        response := map[string]interface{}{
+                "course_id": courseID,
+                "students":  students,
+                "metrics":   studentMetrics,
+                "count":     len(students),
+        }
+        
+        return c.JSON(http.StatusOK, response)</span>
+}
+
+// GetCourseAssignments retrieves assignments for a specific course
+func (h *GoogleHandler) GetCourseAssignments(c echo.Context) error <span class="cov8" title="1">{
+        courseID := c.Param("courseId")
+        if courseID == "" </span><span class="cov0" title="0">{
+                return c.JSON(http.StatusBadRequest, map[string]string{
+                        "error": "Course ID is required",
+                })
+        }</span>
+        
+        // Get assignments from Google Classroom service
+        <span class="cov8" title="1">assignments, err := h.googleService.ListAssignments(courseID)
+        if err != nil </span><span class="cov8" title="1">{
+                return c.JSON(http.StatusInternalServerError, map[string]string{
+                        "error": "Failed to retrieve assignments",
+                })
+        }</span>
+        
+        // Calculate assignment metrics
+        <span class="cov8" title="1">assignmentMetrics := h.metricsService.CalculateAssignmentMetrics(assignments)
+        
+        response := map[string]interface{}{
+                "course_id":  courseID,
+                "assignments": assignments,
+                "metrics":    assignmentMetrics,
+                "count":      len(assignments),
+        }
+        
+        return c.JSON(http.StatusOK, response)</span>
+}
+
+// GetCourseStats retrieves statistics for a specific course
+func (h *GoogleHandler) GetCourseStats(c echo.Context) error <span class="cov8" title="1">{
+        courseID := c.Param("courseId")
+        if courseID == "" </span><span class="cov0" title="0">{
+                return c.JSON(http.StatusBadRequest, map[string]string{
+                        "error": "Course ID is required",
+                })
+        }</span>
+        
+        // Get course stats from Google Classroom service
+        <span class="cov8" title="1">stats, err := h.googleService.GetCourseStats(courseID)
+        if err != nil </span><span class="cov8" title="1">{
+                return c.JSON(http.StatusInternalServerError, map[string]string{
+                        "error": "Failed to retrieve course statistics",
+                })
+        }</span>
+        
+        <span class="cov8" title="1">return c.JSON(http.StatusOK, stats)</span>
+}
+
+// GetDashboardMetrics retrieves comprehensive dashboard metrics
+func (h *GoogleHandler) GetDashboardMetrics(c echo.Context) error <span class="cov0" title="0">{
+        // Get user from context
+        user := c.Get("user")
+        if user == nil </span><span class="cov0" title="0">{
+                return c.JSON(http.StatusUnauthorized, map[string]string{"error": "User not authenticated"})
+        }</span>
+        
+        <span class="cov0" title="0">claims, ok := user.(*auth.Claims)
+        if !ok </span><span class="cov0" title="0">{
+                return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Invalid user context"})
+        }</span>
+        
+        <span class="cov0" title="0">userID := claims.UserID
+        userRole := claims.Role
+        
+        // Get courses for the user
+        courses, err := h.googleService.ListCourses(userID)
+        if err != nil </span><span class="cov0" title="0">{
+                return c.JSON(http.StatusInternalServerError, map[string]string{
+                        "error": "Failed to retrieve courses",
+                })
+        }</span>
+        
+        // Get students and assignments for all courses
+        <span class="cov0" title="0">var allStudents []services.Student
+        var allAssignments []services.Assignment
+        
+        for _, course := range courses </span><span class="cov0" title="0">{
+                students, err := h.googleService.ListStudents(course.ID)
+                if err == nil </span><span class="cov0" title="0">{
+                        allStudents = append(allStudents, students...)
+                }</span>
+                
+                <span class="cov0" title="0">assignments, err := h.googleService.ListAssignments(course.ID)
+                if err == nil </span><span class="cov0" title="0">{
+                        allAssignments = append(allAssignments, assignments...)
+                }</span>
+        }
+        
+        // Get role-specific metrics
+        <span class="cov0" title="0">roleMetrics := h.metricsService.GetRoleSpecificMetrics(userRole, courses, allStudents, allAssignments)
+        
+        return c.JSON(http.StatusOK, roleMetrics)</span>
+}
+
+// ToggleMockMode toggles between Google API and mock mode
+func (h *GoogleHandler) ToggleMockMode(c echo.Context) error <span class="cov8" title="1">{
+        enabledStr := c.Param("enabled")
+        if enabledStr == "" </span><span class="cov0" title="0">{
+                return c.JSON(http.StatusBadRequest, map[string]string{
+                        "error": "enabled parameter is required (true/false)",
+                })
+        }</span>
+        
+        <span class="cov8" title="1">enabled, err := strconv.ParseBool(enabledStr)
+        if err != nil </span><span class="cov8" title="1">{
+                return c.JSON(http.StatusBadRequest, map[string]string{
+                        "error": "enabled parameter must be 'true' or 'false'",
+                })
+        }</span>
+        
+        // Toggle mock mode
+        <span class="cov8" title="1">h.googleService.SetMockMode(enabled)
+        
+        response := map[string]interface{}{
+                "mock_mode_enabled": enabled,
+                "message":           "Mock mode toggled successfully",
+        }
+        
+        return c.JSON(http.StatusOK, response)</span>
+}
+
+// GetSystemStatus retrieves the current system status including mock mode
+func (h *GoogleHandler) GetSystemStatus(c echo.Context) error <span class="cov0" title="0">{
+        // Get user from context
+        user := c.Get("user")
+        if user == nil </span><span class="cov0" title="0">{
+                return c.JSON(http.StatusUnauthorized, map[string]string{"error": "User not authenticated"})
+        }</span>
+        
+        <span class="cov0" title="0">claims, ok := user.(*auth.Claims)
+        if !ok </span><span class="cov0" title="0">{
+                return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Invalid user context"})
+        }</span>
+        
+        // Get system information
+        <span class="cov0" title="0">systemStatus := map[string]interface{}{
+                "user_id":         claims.UserID,
+                "user_role":       claims.Role,
+                "service_status":  "operational",
+                "google_api_status": "connected",
+                "mock_mode_available": true,
+                "timestamp":       "2025-10-06T00:00:00Z",
+        }
+        
+        return c.JSON(http.StatusOK, systemStatus)</span>
+}
+
+// GetPerformanceMetrics retrieves performance metrics for the system
+func (h *GoogleHandler) GetPerformanceMetrics(c echo.Context) error <span class="cov0" title="0">{
+        // Get user from context
+        user := c.Get("user")
+        if user == nil </span><span class="cov0" title="0">{
+                return c.JSON(http.StatusUnauthorized, map[string]string{"error": "User not authenticated"})
+        }</span>
+        
+        <span class="cov0" title="0">claims, ok := user.(*auth.Claims)
+        if !ok </span><span class="cov0" title="0">{
+                return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Invalid user context"})
+        }</span>
+        
+        <span class="cov0" title="0">userID := claims.UserID
+        
+        // Get courses for performance calculation
+        courses, err := h.googleService.ListCourses(userID)
+        if err != nil </span><span class="cov0" title="0">{
+                return c.JSON(http.StatusInternalServerError, map[string]string{
+                        "error": "Failed to retrieve courses for performance metrics",
+                })
+        }</span>
+        
+        // Get students and assignments for performance calculation
+        <span class="cov0" title="0">var allStudents []services.Student
+        var allAssignments []services.Assignment
+        
+        for _, course := range courses </span><span class="cov0" title="0">{
+                students, err := h.googleService.ListStudents(course.ID)
+                if err == nil </span><span class="cov0" title="0">{
+                        allStudents = append(allStudents, students...)
+                }</span>
+                
+                <span class="cov0" title="0">assignments, err := h.googleService.ListAssignments(course.ID)
+                if err == nil </span><span class="cov0" title="0">{
+                        allAssignments = append(allAssignments, assignments...)
+                }</span>
+        }
+        
+        // Calculate performance metrics
+        <span class="cov0" title="0">performanceMetrics := map[string]interface{}{
+                "user_id": claims.UserID,
+                "metrics": map[string]interface{}{
+                        "total_courses":     len(courses),
+                        "total_students":    len(allStudents),
+                        "total_assignments": len(allAssignments),
+                        "completion_rate":   85.0,
+                        "average_grade":     85.5,
+                        "engagement_score":  78.3,
+                        "productivity_index": 82.1,
+                },
+                "trends": map[string]interface{}{
+                        "grade_trend":     "increasing",
+                        "participation":   "stable",
+                        "completion_rate": "improving",
+                },
+                "timestamp": "2025-10-06T00:00:00Z",
+        }
+        
+        return c.JSON(http.StatusOK, performanceMetrics)</span>
+}
+</pre>
+		
+		<pre class="file" id="file9" style="display: none">package main
 
 import (
         "log"
@@ -813,6 +1519,8 @@ import (
         "classsphere-backend/database"
         "classsphere-backend/handlers"
         "classsphere-backend/models"
+        "classsphere-backend/oauth"
+        "classsphere-backend/services"
 
         "github.com/labstack/echo/v4"
         "github.com/labstack/echo/v4/middleware"
@@ -838,8 +1546,15 @@ func main() <span class="cov0" title="0">{
         // Initialize repositories
         userRepo := models.NewUserRepository(db)
 
+        // Initialize services
+        googleClassroomService := services.NewGoogleClassroomService(nil) // nil for mock mode by default
+        metricsService := services.NewMetricsService()
+
         // Initialize handlers
         authHandler := handlers.NewAuthHandler(userRepo, jwtManager)
+        dashboardHandler := handlers.NewDashboardHandler(userRepo)
+        googleOAuthHandler := oauth.NewGoogleOAuthHandler(userRepo, jwtManager)
+        googleHandler := handlers.NewGoogleHandler(userRepo, googleClassroomService, metricsService)
 
         // Setup Echo
         e := echo.New()
@@ -858,10 +1573,34 @@ func main() <span class="cov0" title="0">{
         authGroup.POST("/register", authHandler.Register)
         authGroup.POST("/login", authHandler.Login)
         authGroup.POST("/refresh", authHandler.RefreshToken)
+        authGroup.POST("/logout", authHandler.Logout)
+        
+        // OAuth routes
+        authGroup.GET("/google", googleOAuthHandler.InitiateGoogleAuth)
+        authGroup.GET("/google/callback", googleOAuthHandler.HandleGoogleCallback)
 
         // Protected routes
         protectedGroup := e.Group("/api")
         protectedGroup.Use(auth.JWTMiddleware(jwtManager))
+        
+        // Dashboard routes (more specific routes first)
+        protectedGroup.GET("/dashboard/student", dashboardHandler.GetStudentDashboard)
+        protectedGroup.GET("/dashboard/teacher", dashboardHandler.GetTeacherDashboard)
+        protectedGroup.GET("/dashboard/coordinator", dashboardHandler.GetCoordinatorDashboard)
+        protectedGroup.GET("/dashboard/admin", dashboardHandler.GetAdminDashboard)
+        
+        // Google Classroom routes
+        googleGroup := protectedGroup.Group("/google")
+        googleGroup.GET("/courses", googleHandler.GetCourses)
+        googleGroup.GET("/courses/:courseId/students", googleHandler.GetCourseStudents)
+        googleGroup.GET("/courses/:courseId/assignments", googleHandler.GetCourseAssignments)
+        googleGroup.GET("/courses/:courseId/stats", googleHandler.GetCourseStats)
+        googleGroup.GET("/dashboard/metrics", googleHandler.GetDashboardMetrics)
+        googleGroup.GET("/performance/metrics", googleHandler.GetPerformanceMetrics)
+        googleGroup.GET("/system/status", googleHandler.GetSystemStatus)
+        googleGroup.POST("/mock-mode/:enabled", googleHandler.ToggleMockMode)
+        
+        // General profile route
         protectedGroup.GET("/profile", authHandler.GetProfile)
 
         // Admin routes (require admin role)
@@ -903,7 +1642,7 @@ func setupTestApp() *echo.Echo <span class="cov8" title="1">{
         return e
 }</pre>
 		
-		<pre class="file" id="file8" style="display: none">package models
+		<pre class="file" id="file10" style="display: none">package models
 
 import (
         "time"
@@ -994,7 +1733,7 @@ func (r *UserRepository) UpdateUser(user *User) error <span class="cov8" title="
 // DeleteUser soft deletes a user by ID
 func (r *UserRepository) DeleteUser(id uint) error <span class="cov8" title="1">{
         result := r.db.Delete(&amp;User{}, id)
-        if result.Error != nil </span><span class="cov0" title="0">{
+        if result.Error != nil </span><span class="cov8" title="1">{
                 return result.Error
         }</span>
         <span class="cov8" title="1">if result.RowsAffected == 0 </span><span class="cov8" title="1">{
@@ -1015,35 +1754,876 @@ func (r *UserRepository) ListUsers(offset, limit int) ([]*User, error) <span cla
 }</span>
 
 // GetUserCount returns the total count of active users
-func (r *UserRepository) GetUserCount() (int64, error) <span class="cov0" title="0">{
+func (r *UserRepository) GetUserCount() (int64, error) <span class="cov8" title="1">{
         var count int64
         err := r.db.Model(&amp;User{}).Where("is_active = ?", true).Count(&amp;count).Error
         return count, err
 }</span>
 
 // DeactivateUser deactivates a user instead of deleting
-func (r *UserRepository) DeactivateUser(id uint) error <span class="cov0" title="0">{
+func (r *UserRepository) DeactivateUser(id uint) error <span class="cov8" title="1">{
         result := r.db.Model(&amp;User{}).Where("id = ?", id).Update("is_active", false)
-        if result.Error != nil </span><span class="cov0" title="0">{
+        if result.Error != nil </span><span class="cov8" title="1">{
                 return result.Error
         }</span>
-        <span class="cov0" title="0">if result.RowsAffected == 0 </span><span class="cov0" title="0">{
+        <span class="cov8" title="1">if result.RowsAffected == 0 </span><span class="cov8" title="1">{
                 return gorm.ErrRecordNotFound
         }</span>
-        <span class="cov0" title="0">return nil</span>
+        <span class="cov8" title="1">return nil</span>
 }
 
 // ActivateUser activates a deactivated user
-func (r *UserRepository) ActivateUser(id uint) error <span class="cov0" title="0">{
+func (r *UserRepository) ActivateUser(id uint) error <span class="cov8" title="1">{
         result := r.db.Model(&amp;User{}).Where("id = ?", id).Update("is_active", true)
-        if result.Error != nil </span><span class="cov0" title="0">{
+        if result.Error != nil </span><span class="cov8" title="1">{
                 return result.Error
         }</span>
-        <span class="cov0" title="0">if result.RowsAffected == 0 </span><span class="cov0" title="0">{
+        <span class="cov8" title="1">if result.RowsAffected == 0 </span><span class="cov8" title="1">{
                 return gorm.ErrRecordNotFound
         }</span>
-        <span class="cov0" title="0">return nil</span>
+        <span class="cov8" title="1">return nil</span>
 }</pre>
+		
+		<pre class="file" id="file11" style="display: none">package oauth
+
+import (
+        "encoding/json"
+        "fmt"
+        "io"
+        "net/http"
+        "net/url"
+        "os"
+        "time"
+
+        "classsphere-backend/auth"
+        "classsphere-backend/models"
+
+        "github.com/labstack/echo/v4"
+)
+
+// GoogleOAuthService handles Google OAuth authentication
+type GoogleOAuthService struct {
+        clientID     string
+        clientSecret string
+        redirectURI  string
+        authURL      string
+        tokenURL     string
+        userInfoURL  string
+}
+
+// GoogleTokenResponse represents the response from Google's token endpoint
+type GoogleTokenResponse struct {
+        AccessToken  string `json:"access_token"`
+        TokenType    string `json:"token_type"`
+        ExpiresIn    int    `json:"expires_in"`
+        RefreshToken string `json:"refresh_token"`
+        Scope        string `json:"scope"`
+}
+
+// GoogleUserInfo represents user information from Google
+type GoogleUserInfo struct {
+        ID            string `json:"id"`
+        Email         string `json:"email"`
+        VerifiedEmail bool   `json:"verified_email"`
+        Name          string `json:"name"`
+        GivenName     string `json:"given_name"`
+        FamilyName    string `json:"family_name"`
+        Picture       string `json:"picture"`
+        Locale        string `json:"locale"`
+}
+
+// NewGoogleOAuthService creates a new Google OAuth service
+func NewGoogleOAuthService() *GoogleOAuthService <span class="cov8" title="1">{
+        return &amp;GoogleOAuthService{
+                clientID:     os.Getenv("GOOGLE_CLIENT_ID"),
+                clientSecret: os.Getenv("GOOGLE_CLIENT_SECRET"),
+                redirectURI:  os.Getenv("GOOGLE_REDIRECT_URI"),
+                authURL:      "https://accounts.google.com/o/oauth2/v2/auth",
+                tokenURL:     "https://oauth2.googleapis.com/token",
+                userInfoURL:  "https://www.googleapis.com/oauth2/v2/userinfo",
+        }
+}</span>
+
+// GetAuthURL generates the Google OAuth authorization URL
+func (g *GoogleOAuthService) GetAuthURL(state string) string <span class="cov8" title="1">{
+        params := url.Values{}
+        params.Add("client_id", g.clientID)
+        params.Add("redirect_uri", g.redirectURI)
+        params.Add("scope", "openid email profile")
+        params.Add("response_type", "code")
+        params.Add("state", state)
+        params.Add("access_type", "offline")
+        params.Add("prompt", "consent")
+
+        return fmt.Sprintf("%s?%s", g.authURL, params.Encode())
+}</span>
+
+// ExchangeCode exchanges authorization code for access token
+func (g *GoogleOAuthService) ExchangeCode(code string) (*GoogleTokenResponse, error) <span class="cov8" title="1">{
+        data := url.Values{}
+        data.Set("client_id", g.clientID)
+        data.Set("client_secret", g.clientSecret)
+        data.Set("code", code)
+        data.Set("grant_type", "authorization_code")
+        data.Set("redirect_uri", g.redirectURI)
+
+        resp, err := http.PostForm(g.tokenURL, data)
+        if err != nil </span><span class="cov8" title="1">{
+                return nil, fmt.Errorf("failed to exchange code: %v", err)
+        }</span>
+        <span class="cov8" title="1">defer resp.Body.Close()
+
+        if resp.StatusCode != http.StatusOK </span><span class="cov8" title="1">{
+                body, _ := io.ReadAll(resp.Body)
+                return nil, fmt.Errorf("token exchange failed: %s", string(body))
+        }</span>
+
+        <span class="cov0" title="0">var tokenResp GoogleTokenResponse
+        if err := json.NewDecoder(resp.Body).Decode(&amp;tokenResp); err != nil </span><span class="cov0" title="0">{
+                return nil, fmt.Errorf("failed to decode token response: %v", err)
+        }</span>
+
+        <span class="cov0" title="0">return &amp;tokenResp, nil</span>
+}
+
+// GetUserInfo retrieves user information from Google
+func (g *GoogleOAuthService) GetUserInfo(accessToken string) (*GoogleUserInfo, error) <span class="cov8" title="1">{
+        req, err := http.NewRequest("GET", g.userInfoURL, nil)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, fmt.Errorf("failed to create request: %v", err)
+        }</span>
+
+        <span class="cov8" title="1">req.Header.Set("Authorization", "Bearer "+accessToken)
+
+        client := &amp;http.Client{Timeout: 10 * time.Second}
+        resp, err := client.Do(req)
+        if err != nil </span><span class="cov8" title="1">{
+                return nil, fmt.Errorf("failed to get user info: %v", err)
+        }</span>
+        <span class="cov8" title="1">defer resp.Body.Close()
+
+        if resp.StatusCode != http.StatusOK </span><span class="cov8" title="1">{
+                body, _ := io.ReadAll(resp.Body)
+                return nil, fmt.Errorf("user info request failed: %s", string(body))
+        }</span>
+
+        <span class="cov0" title="0">var userInfo GoogleUserInfo
+        if err := json.NewDecoder(resp.Body).Decode(&amp;userInfo); err != nil </span><span class="cov0" title="0">{
+                return nil, fmt.Errorf("failed to decode user info: %v", err)
+        }</span>
+
+        <span class="cov0" title="0">return &amp;userInfo, nil</span>
+}
+
+// GoogleOAuthHandler handles Google OAuth requests
+type GoogleOAuthHandler struct {
+        oauthService *GoogleOAuthService
+        userRepo     *models.UserRepository
+        jwtManager   *auth.JWTManager
+}
+
+// NewGoogleOAuthHandler creates a new Google OAuth handler
+func NewGoogleOAuthHandler(userRepo *models.UserRepository, jwtManager *auth.JWTManager) *GoogleOAuthHandler <span class="cov8" title="1">{
+        return &amp;GoogleOAuthHandler{
+                oauthService: NewGoogleOAuthService(),
+                userRepo:     userRepo,
+                jwtManager:   jwtManager,
+        }
+}</span>
+
+// InitiateGoogleAuth initiates Google OAuth flow
+func (h *GoogleOAuthHandler) InitiateGoogleAuth(c echo.Context) error <span class="cov8" title="1">{
+        // Generate a random state for security
+        state := fmt.Sprintf("state_%d", time.Now().Unix())
+        
+        // Store state in session/cache for validation (simplified for now)
+        // In production, store this in Redis or session store
+        
+        authURL := h.oauthService.GetAuthURL(state)
+        return c.Redirect(http.StatusTemporaryRedirect, authURL)
+}</span>
+
+// HandleGoogleCallback handles Google OAuth callback
+func (h *GoogleOAuthHandler) HandleGoogleCallback(c echo.Context) error <span class="cov8" title="1">{
+        code := c.QueryParam("code")
+        _ = c.QueryParam("state") // State validation would be implemented here
+        error := c.QueryParam("error")
+
+        if error != "" </span><span class="cov8" title="1">{
+                return c.JSON(http.StatusBadRequest, map[string]string{
+                        "error": "OAuth error: " + error,
+                })
+        }</span>
+
+        <span class="cov8" title="1">if code == "" </span><span class="cov8" title="1">{
+                return c.JSON(http.StatusBadRequest, map[string]string{
+                        "error": "Authorization code not provided",
+                })
+        }</span>
+
+        // Exchange code for token
+        <span class="cov8" title="1">tokenResp, err := h.oauthService.ExchangeCode(code)
+        if err != nil </span><span class="cov8" title="1">{
+                return c.JSON(http.StatusInternalServerError, map[string]string{
+                        "error": "Failed to exchange authorization code",
+                })
+        }</span>
+
+        // Get user info from Google
+        <span class="cov0" title="0">userInfo, err := h.oauthService.GetUserInfo(tokenResp.AccessToken)
+        if err != nil </span><span class="cov0" title="0">{
+                return c.JSON(http.StatusInternalServerError, map[string]string{
+                        "error": "Failed to get user information",
+                })
+        }</span>
+
+        // Check if user exists in our database
+        <span class="cov0" title="0">user, err := h.userRepo.GetUserByEmail(userInfo.Email)
+        if err != nil </span><span class="cov0" title="0">{
+                // User doesn't exist, create new user
+                user = &amp;models.User{
+                        Email:    userInfo.Email,
+                        Name:     userInfo.Name,
+                        Role:     "user", // Default role
+                        IsActive: true,
+                        // No password for OAuth users
+                }
+
+                if err := h.userRepo.CreateUser(user); err != nil </span><span class="cov0" title="0">{
+                        return c.JSON(http.StatusInternalServerError, map[string]string{
+                                "error": "Failed to create user",
+                        })
+                }</span>
+        }
+
+        // Generate JWT token
+        <span class="cov0" title="0">token, err := h.jwtManager.GenerateToken(fmt.Sprintf("%d", user.ID), user.Role, 24*time.Hour)
+        if err != nil </span><span class="cov0" title="0">{
+                return c.JSON(http.StatusInternalServerError, map[string]string{
+                        "error": "Failed to generate token",
+                })
+        }</span>
+
+        // Redirect to frontend with token
+        // In production, use a secure method to pass the token
+        <span class="cov0" title="0">frontendURL := os.Getenv("FRONTEND_URL")
+        if frontendURL == "" </span><span class="cov0" title="0">{
+                frontendURL = "http://localhost:4200"
+        }</span>
+
+        <span class="cov0" title="0">redirectURL := fmt.Sprintf("%s/auth/callback?token=%s", frontendURL, token)
+        return c.Redirect(http.StatusTemporaryRedirect, redirectURL)</span>
+}
+</pre>
+		
+		<pre class="file" id="file12" style="display: none">package services
+
+import (
+        "fmt"
+        "math/rand"
+        "time"
+)
+
+// GoogleClient interface for dependency injection
+type GoogleClient interface {
+        ListCourses(userID string) ([]Course, error)
+        ListStudents(courseID string) ([]Student, error)
+        ListAssignments(courseID string) ([]Assignment, error)
+}
+
+// Course represents a Google Classroom course
+type Course struct {
+        ID          string `json:"id"`
+        Name        string `json:"name"`
+        Description string `json:"description"`
+        Section     string `json:"section"`
+        Room        string `json:"room"`
+        OwnerID     string `json:"ownerId"`
+        CourseState string `json:"courseState"`
+}
+
+// Student represents a Google Classroom student
+type Student struct {
+        ID       string `json:"id"`
+        Name     string `json:"name"`
+        Email    string `json:"email"`
+        PhotoURL string `json:"photoUrl"`
+}
+
+// Assignment represents a Google Classroom assignment
+type Assignment struct {
+        ID          string `json:"id"`
+        Title       string `json:"title"`
+        Description string `json:"description"`
+        DueDate     string `json:"dueDate"`
+        MaxPoints   int    `json:"maxPoints"`
+        State       string `json:"state"`
+}
+
+// GoogleClassroomService handles Google Classroom API integration
+type GoogleClassroomService struct {
+        client   GoogleClient
+        mockMode bool
+}
+
+// NewGoogleClassroomService creates a new Google Classroom service
+func NewGoogleClassroomService(client GoogleClient) *GoogleClassroomService <span class="cov0" title="0">{
+        return &amp;GoogleClassroomService{
+                client:   client,
+                mockMode: false,
+        }
+}</span>
+
+// SetMockMode enables or disables mock mode
+func (s *GoogleClassroomService) SetMockMode(enabled bool) <span class="cov8" title="1">{
+        s.mockMode = enabled
+}</span>
+
+// ListCourses retrieves courses for a user
+func (s *GoogleClassroomService) ListCourses(userID string) ([]Course, error) <span class="cov8" title="1">{
+        if s.mockMode </span><span class="cov8" title="1">{
+                return s.getMockCourses(), nil
+        }</span>
+
+        <span class="cov8" title="1">if s.client == nil </span><span class="cov0" title="0">{
+                return nil, fmt.Errorf("Google client not initialized")
+        }</span>
+
+        <span class="cov8" title="1">return s.client.ListCourses(userID)</span>
+}
+
+// ListStudents retrieves students for a course
+func (s *GoogleClassroomService) ListStudents(courseID string) ([]Student, error) <span class="cov8" title="1">{
+        if s.mockMode </span><span class="cov8" title="1">{
+                return s.getMockStudents(), nil
+        }</span>
+
+        <span class="cov8" title="1">if s.client == nil </span><span class="cov0" title="0">{
+                return nil, fmt.Errorf("Google client not initialized")
+        }</span>
+
+        <span class="cov8" title="1">return s.client.ListStudents(courseID)</span>
+}
+
+// ListAssignments retrieves assignments for a course
+func (s *GoogleClassroomService) ListAssignments(courseID string) ([]Assignment, error) <span class="cov8" title="1">{
+        if s.mockMode </span><span class="cov8" title="1">{
+                return s.getMockAssignments(), nil
+        }</span>
+
+        <span class="cov8" title="1">if s.client == nil </span><span class="cov0" title="0">{
+                return nil, fmt.Errorf("Google client not initialized")
+        }</span>
+
+        <span class="cov8" title="1">return s.client.ListAssignments(courseID)</span>
+}
+
+// getMockCourses returns mock course data for testing and development
+func (s *GoogleClassroomService) getMockCourses() []Course <span class="cov8" title="1">{
+        return []Course{
+                {
+                        ID:          "course_mock_1",
+                        Name:        "Advanced Mathematics",
+                        Description: "Comprehensive study of calculus, algebra, and geometry",
+                        Section:     "A",
+                        Room:        "Room 201",
+                        OwnerID:     "teacher_mock_1",
+                        CourseState: "ACTIVE",
+                },
+                {
+                        ID:          "course_mock_2",
+                        Name:        "Physics Laboratory",
+                        Description: "Hands-on experiments in mechanics, thermodynamics, and electromagnetism",
+                        Section:     "B",
+                        Room:        "Lab 301",
+                        OwnerID:     "teacher_mock_2",
+                        CourseState: "ACTIVE",
+                },
+                {
+                        ID:          "course_mock_3",
+                        Name:        "English Literature",
+                        Description: "Study of classic and contemporary literature",
+                        Section:     "C",
+                        Room:        "Room 105",
+                        OwnerID:     "teacher_mock_3",
+                        CourseState: "ACTIVE",
+                },
+                {
+                        ID:          "course_mock_4",
+                        Name:        "Computer Science",
+                        Description: "Programming fundamentals and software engineering",
+                        Section:     "D",
+                        Room:        "Computer Lab 1",
+                        OwnerID:     "teacher_mock_4",
+                        CourseState: "ACTIVE",
+                },
+                {
+                        ID:          "course_mock_5",
+                        Name:        "World History",
+                        Description: "Comprehensive study of world civilizations and events",
+                        Section:     "E",
+                        Room:        "Room 208",
+                        OwnerID:     "teacher_mock_5",
+                        CourseState: "ACTIVE",
+                },
+        }
+}</span>
+
+// getMockStudents returns mock student data for testing and development
+func (s *GoogleClassroomService) getMockStudents() []Student <span class="cov8" title="1">{
+        return []Student{
+                {
+                        ID:       "student_mock_1",
+                        Name:     "Alice Johnson",
+                        Email:    "alice.johnson@classsphere.edu",
+                        PhotoURL: "https://example.com/photos/alice.jpg",
+                },
+                {
+                        ID:       "student_mock_2",
+                        Name:     "Bob Smith",
+                        Email:    "bob.smith@classsphere.edu",
+                        PhotoURL: "https://example.com/photos/bob.jpg",
+                },
+                {
+                        ID:       "student_mock_3",
+                        Name:     "Carol Davis",
+                        Email:    "carol.davis@classsphere.edu",
+                        PhotoURL: "https://example.com/photos/carol.jpg",
+                },
+                {
+                        ID:       "student_mock_4",
+                        Name:     "David Wilson",
+                        Email:    "david.wilson@classsphere.edu",
+                        PhotoURL: "https://example.com/photos/david.jpg",
+                },
+                {
+                        ID:       "student_mock_5",
+                        Name:     "Eva Brown",
+                        Email:    "eva.brown@classsphere.edu",
+                        PhotoURL: "https://example.com/photos/eva.jpg",
+                },
+                {
+                        ID:       "student_mock_6",
+                        Name:     "Frank Miller",
+                        Email:    "frank.miller@classsphere.edu",
+                        PhotoURL: "https://example.com/photos/frank.jpg",
+                },
+                {
+                        ID:       "student_mock_7",
+                        Name:     "Grace Lee",
+                        Email:    "grace.lee@classsphere.edu",
+                        PhotoURL: "https://example.com/photos/grace.jpg",
+                },
+                {
+                        ID:       "student_mock_8",
+                        Name:     "Henry Taylor",
+                        Email:    "henry.taylor@classsphere.edu",
+                        PhotoURL: "https://example.com/photos/henry.jpg",
+                },
+        }
+}</span>
+
+// getMockAssignments returns mock assignment data for testing and development
+func (s *GoogleClassroomService) getMockAssignments() []Assignment <span class="cov8" title="1">{
+        now := time.Now()
+        
+        return []Assignment{
+                {
+                        ID:          "assignment_mock_1",
+                        Title:       "Calculus Problem Set 1",
+                        Description: "Solve differential equations and integration problems",
+                        DueDate:     now.AddDate(0, 0, 7).Format("2006-01-02"),
+                        MaxPoints:   100,
+                        State:       "PUBLISHED",
+                },
+                {
+                        ID:          "assignment_mock_2",
+                        Title:       "Physics Lab Report: Pendulum Motion",
+                        Description: "Write a comprehensive report on pendulum motion experiments",
+                        DueDate:     now.AddDate(0, 0, 5).Format("2006-01-02"),
+                        MaxPoints:   150,
+                        State:       "PUBLISHED",
+                },
+                {
+                        ID:          "assignment_mock_3",
+                        Title:       "Literature Analysis: Shakespeare's Hamlet",
+                        Description: "Analyze themes and character development in Hamlet",
+                        DueDate:     now.AddDate(0, 0, 10).Format("2006-01-02"),
+                        MaxPoints:   120,
+                        State:       "PUBLISHED",
+                },
+                {
+                        ID:          "assignment_mock_4",
+                        Title:       "Programming Project: Web Application",
+                        Description: "Build a full-stack web application using modern technologies",
+                        DueDate:     now.AddDate(0, 0, 14).Format("2006-01-02"),
+                        MaxPoints:   200,
+                        State:       "PUBLISHED",
+                },
+                {
+                        ID:          "assignment_mock_5",
+                        Title:       "History Research Paper: World War II",
+                        Description: "Research and analyze the causes and effects of World War II",
+                        DueDate:     now.AddDate(0, 0, 12).Format("2006-01-02"),
+                        MaxPoints:   180,
+                        State:       "PUBLISHED",
+                },
+                {
+                        ID:          "assignment_mock_6",
+                        Title:       "Algebra Quiz: Linear Equations",
+                        Description: "Quiz covering solving linear equations and graphing",
+                        DueDate:     now.AddDate(0, 0, 3).Format("2006-01-02"),
+                        MaxPoints:   80,
+                        State:       "PUBLISHED",
+                },
+        }
+}</span>
+
+// GetRandomCourse returns a random course from mock data
+func (s *GoogleClassroomService) GetRandomCourse() Course <span class="cov0" title="0">{
+        courses := s.getMockCourses()
+        if len(courses) == 0 </span><span class="cov0" title="0">{
+                return Course{}
+        }</span>
+        
+        <span class="cov0" title="0">rand.Seed(time.Now().UnixNano())
+        return courses[rand.Intn(len(courses))]</span>
+}
+
+// GetRandomStudent returns a random student from mock data
+func (s *GoogleClassroomService) GetRandomStudent() Student <span class="cov0" title="0">{
+        students := s.getMockStudents()
+        if len(students) == 0 </span><span class="cov0" title="0">{
+                return Student{}
+        }</span>
+        
+        <span class="cov0" title="0">rand.Seed(time.Now().UnixNano())
+        return students[rand.Intn(len(students))]</span>
+}
+
+// GetRandomAssignment returns a random assignment from mock data
+func (s *GoogleClassroomService) GetRandomAssignment() Assignment <span class="cov0" title="0">{
+        assignments := s.getMockAssignments()
+        if len(assignments) == 0 </span><span class="cov0" title="0">{
+                return Assignment{}
+        }</span>
+        
+        <span class="cov0" title="0">rand.Seed(time.Now().UnixNano())
+        return assignments[rand.Intn(len(assignments))]</span>
+}
+
+// GetCourseStats returns statistics for a course
+func (s *GoogleClassroomService) GetCourseStats(courseID string) (map[string]interface{}, error) <span class="cov0" title="0">{
+        // Get students for the course
+        students, err := s.ListStudents(courseID)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, fmt.Errorf("failed to get students: %v", err)
+        }</span>
+
+        // Get assignments for the course
+        <span class="cov0" title="0">assignments, err := s.ListAssignments(courseID)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, fmt.Errorf("failed to get assignments: %v", err)
+        }</span>
+
+        // Calculate statistics
+        <span class="cov0" title="0">stats := map[string]interface{}{
+                "course_id":           courseID,
+                "total_students":      len(students),
+                "total_assignments":   len(assignments),
+                "published_assignments": 0,
+                "draft_assignments":   0,
+        }
+
+        // Count assignment states
+        for _, assignment := range assignments </span><span class="cov0" title="0">{
+                if assignment.State == "PUBLISHED" </span><span class="cov0" title="0">{
+                        stats["published_assignments"] = stats["published_assignments"].(int) + 1
+                }</span> else<span class="cov0" title="0"> {
+                        stats["draft_assignments"] = stats["draft_assignments"].(int) + 1
+                }</span>
+        }
+
+        <span class="cov0" title="0">return stats, nil</span>
+}
+</pre>
+		
+		<pre class="file" id="file13" style="display: none">package services
+
+import (
+        "math"
+)
+
+// MetricsService handles calculation of educational metrics
+type MetricsService struct{}
+
+// NewMetricsService creates a new metrics service
+func NewMetricsService() *MetricsService <span class="cov8" title="1">{
+        return &amp;MetricsService{}
+}</span>
+
+// CourseMetrics represents metrics for courses
+type CourseMetrics struct {
+        TotalCourses      int     `json:"total_courses"`
+        ActiveCourses     int     `json:"active_courses"`
+        ArchivedCourses   int     `json:"archived_courses"`
+        TotalStudents     int     `json:"total_students"`
+        AverageGrade      float64 `json:"average_grade"`
+        TotalAssignments  int     `json:"total_assignments"`
+}
+
+// StudentMetrics represents metrics for students
+type StudentMetrics struct {
+        TotalStudents   int `json:"total_students"`
+        ActiveStudents  int `json:"active_students"`
+}
+
+// AssignmentMetrics represents metrics for assignments
+type AssignmentMetrics struct {
+        TotalAssignments      int     `json:"total_assignments"`
+        PublishedAssignments  int     `json:"published_assignments"`
+        DraftAssignments      int     `json:"draft_assignments"`
+        TotalPoints           int     `json:"total_points"`
+        AveragePoints         float64 `json:"average_points"`
+}
+
+// DashboardMetrics represents combined dashboard metrics
+type DashboardMetrics struct {
+        Courses     CourseMetrics     `json:"courses"`
+        Students    StudentMetrics    `json:"students"`
+        Assignments AssignmentMetrics `json:"assignments"`
+}
+
+// CalculateCourseMetrics calculates metrics for a list of courses
+func (s *MetricsService) CalculateCourseMetrics(courses []Course) CourseMetrics <span class="cov8" title="1">{
+        metrics := CourseMetrics{}
+
+        if len(courses) == 0 </span><span class="cov8" title="1">{
+                return metrics
+        }</span>
+
+        <span class="cov8" title="1">metrics.TotalCourses = len(courses)
+        
+        // Count active and archived courses
+        for _, course := range courses </span><span class="cov8" title="1">{
+                if course.CourseState == "ACTIVE" </span><span class="cov8" title="1">{
+                        metrics.ActiveCourses++
+                }</span> else<span class="cov8" title="1"> if course.CourseState == "ARCHIVED" </span><span class="cov8" title="1">{
+                        metrics.ArchivedCourses++
+                }</span>
+        }
+
+        // For active courses, calculate total students and assignments
+        // Using mock data: 8 students per course, 6 assignments per course
+        <span class="cov8" title="1">metrics.TotalStudents = metrics.ActiveCourses * 8
+        metrics.TotalAssignments = metrics.ActiveCourses * 6
+        
+        // Mock average grade
+        metrics.AverageGrade = 85.5
+
+        return metrics</span>
+}
+
+// CalculateStudentMetrics calculates metrics for a list of students
+func (s *MetricsService) CalculateStudentMetrics(students []Student) StudentMetrics <span class="cov8" title="1">{
+        metrics := StudentMetrics{}
+
+        if len(students) == 0 </span><span class="cov8" title="1">{
+                return metrics
+        }</span>
+
+        <span class="cov8" title="1">metrics.TotalStudents = len(students)
+        metrics.ActiveStudents = len(students) // All students are considered active in mock data
+
+        return metrics</span>
+}
+
+// CalculateAssignmentMetrics calculates metrics for a list of assignments
+func (s *MetricsService) CalculateAssignmentMetrics(assignments []Assignment) AssignmentMetrics <span class="cov8" title="1">{
+        metrics := AssignmentMetrics{}
+
+        if len(assignments) == 0 </span><span class="cov8" title="1">{
+                return metrics
+        }</span>
+
+        <span class="cov8" title="1">metrics.TotalAssignments = len(assignments)
+        
+        totalPoints := 0
+        
+        // Count published and draft assignments, calculate total points
+        for _, assignment := range assignments </span><span class="cov8" title="1">{
+                if assignment.State == "PUBLISHED" </span><span class="cov8" title="1">{
+                        metrics.PublishedAssignments++
+                }</span> else<span class="cov8" title="1"> if assignment.State == "DRAFT" </span><span class="cov8" title="1">{
+                        metrics.DraftAssignments++
+                }</span>
+                
+                <span class="cov8" title="1">totalPoints += assignment.MaxPoints</span>
+        }
+
+        <span class="cov8" title="1">metrics.TotalPoints = totalPoints
+        
+        // Calculate average points
+        if metrics.TotalAssignments &gt; 0 </span><span class="cov8" title="1">{
+                metrics.AveragePoints = math.Round(float64(totalPoints)/float64(metrics.TotalAssignments)*100) / 100
+        }</span>
+
+        <span class="cov8" title="1">return metrics</span>
+}
+
+// GetDashboardMetrics calculates combined dashboard metrics
+func (s *MetricsService) GetDashboardMetrics(courses []Course, students []Student, assignments []Assignment) DashboardMetrics <span class="cov8" title="1">{
+        return DashboardMetrics{
+                Courses:     s.CalculateCourseMetrics(courses),
+                Students:    s.CalculateStudentMetrics(students),
+                Assignments: s.CalculateAssignmentMetrics(assignments),
+        }
+}</span>
+
+// GetRoleSpecificMetrics calculates metrics specific to user roles
+func (s *MetricsService) GetRoleSpecificMetrics(role string, courses []Course, students []Student, assignments []Assignment) map[string]interface{} <span class="cov0" title="0">{
+        baseMetrics := s.GetDashboardMetrics(courses, students, assignments)
+        
+        roleMetrics := map[string]interface{}{
+                "role":     role,
+                "base":     baseMetrics,
+                "specific": map[string]interface{}{},
+        }
+
+        switch role </span>{
+        case "student":<span class="cov0" title="0">
+                roleMetrics["specific"] = map[string]interface{}{
+                        "my_courses":        len(courses),
+                        "pending_assignments": s.countPendingAssignments(assignments),
+                        "completed_assignments": s.countCompletedAssignments(assignments),
+                        "average_grade":     baseMetrics.Courses.AverageGrade,
+                }</span>
+        case "teacher":<span class="cov0" title="0">
+                roleMetrics["specific"] = map[string]interface{}{
+                        "my_courses":        len(courses),
+                        "total_students":    baseMetrics.Students.TotalStudents,
+                        "graded_assignments": s.countGradedAssignments(assignments),
+                        "pending_grades":    s.countPendingGrades(assignments),
+                }</span>
+        case "coordinator":<span class="cov0" title="0">
+                roleMetrics["specific"] = map[string]interface{}{
+                        "total_courses":     baseMetrics.Courses.TotalCourses,
+                        "total_teachers":    s.estimateTeachers(courses),
+                        "total_students":    baseMetrics.Students.TotalStudents,
+                        "active_programs":   s.countActivePrograms(courses),
+                }</span>
+        case "admin":<span class="cov0" title="0">
+                roleMetrics["specific"] = map[string]interface{}{
+                        "total_users":       baseMetrics.Students.TotalStudents + s.estimateTeachers(courses),
+                        "total_courses":     baseMetrics.Courses.TotalCourses,
+                        "system_health":     "healthy",
+                        "uptime_percentage": 99.9,
+                }</span>
+        }
+
+        <span class="cov0" title="0">return roleMetrics</span>
+}
+
+// Helper methods for role-specific calculations
+
+func (s *MetricsService) countPendingAssignments(assignments []Assignment) int <span class="cov0" title="0">{
+        // Mock implementation: assume 30% of assignments are pending
+        return int(math.Ceil(float64(len(assignments)) * 0.3))
+}</span>
+
+func (s *MetricsService) countCompletedAssignments(assignments []Assignment) int <span class="cov0" title="0">{
+        // Mock implementation: assume 70% of assignments are completed
+        return int(math.Floor(float64(len(assignments)) * 0.7))
+}</span>
+
+func (s *MetricsService) countGradedAssignments(assignments []Assignment) int <span class="cov0" title="0">{
+        // Mock implementation: assume 60% of assignments are graded
+        return int(math.Floor(float64(len(assignments)) * 0.6))
+}</span>
+
+func (s *MetricsService) countPendingGrades(assignments []Assignment) int <span class="cov0" title="0">{
+        // Mock implementation: assume 40% of assignments are pending grades
+        return int(math.Ceil(float64(len(assignments)) * 0.4))
+}</span>
+
+func (s *MetricsService) estimateTeachers(courses []Course) int <span class="cov0" title="0">{
+        // Mock implementation: assume each teacher handles 2 courses on average
+        if len(courses) == 0 </span><span class="cov0" title="0">{
+                return 0
+        }</span>
+        <span class="cov0" title="0">return int(math.Ceil(float64(len(courses)) / 2.0))</span>
+}
+
+func (s *MetricsService) countActivePrograms(courses []Course) int <span class="cov0" title="0">{
+        // Mock implementation: assume 3 active programs
+        return 3
+}</span>
+
+// GetPerformanceMetrics calculates performance-related metrics
+func (s *MetricsService) GetPerformanceMetrics(courses []Course, students []Student, assignments []Assignment) map[string]interface{} <span class="cov0" title="0">{
+        return map[string]interface{}{
+                "completion_rate":     s.calculateCompletionRate(assignments),
+                "average_grade":       s.calculateAverageGrade(),
+                "engagement_score":    s.calculateEngagementScore(courses, students),
+                "productivity_index":  s.calculateProductivityIndex(assignments),
+                "trends": map[string]interface{}{
+                        "grade_trend":      "increasing",
+                        "participation":    "stable",
+                        "completion_rate":  "improving",
+                },
+        }
+}</span>
+
+func (s *MetricsService) calculateCompletionRate(assignments []Assignment) float64 <span class="cov0" title="0">{
+        // Mock implementation: 85% completion rate
+        return 85.0
+}</span>
+
+func (s *MetricsService) calculateAverageGrade() float64 <span class="cov0" title="0">{
+        // Mock implementation: average grade of 85.5
+        return 85.5
+}</span>
+
+func (s *MetricsService) calculateEngagementScore(courses []Course, students []Student) float64 <span class="cov0" title="0">{
+        // Mock implementation: engagement score based on course and student count
+        if len(courses) == 0 || len(students) == 0 </span><span class="cov0" title="0">{
+                return 0.0
+        }</span>
+        
+        // Simple calculation: engagement = (courses * students) / 100
+        <span class="cov0" title="0">engagement := float64(len(courses) * len(students)) / 100.0
+        
+        // Cap at 100
+        if engagement &gt; 100.0 </span><span class="cov0" title="0">{
+                engagement = 100.0
+        }</span>
+        
+        <span class="cov0" title="0">return math.Round(engagement*100) / 100</span>
+}
+
+func (s *MetricsService) calculateProductivityIndex(assignments []Assignment) float64 <span class="cov0" title="0">{
+        // Mock implementation: productivity based on assignment count and points
+        if len(assignments) == 0 </span><span class="cov0" title="0">{
+                return 0.0
+        }</span>
+        
+        <span class="cov0" title="0">totalPoints := 0
+        for _, assignment := range assignments </span><span class="cov0" title="0">{
+                totalPoints += assignment.MaxPoints
+        }</span>
+        
+        // Simple calculation: productivity = (assignments * avg_points) / 10
+        <span class="cov0" title="0">avgPoints := float64(totalPoints) / float64(len(assignments))
+        productivity := float64(len(assignments)) * avgPoints / 10.0
+        
+        // Cap at 100
+        if productivity &gt; 100.0 </span><span class="cov0" title="0">{
+                productivity = 100.0
+        }</span>
+        
+        <span class="cov0" title="0">return math.Round(productivity*100) / 100</span>
+}
+</pre>
 		
 		</div>
 	</body>

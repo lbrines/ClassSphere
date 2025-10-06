@@ -48,11 +48,9 @@ func NewGoogleHandler(userRepo *models.UserRepository, googleService GoogleClass
 
 // GetCourses retrieves courses for the authenticated user
 func (h *GoogleHandler) GetCourses(c echo.Context) error {
-	fmt.Printf("DEBUG: GetCourses handler called\n")
 	// Get user from context
 	user := c.Get("user")
 	if user == nil {
-		fmt.Printf("DEBUG: No user in context\n")
 		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "User not authenticated"})
 	}
 	
@@ -62,17 +60,14 @@ func (h *GoogleHandler) GetCourses(c echo.Context) error {
 	}
 	
 	userID := claims.UserID
-	fmt.Printf("DEBUG: Handler - userID: %s\n", userID)
 	
 	// Get courses from Google Classroom service
 	courses, err := h.googleService.ListCourses(userID)
 	if err != nil {
-		fmt.Printf("DEBUG: Handler - Error from service: %v\n", err)
 		return c.JSON(http.StatusInternalServerError, map[string]string{
 			"error": "Failed to retrieve courses",
 		})
 	}
-	fmt.Printf("DEBUG: Handler - Successfully retrieved %d courses\n", len(courses))
 	
 	// Calculate course metrics
 	courseMetrics := h.metricsService.CalculateCourseMetrics(courses)
