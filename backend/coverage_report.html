@@ -69,19 +69,19 @@
 				
 				<option value="file6">classsphere-backend/handlers/auth.go (92.4%)</option>
 				
-				<option value="file7">classsphere-backend/handlers/dashboard.go (98.4%)</option>
+				<option value="file7">classsphere-backend/handlers/dashboard.go (95.7%)</option>
 				
 				<option value="file8">classsphere-backend/handlers/google.go (41.4%)</option>
 				
-				<option value="file9">classsphere-backend/main.go (10.5%)</option>
+				<option value="file9">classsphere-backend/main.go (10.0%)</option>
 				
 				<option value="file10">classsphere-backend/models/user.go (97.9%)</option>
 				
 				<option value="file11">classsphere-backend/oauth/google.go (65.8%)</option>
 				
-				<option value="file12">classsphere-backend/services/google.go (35.4%)</option>
+				<option value="file12">classsphere-backend/services/google.go (92.2%)</option>
 				
-				<option value="file13">classsphere-backend/services/metrics.go (50.7%)</option>
+				<option value="file13">classsphere-backend/services/metrics.go (97.2%)</option>
 				
 				</select>
 			</div>
@@ -850,17 +850,44 @@ import (
 
         "classsphere-backend/auth"
         "classsphere-backend/models"
+        "classsphere-backend/services"
 
         "github.com/labstack/echo/v4"
 )
 
-type DashboardHandler struct {
-        userRepo *models.UserRepository
+// GoogleClassroomService and MetricsService interfaces are defined in google.go
+
+// UserRepository interface for dependency injection
+type UserRepository interface {
+        GetUserByID(id uint) (*models.User, error)
+        GetUserByEmail(email string) (*models.User, error)
+        CreateUser(user *models.User) error
+        UpdateUser(user *models.User) error
+        DeleteUser(id uint) error
+        ListUsers(offset, limit int) ([]*models.User, error)
+        GetUserCount() (int64, error)
+        DeactivateUser(id uint) error
+        ActivateUser(id uint) error
 }
 
-func NewDashboardHandler(userRepo *models.UserRepository) *DashboardHandler <span class="cov8" title="1">{
+type DashboardHandler struct {
+        userRepo       UserRepository
+        googleService  GoogleClassroomService
+        metricsService MetricsService
+}
+
+func NewDashboardHandler(userRepo UserRepository) *DashboardHandler <span class="cov8" title="1">{
         return &amp;DashboardHandler{
                 userRepo: userRepo,
+        }
+}</span>
+
+// NewEnhancedDashboardHandler creates a dashboard handler with Google services
+func NewEnhancedDashboardHandler(userRepo UserRepository, googleService GoogleClassroomService, metricsService MetricsService) *DashboardHandler <span class="cov8" title="1">{
+        return &amp;DashboardHandler{
+                userRepo:       userRepo,
+                googleService:  googleService,
+                metricsService: metricsService,
         }
 }</span>
 
@@ -891,7 +918,12 @@ func (h *DashboardHandler) GetStudentDashboard(c echo.Context) error <span class
                 return c.JSON(http.StatusNotFound, map[string]string{"error": "User not found"})
         }</span>
 
-        // Mock student dashboard data
+        // If Google services are available, use them
+        <span class="cov8" title="1">if h.googleService != nil &amp;&amp; h.metricsService != nil </span><span class="cov8" title="1">{
+                return h.getEnhancedStudentDashboard(c, dbUser, userID)
+        }</span>
+
+        // Fallback to mock data
         <span class="cov8" title="1">dashboardData := map[string]interface{}{
                 "user": map[string]interface{}{
                         "id":    dbUser.ID,
@@ -940,6 +972,132 @@ func (h *DashboardHandler) GetStudentDashboard(c echo.Context) error <span class
 
         return c.JSON(http.StatusOK, dashboardData)</span>
 }
+
+// getEnhancedStudentDashboard returns student dashboard with Google Classroom integration
+func (h *DashboardHandler) getEnhancedStudentDashboard(c echo.Context, dbUser *models.User, userID string) error <span class="cov8" title="1">{
+        // Get courses from Google Classroom
+        courses, err := h.googleService.ListCourses(userID)
+        if err != nil </span><span class="cov8" title="1">{
+                // Fallback to mock data if Google service fails
+                return h.getFallbackStudentDashboard(c, dbUser)
+        }</span>
+
+        // Get all assignments from all courses
+        <span class="cov8" title="1">var allAssignments []services.Assignment
+        for _, course := range courses </span><span class="cov8" title="1">{
+                assignments, err := h.googleService.ListAssignments(course.ID)
+                if err != nil </span><span class="cov0" title="0">{
+                        continue</span> // Skip courses with assignment errors
+                }
+                <span class="cov8" title="1">allAssignments = append(allAssignments, assignments...)</span>
+        }
+
+        // Calculate metrics
+        <span class="cov8" title="1">courseMetrics := h.metricsService.CalculateCourseMetrics(courses)
+        assignmentMetrics := h.metricsService.CalculateAssignmentMetrics(allAssignments)
+        roleMetrics := h.metricsService.GetRoleSpecificMetrics("student", courses, []services.Student{}, allAssignments)
+
+        // Prepare upcoming deadlines from assignments
+        upcomingDeadlines := []map[string]interface{}{}
+        for _, assignment := range allAssignments </span><span class="cov8" title="1">{
+                if assignment.State == "PUBLISHED" &amp;&amp; assignment.DueDate != "" </span><span class="cov8" title="1">{
+                        // Find course name for this assignment
+                        courseName := "Unknown Course"
+                        for _, course := range courses </span><span class="cov8" title="1">{
+                                if course.ID == assignment.ID </span><span class="cov0" title="0">{ // This is a simplified match
+                                        courseName = course.Name
+                                        break</span>
+                                }
+                        }
+                        
+                        <span class="cov8" title="1">upcomingDeadlines = append(upcomingDeadlines, map[string]interface{}{
+                                "title":    assignment.Title,
+                                "due_date": assignment.DueDate,
+                                "course":   courseName,
+                                "points":   assignment.MaxPoints,
+                        })</span>
+                }
+        }
+
+        // Prepare recent activities (mock for now)
+        <span class="cov8" title="1">recentActivities := []map[string]interface{}{
+                {
+                        "type": "assignment_submitted",
+                        "title": "Math Homework #3",
+                        "date": time.Now().AddDate(0, 0, -1).Format("2006-01-02"),
+                        "status": "submitted",
+                },
+                {
+                        "type": "grade_received",
+                        "title": "Science Quiz",
+                        "date": time.Now().AddDate(0, 0, -2).Format("2006-01-02"),
+                        "grade": 92,
+                },
+        }
+
+        dashboardData := map[string]interface{}{
+                "user": map[string]interface{}{
+                        "id":    dbUser.ID,
+                        "name":  dbUser.Name,
+                        "email": dbUser.Email,
+                        "role":  dbUser.Role,
+                },
+                "dashboard": map[string]interface{}{
+                        "type": "student",
+                        "welcome_message": "Welcome to your student dashboard!",
+                        "stats": map[string]interface{}{
+                                "total_courses":          courseMetrics.TotalCourses,
+                                "assignments_pending":    assignmentMetrics.TotalAssignments - assignmentMetrics.PublishedAssignments,
+                                "assignments_completed":  assignmentMetrics.PublishedAssignments,
+                                "average_grade":          courseMetrics.AverageGrade,
+                        },
+                        "recent_activities": recentActivities,
+                        "upcoming_deadlines": upcomingDeadlines,
+                        "google_integration": map[string]interface{}{
+                                "enabled": true,
+                                "courses_count": len(courses),
+                                "assignments_count": len(allAssignments),
+                        },
+                },
+                "metrics": map[string]interface{}{
+                        "course_metrics": courseMetrics,
+                        "assignment_metrics": assignmentMetrics,
+                        "role_specific": roleMetrics,
+                },
+                "timestamp": time.Now().Format("2006-01-02T15:04:05Z07:00"),
+        }
+
+        return c.JSON(http.StatusOK, dashboardData)</span>
+}
+
+// getFallbackStudentDashboard returns mock student dashboard data
+func (h *DashboardHandler) getFallbackStudentDashboard(c echo.Context, dbUser *models.User) error <span class="cov8" title="1">{
+        dashboardData := map[string]interface{}{
+                "user": map[string]interface{}{
+                        "id":    dbUser.ID,
+                        "name":  dbUser.Name,
+                        "email": dbUser.Email,
+                        "role":  dbUser.Role,
+                },
+                "dashboard": map[string]interface{}{
+                        "type": "student",
+                        "welcome_message": "Welcome to your student dashboard!",
+                        "stats": map[string]interface{}{
+                                "total_courses": 3,
+                                "assignments_pending": 5,
+                                "assignments_completed": 12,
+                                "average_grade": 85.5,
+                        },
+                        "google_integration": map[string]interface{}{
+                                "enabled": false,
+                                "fallback": true,
+                        },
+                },
+                "timestamp": time.Now().Format("2006-01-02T15:04:05Z07:00"),
+        }
+
+        return c.JSON(http.StatusOK, dashboardData)
+}</span>
 
 // GetTeacherDashboard returns teacher-specific dashboard data
 func (h *DashboardHandler) GetTeacherDashboard(c echo.Context) error <span class="cov8" title="1">{
@@ -1552,9 +1710,10 @@ func main() <span class="cov0" title="0">{
 
         // Initialize handlers
         authHandler := handlers.NewAuthHandler(userRepo, jwtManager)
-        dashboardHandler := handlers.NewDashboardHandler(userRepo)
+        dashboardHandler := handlers.NewEnhancedDashboardHandler(userRepo, googleClassroomService, metricsService)
         googleOAuthHandler := oauth.NewGoogleOAuthHandler(userRepo, jwtManager)
         googleHandler := handlers.NewGoogleHandler(userRepo, googleClassroomService, metricsService)
+        log.Println("GoogleHandler initialized successfully")
 
         // Setup Echo
         e := echo.New()
@@ -1583,14 +1742,9 @@ func main() <span class="cov0" title="0">{
         protectedGroup := e.Group("/api")
         protectedGroup.Use(auth.JWTMiddleware(jwtManager))
         
-        // Dashboard routes (more specific routes first)
-        protectedGroup.GET("/dashboard/student", dashboardHandler.GetStudentDashboard)
-        protectedGroup.GET("/dashboard/teacher", dashboardHandler.GetTeacherDashboard)
-        protectedGroup.GET("/dashboard/coordinator", dashboardHandler.GetCoordinatorDashboard)
-        protectedGroup.GET("/dashboard/admin", dashboardHandler.GetAdminDashboard)
-        
-        // Google Classroom routes
+        // Google Classroom routes - FIXED: Register BEFORE dashboard routes to avoid conflicts
         googleGroup := protectedGroup.Group("/google")
+        log.Println("Registering Google Classroom routes...")
         googleGroup.GET("/courses", googleHandler.GetCourses)
         googleGroup.GET("/courses/:courseId/students", googleHandler.GetCourseStudents)
         googleGroup.GET("/courses/:courseId/assignments", googleHandler.GetCourseAssignments)
@@ -1599,6 +1753,13 @@ func main() <span class="cov0" title="0">{
         googleGroup.GET("/performance/metrics", googleHandler.GetPerformanceMetrics)
         googleGroup.GET("/system/status", googleHandler.GetSystemStatus)
         googleGroup.POST("/mock-mode/:enabled", googleHandler.ToggleMockMode)
+        log.Println("Google Classroom routes registered successfully")
+        
+        // Dashboard routes (more specific routes first)
+        protectedGroup.GET("/dashboard/student", dashboardHandler.GetStudentDashboard)
+        protectedGroup.GET("/dashboard/teacher", dashboardHandler.GetTeacherDashboard)
+        protectedGroup.GET("/dashboard/coordinator", dashboardHandler.GetCoordinatorDashboard)
+        protectedGroup.GET("/dashboard/admin", dashboardHandler.GetAdminDashboard)
         
         // General profile route
         protectedGroup.GET("/profile", authHandler.GetProfile)
@@ -2067,10 +2228,10 @@ type GoogleClassroomService struct {
 }
 
 // NewGoogleClassroomService creates a new Google Classroom service
-func NewGoogleClassroomService(client GoogleClient) *GoogleClassroomService <span class="cov0" title="0">{
+func NewGoogleClassroomService(client GoogleClient) *GoogleClassroomService <span class="cov8" title="1">{
         return &amp;GoogleClassroomService{
                 client:   client,
-                mockMode: false,
+                mockMode: client == nil, // Enable mock mode if no client is provided
         }
 }</span>
 
@@ -2082,10 +2243,13 @@ func (s *GoogleClassroomService) SetMockMode(enabled bool) <span class="cov8" ti
 // ListCourses retrieves courses for a user
 func (s *GoogleClassroomService) ListCourses(userID string) ([]Course, error) <span class="cov8" title="1">{
         if s.mockMode </span><span class="cov8" title="1">{
-                return s.getMockCourses(), nil
+                fmt.Printf("DEBUG: Using mock mode for userID: %s\n", userID)
+                courses := s.getMockCourses()
+                fmt.Printf("DEBUG: Returning %d mock courses\n", len(courses))
+                return courses, nil
         }</span>
 
-        <span class="cov8" title="1">if s.client == nil </span><span class="cov0" title="0">{
+        <span class="cov8" title="1">if s.client == nil </span><span class="cov8" title="1">{
                 return nil, fmt.Errorf("Google client not initialized")
         }</span>
 
@@ -2098,7 +2262,7 @@ func (s *GoogleClassroomService) ListStudents(courseID string) ([]Student, error
                 return s.getMockStudents(), nil
         }</span>
 
-        <span class="cov8" title="1">if s.client == nil </span><span class="cov0" title="0">{
+        <span class="cov8" title="1">if s.client == nil </span><span class="cov8" title="1">{
                 return nil, fmt.Errorf("Google client not initialized")
         }</span>
 
@@ -2111,7 +2275,7 @@ func (s *GoogleClassroomService) ListAssignments(courseID string) ([]Assignment,
                 return s.getMockAssignments(), nil
         }</span>
 
-        <span class="cov8" title="1">if s.client == nil </span><span class="cov0" title="0">{
+        <span class="cov8" title="1">if s.client == nil </span><span class="cov8" title="1">{
                 return nil, fmt.Errorf("Google client not initialized")
         }</span>
 
@@ -2280,54 +2444,54 @@ func (s *GoogleClassroomService) getMockAssignments() []Assignment <span class="
 }</span>
 
 // GetRandomCourse returns a random course from mock data
-func (s *GoogleClassroomService) GetRandomCourse() Course <span class="cov0" title="0">{
+func (s *GoogleClassroomService) GetRandomCourse() Course <span class="cov8" title="1">{
         courses := s.getMockCourses()
         if len(courses) == 0 </span><span class="cov0" title="0">{
                 return Course{}
         }</span>
         
-        <span class="cov0" title="0">rand.Seed(time.Now().UnixNano())
+        <span class="cov8" title="1">rand.Seed(time.Now().UnixNano())
         return courses[rand.Intn(len(courses))]</span>
 }
 
 // GetRandomStudent returns a random student from mock data
-func (s *GoogleClassroomService) GetRandomStudent() Student <span class="cov0" title="0">{
+func (s *GoogleClassroomService) GetRandomStudent() Student <span class="cov8" title="1">{
         students := s.getMockStudents()
         if len(students) == 0 </span><span class="cov0" title="0">{
                 return Student{}
         }</span>
         
-        <span class="cov0" title="0">rand.Seed(time.Now().UnixNano())
+        <span class="cov8" title="1">rand.Seed(time.Now().UnixNano())
         return students[rand.Intn(len(students))]</span>
 }
 
 // GetRandomAssignment returns a random assignment from mock data
-func (s *GoogleClassroomService) GetRandomAssignment() Assignment <span class="cov0" title="0">{
+func (s *GoogleClassroomService) GetRandomAssignment() Assignment <span class="cov8" title="1">{
         assignments := s.getMockAssignments()
         if len(assignments) == 0 </span><span class="cov0" title="0">{
                 return Assignment{}
         }</span>
         
-        <span class="cov0" title="0">rand.Seed(time.Now().UnixNano())
+        <span class="cov8" title="1">rand.Seed(time.Now().UnixNano())
         return assignments[rand.Intn(len(assignments))]</span>
 }
 
 // GetCourseStats returns statistics for a course
-func (s *GoogleClassroomService) GetCourseStats(courseID string) (map[string]interface{}, error) <span class="cov0" title="0">{
+func (s *GoogleClassroomService) GetCourseStats(courseID string) (map[string]interface{}, error) <span class="cov8" title="1">{
         // Get students for the course
         students, err := s.ListStudents(courseID)
-        if err != nil </span><span class="cov0" title="0">{
+        if err != nil </span><span class="cov8" title="1">{
                 return nil, fmt.Errorf("failed to get students: %v", err)
         }</span>
 
         // Get assignments for the course
-        <span class="cov0" title="0">assignments, err := s.ListAssignments(courseID)
+        <span class="cov8" title="1">assignments, err := s.ListAssignments(courseID)
         if err != nil </span><span class="cov0" title="0">{
                 return nil, fmt.Errorf("failed to get assignments: %v", err)
         }</span>
 
         // Calculate statistics
-        <span class="cov0" title="0">stats := map[string]interface{}{
+        <span class="cov8" title="1">stats := map[string]interface{}{
                 "course_id":           courseID,
                 "total_students":      len(students),
                 "total_assignments":   len(assignments),
@@ -2336,15 +2500,15 @@ func (s *GoogleClassroomService) GetCourseStats(courseID string) (map[string]int
         }
 
         // Count assignment states
-        for _, assignment := range assignments </span><span class="cov0" title="0">{
-                if assignment.State == "PUBLISHED" </span><span class="cov0" title="0">{
+        for _, assignment := range assignments </span><span class="cov8" title="1">{
+                if assignment.State == "PUBLISHED" </span><span class="cov8" title="1">{
                         stats["published_assignments"] = stats["published_assignments"].(int) + 1
-                }</span> else<span class="cov0" title="0"> {
+                }</span> else<span class="cov8" title="1"> {
                         stats["draft_assignments"] = stats["draft_assignments"].(int) + 1
                 }</span>
         }
 
-        <span class="cov0" title="0">return stats, nil</span>
+        <span class="cov8" title="1">return stats, nil</span>
 }
 </pre>
 		
@@ -2481,7 +2645,7 @@ func (s *MetricsService) GetDashboardMetrics(courses []Course, students []Studen
 }</span>
 
 // GetRoleSpecificMetrics calculates metrics specific to user roles
-func (s *MetricsService) GetRoleSpecificMetrics(role string, courses []Course, students []Student, assignments []Assignment) map[string]interface{} <span class="cov0" title="0">{
+func (s *MetricsService) GetRoleSpecificMetrics(role string, courses []Course, students []Student, assignments []Assignment) map[string]interface{} <span class="cov8" title="1">{
         baseMetrics := s.GetDashboardMetrics(courses, students, assignments)
         
         roleMetrics := map[string]interface{}{
@@ -2491,28 +2655,28 @@ func (s *MetricsService) GetRoleSpecificMetrics(role string, courses []Course, s
         }
 
         switch role </span>{
-        case "student":<span class="cov0" title="0">
+        case "student":<span class="cov8" title="1">
                 roleMetrics["specific"] = map[string]interface{}{
                         "my_courses":        len(courses),
                         "pending_assignments": s.countPendingAssignments(assignments),
                         "completed_assignments": s.countCompletedAssignments(assignments),
                         "average_grade":     baseMetrics.Courses.AverageGrade,
                 }</span>
-        case "teacher":<span class="cov0" title="0">
+        case "teacher":<span class="cov8" title="1">
                 roleMetrics["specific"] = map[string]interface{}{
                         "my_courses":        len(courses),
                         "total_students":    baseMetrics.Students.TotalStudents,
                         "graded_assignments": s.countGradedAssignments(assignments),
                         "pending_grades":    s.countPendingGrades(assignments),
                 }</span>
-        case "coordinator":<span class="cov0" title="0">
+        case "coordinator":<span class="cov8" title="1">
                 roleMetrics["specific"] = map[string]interface{}{
                         "total_courses":     baseMetrics.Courses.TotalCourses,
                         "total_teachers":    s.estimateTeachers(courses),
                         "total_students":    baseMetrics.Students.TotalStudents,
                         "active_programs":   s.countActivePrograms(courses),
                 }</span>
-        case "admin":<span class="cov0" title="0">
+        case "admin":<span class="cov8" title="1">
                 roleMetrics["specific"] = map[string]interface{}{
                         "total_users":       baseMetrics.Students.TotalStudents + s.estimateTeachers(courses),
                         "total_courses":     baseMetrics.Courses.TotalCourses,
@@ -2521,46 +2685,46 @@ func (s *MetricsService) GetRoleSpecificMetrics(role string, courses []Course, s
                 }</span>
         }
 
-        <span class="cov0" title="0">return roleMetrics</span>
+        <span class="cov8" title="1">return roleMetrics</span>
 }
 
 // Helper methods for role-specific calculations
 
-func (s *MetricsService) countPendingAssignments(assignments []Assignment) int <span class="cov0" title="0">{
+func (s *MetricsService) countPendingAssignments(assignments []Assignment) int <span class="cov8" title="1">{
         // Mock implementation: assume 30% of assignments are pending
         return int(math.Ceil(float64(len(assignments)) * 0.3))
 }</span>
 
-func (s *MetricsService) countCompletedAssignments(assignments []Assignment) int <span class="cov0" title="0">{
+func (s *MetricsService) countCompletedAssignments(assignments []Assignment) int <span class="cov8" title="1">{
         // Mock implementation: assume 70% of assignments are completed
         return int(math.Floor(float64(len(assignments)) * 0.7))
 }</span>
 
-func (s *MetricsService) countGradedAssignments(assignments []Assignment) int <span class="cov0" title="0">{
+func (s *MetricsService) countGradedAssignments(assignments []Assignment) int <span class="cov8" title="1">{
         // Mock implementation: assume 60% of assignments are graded
         return int(math.Floor(float64(len(assignments)) * 0.6))
 }</span>
 
-func (s *MetricsService) countPendingGrades(assignments []Assignment) int <span class="cov0" title="0">{
+func (s *MetricsService) countPendingGrades(assignments []Assignment) int <span class="cov8" title="1">{
         // Mock implementation: assume 40% of assignments are pending grades
         return int(math.Ceil(float64(len(assignments)) * 0.4))
 }</span>
 
-func (s *MetricsService) estimateTeachers(courses []Course) int <span class="cov0" title="0">{
+func (s *MetricsService) estimateTeachers(courses []Course) int <span class="cov8" title="1">{
         // Mock implementation: assume each teacher handles 2 courses on average
-        if len(courses) == 0 </span><span class="cov0" title="0">{
+        if len(courses) == 0 </span><span class="cov8" title="1">{
                 return 0
         }</span>
-        <span class="cov0" title="0">return int(math.Ceil(float64(len(courses)) / 2.0))</span>
+        <span class="cov8" title="1">return int(math.Ceil(float64(len(courses)) / 2.0))</span>
 }
 
-func (s *MetricsService) countActivePrograms(courses []Course) int <span class="cov0" title="0">{
+func (s *MetricsService) countActivePrograms(courses []Course) int <span class="cov8" title="1">{
         // Mock implementation: assume 3 active programs
         return 3
 }</span>
 
 // GetPerformanceMetrics calculates performance-related metrics
-func (s *MetricsService) GetPerformanceMetrics(courses []Course, students []Student, assignments []Assignment) map[string]interface{} <span class="cov0" title="0">{
+func (s *MetricsService) GetPerformanceMetrics(courses []Course, students []Student, assignments []Assignment) map[string]interface{} <span class="cov8" title="1">{
         return map[string]interface{}{
                 "completion_rate":     s.calculateCompletionRate(assignments),
                 "average_grade":       s.calculateAverageGrade(),
@@ -2574,46 +2738,46 @@ func (s *MetricsService) GetPerformanceMetrics(courses []Course, students []Stud
         }
 }</span>
 
-func (s *MetricsService) calculateCompletionRate(assignments []Assignment) float64 <span class="cov0" title="0">{
+func (s *MetricsService) calculateCompletionRate(assignments []Assignment) float64 <span class="cov8" title="1">{
         // Mock implementation: 85% completion rate
         return 85.0
 }</span>
 
-func (s *MetricsService) calculateAverageGrade() float64 <span class="cov0" title="0">{
+func (s *MetricsService) calculateAverageGrade() float64 <span class="cov8" title="1">{
         // Mock implementation: average grade of 85.5
         return 85.5
 }</span>
 
-func (s *MetricsService) calculateEngagementScore(courses []Course, students []Student) float64 <span class="cov0" title="0">{
+func (s *MetricsService) calculateEngagementScore(courses []Course, students []Student) float64 <span class="cov8" title="1">{
         // Mock implementation: engagement score based on course and student count
-        if len(courses) == 0 || len(students) == 0 </span><span class="cov0" title="0">{
+        if len(courses) == 0 || len(students) == 0 </span><span class="cov8" title="1">{
                 return 0.0
         }</span>
         
         // Simple calculation: engagement = (courses * students) / 100
-        <span class="cov0" title="0">engagement := float64(len(courses) * len(students)) / 100.0
+        <span class="cov8" title="1">engagement := float64(len(courses) * len(students)) / 100.0
         
         // Cap at 100
         if engagement &gt; 100.0 </span><span class="cov0" title="0">{
                 engagement = 100.0
         }</span>
         
-        <span class="cov0" title="0">return math.Round(engagement*100) / 100</span>
+        <span class="cov8" title="1">return math.Round(engagement*100) / 100</span>
 }
 
-func (s *MetricsService) calculateProductivityIndex(assignments []Assignment) float64 <span class="cov0" title="0">{
+func (s *MetricsService) calculateProductivityIndex(assignments []Assignment) float64 <span class="cov8" title="1">{
         // Mock implementation: productivity based on assignment count and points
-        if len(assignments) == 0 </span><span class="cov0" title="0">{
+        if len(assignments) == 0 </span><span class="cov8" title="1">{
                 return 0.0
         }</span>
         
-        <span class="cov0" title="0">totalPoints := 0
-        for _, assignment := range assignments </span><span class="cov0" title="0">{
+        <span class="cov8" title="1">totalPoints := 0
+        for _, assignment := range assignments </span><span class="cov8" title="1">{
                 totalPoints += assignment.MaxPoints
         }</span>
         
         // Simple calculation: productivity = (assignments * avg_points) / 10
-        <span class="cov0" title="0">avgPoints := float64(totalPoints) / float64(len(assignments))
+        <span class="cov8" title="1">avgPoints := float64(totalPoints) / float64(len(assignments))
         productivity := float64(len(assignments)) * avgPoints / 10.0
         
         // Cap at 100
@@ -2621,7 +2785,7 @@ func (s *MetricsService) calculateProductivityIndex(assignments []Assignment) fl
                 productivity = 100.0
         }</span>
         
-        <span class="cov0" title="0">return math.Round(productivity*100) / 100</span>
+        <span class="cov8" title="1">return math.Round(productivity*100) / 100</span>
 }
 </pre>
 		
