@@ -283,55 +283,13 @@ func (h *DashboardHandler) GetTeacherDashboard(c echo.Context) error {
 		return c.JSON(http.StatusNotFound, map[string]string{"error": "User not found"})
 	}
 
-	// Mock teacher dashboard data
-	dashboardData := map[string]interface{}{
-		"user": map[string]interface{}{
-			"id":    dbUser.ID,
-			"name":  dbUser.Name,
-			"email": dbUser.Email,
-			"role":  dbUser.Role,
-		},
-		"dashboard": map[string]interface{}{
-			"type": "teacher",
-			"welcome_message": "Welcome to your teacher dashboard!",
-			"stats": map[string]interface{}{
-				"total_courses": 4,
-				"total_students": 120,
-				"assignments_graded": 45,
-				"assignments_pending": 8,
-			},
-			"recent_activities": []map[string]interface{}{
-				{
-					"type": "assignment_graded",
-					"title": "Math Homework #3",
-					"date": time.Now().AddDate(0, 0, -1).Format("2006-01-02"),
-					"students_graded": 25,
-				},
-				{
-					"type": "new_assignment",
-					"title": "Science Lab Report",
-					"date": time.Now().AddDate(0, 0, -2).Format("2006-01-02"),
-					"course": "Chemistry",
-				},
-			},
-			"upcoming_tasks": []map[string]interface{}{
-				{
-					"title": "Grade History Essays",
-					"due_date": time.Now().AddDate(0, 0, 2).Format("2006-01-02"),
-					"course": "World History",
-					"students": 30,
-				},
-				{
-					"title": "Prepare Math Test",
-					"due_date": time.Now().AddDate(0, 0, 4).Format("2006-01-02"),
-					"course": "Algebra II",
-				},
-			},
-		},
-		"timestamp": time.Now().Format("2006-01-02T15:04:05Z07:00"),
+	// If Google services are available, use them
+	if h.googleService != nil && h.metricsService != nil {
+		return h.getEnhancedTeacherDashboard(c, dbUser, userID)
 	}
 
-	return c.JSON(http.StatusOK, dashboardData)
+	// Fallback to mock data
+	return h.getFallbackTeacherDashboard(c, dbUser)
 }
 
 // GetCoordinatorDashboard returns coordinator-specific dashboard data
@@ -361,54 +319,13 @@ func (h *DashboardHandler) GetCoordinatorDashboard(c echo.Context) error {
 		return c.JSON(http.StatusNotFound, map[string]string{"error": "User not found"})
 	}
 
-	// Mock coordinator dashboard data
-	dashboardData := map[string]interface{}{
-		"user": map[string]interface{}{
-			"id":    dbUser.ID,
-			"name":  dbUser.Name,
-			"email": dbUser.Email,
-			"role":  dbUser.Role,
-		},
-		"dashboard": map[string]interface{}{
-			"type": "coordinator",
-			"welcome_message": "Welcome to your coordinator dashboard!",
-			"stats": map[string]interface{}{
-				"total_courses": 15,
-				"total_teachers": 8,
-				"total_students": 300,
-				"active_programs": 3,
-			},
-			"recent_activities": []map[string]interface{}{
-				{
-					"type": "course_created",
-					"title": "Advanced Mathematics",
-					"date": time.Now().AddDate(0, 0, -1).Format("2006-01-02"),
-					"teacher": "Dr. Smith",
-				},
-				{
-					"type": "teacher_assigned",
-					"title": "Chemistry Lab",
-					"date": time.Now().AddDate(0, 0, -2).Format("2006-01-02"),
-					"teacher": "Prof. Johnson",
-				},
-			},
-			"upcoming_tasks": []map[string]interface{}{
-				{
-					"title": "Review Course Schedules",
-					"due_date": time.Now().AddDate(0, 0, 3).Format("2006-01-02"),
-					"priority": "high",
-				},
-				{
-					"title": "Teacher Performance Review",
-					"due_date": time.Now().AddDate(0, 0, 7).Format("2006-01-02"),
-					"teachers": 8,
-				},
-			},
-		},
-		"timestamp": time.Now().Format("2006-01-02T15:04:05Z07:00"),
+	// If Google services are available, use them
+	if h.googleService != nil && h.metricsService != nil {
+		return h.getEnhancedCoordinatorDashboard(c, dbUser, userID)
 	}
 
-	return c.JSON(http.StatusOK, dashboardData)
+	// Fallback to mock data
+	return h.getFallbackCoordinatorDashboard(c, dbUser)
 }
 
 // GetAdminDashboard returns admin-specific dashboard data
@@ -438,13 +355,275 @@ func (h *DashboardHandler) GetAdminDashboard(c echo.Context) error {
 		return c.JSON(http.StatusNotFound, map[string]string{"error": "User not found"})
 	}
 
+	// If Google services are available, use them
+	if h.googleService != nil && h.metricsService != nil {
+		return h.getEnhancedAdminDashboard(c, dbUser, userID)
+	}
+
+	// Fallback to mock data
+	return h.getFallbackAdminDashboard(c, dbUser)
+}
+
+// getEnhancedTeacherDashboard returns teacher dashboard with Google Classroom integration
+func (h *DashboardHandler) getEnhancedTeacherDashboard(c echo.Context, dbUser *models.User, userID string) error {
+	courses, err := h.googleService.ListCourses(userID)
+	if err != nil {
+		return h.getFallbackTeacherDashboard(c, dbUser)
+	}
+
+	var allStudents []services.Student
+	var allAssignments []services.Assignment
+	for _, course := range courses {
+		students, err := h.googleService.ListStudents(course.ID)
+		if err != nil {
+			continue
+		}
+		allStudents = append(allStudents, students...)
+
+		assignments, err := h.googleService.ListAssignments(course.ID)
+		if err != nil {
+			continue
+		}
+		allAssignments = append(allAssignments, assignments...)
+	}
+
+	courseMetrics := h.metricsService.CalculateCourseMetrics(courses)
+	studentMetrics := h.metricsService.CalculateStudentMetrics(allStudents)
+	assignmentMetrics := h.metricsService.CalculateAssignmentMetrics(allAssignments)
+	roleMetrics := h.metricsService.GetRoleSpecificMetrics("teacher", courses, allStudents, allAssignments)
+
+	dashboardData := map[string]interface{}{
+		"user": map[string]interface{}{
+			"id":    dbUser.ID,
+			"name":  dbUser.Name,
+			"email": dbUser.Email,
+			"role":  dbUser.Role,
+		},
+		"dashboard": map[string]interface{}{
+			"type": "teacher",
+			"welcome_message": "Welcome to your teacher dashboard!",
+			"stats": map[string]interface{}{
+				"total_courses":     courseMetrics.TotalCourses,
+				"total_students":    studentMetrics.TotalStudents,
+				"graded_assignments": assignmentMetrics.PublishedAssignments,
+				"pending_grades":    assignmentMetrics.TotalAssignments - assignmentMetrics.PublishedAssignments,
+			},
+			"google_integration": map[string]interface{}{
+				"enabled": true,
+				"courses_count": len(courses),
+				"students_count": len(allStudents),
+				"assignments_count": len(allAssignments),
+			},
+		},
+		"metrics": map[string]interface{}{
+			"course_metrics": courseMetrics,
+			"student_metrics": studentMetrics,
+			"assignment_metrics": assignmentMetrics,
+			"role_specific": roleMetrics,
+		},
+		"timestamp": time.Now().Format("2006-01-02T15:04:05Z07:00"),
+	}
+
+	return c.JSON(http.StatusOK, dashboardData)
+}
+
+// getFallbackTeacherDashboard returns mock teacher dashboard data
+func (h *DashboardHandler) getFallbackTeacherDashboard(c echo.Context, dbUser *models.User) error {
+	dashboardData := map[string]interface{}{
+		"user": map[string]interface{}{
+			"id":    dbUser.ID,
+			"name":  dbUser.Name,
+			"email": dbUser.Email,
+			"role":  dbUser.Role,
+		},
+		"dashboard": map[string]interface{}{
+			"type": "teacher",
+			"welcome_message": "Welcome to your teacher dashboard!",
+			"stats": map[string]interface{}{
+				"total_courses":     5,
+				"total_students":    50,
+				"graded_assignments": 30,
+				"pending_grades":    15,
+			},
+			"google_integration": map[string]interface{}{
+				"enabled": false,
+				"fallback": true,
+			},
+		},
+		"timestamp": time.Now().Format("2006-01-02T15:04:05Z07:00"),
+	}
+	return c.JSON(http.StatusOK, dashboardData)
+}
+
+// getEnhancedCoordinatorDashboard returns coordinator dashboard with Google Classroom integration
+func (h *DashboardHandler) getEnhancedCoordinatorDashboard(c echo.Context, dbUser *models.User, userID string) error {
+	courses, err := h.googleService.ListCourses(userID)
+	if err != nil {
+		return h.getFallbackCoordinatorDashboard(c, dbUser)
+	}
+
+	var allStudents []services.Student
+	var allAssignments []services.Assignment
+	for _, course := range courses {
+		students, err := h.googleService.ListStudents(course.ID)
+		if err != nil {
+			continue
+		}
+		allStudents = append(allStudents, students...)
+
+		assignments, err := h.googleService.ListAssignments(course.ID)
+		if err != nil {
+			continue
+		}
+		allAssignments = append(allAssignments, assignments...)
+	}
+
+	courseMetrics := h.metricsService.CalculateCourseMetrics(courses)
+	studentMetrics := h.metricsService.CalculateStudentMetrics(allStudents)
+	assignmentMetrics := h.metricsService.CalculateAssignmentMetrics(allAssignments)
+	roleMetrics := h.metricsService.GetRoleSpecificMetrics("coordinator", courses, allStudents, allAssignments)
+
+	dashboardData := map[string]interface{}{
+		"user": map[string]interface{}{
+			"id":    dbUser.ID,
+			"name":  dbUser.Name,
+			"email": dbUser.Email,
+			"role":  dbUser.Role,
+		},
+		"dashboard": map[string]interface{}{
+			"type": "coordinator",
+			"welcome_message": "Welcome to your coordinator dashboard!",
+			"stats": map[string]interface{}{
+				"total_courses":     courseMetrics.TotalCourses,
+				"total_teachers":    courseMetrics.TotalCourses / 2, // Estimate
+				"total_students":    studentMetrics.TotalStudents,
+				"active_programs":   3, // Mock value
+			},
+			"google_integration": map[string]interface{}{
+				"enabled": true,
+				"courses_count": len(courses),
+				"students_count": len(allStudents),
+				"assignments_count": len(allAssignments),
+			},
+		},
+		"metrics": map[string]interface{}{
+			"course_metrics": courseMetrics,
+			"student_metrics": studentMetrics,
+			"assignment_metrics": assignmentMetrics,
+			"role_specific": roleMetrics,
+		},
+		"timestamp": time.Now().Format("2006-01-02T15:04:05Z07:00"),
+	}
+
+	return c.JSON(http.StatusOK, dashboardData)
+}
+
+// getFallbackCoordinatorDashboard returns mock coordinator dashboard data
+func (h *DashboardHandler) getFallbackCoordinatorDashboard(c echo.Context, dbUser *models.User) error {
+	dashboardData := map[string]interface{}{
+		"user": map[string]interface{}{
+			"id":    dbUser.ID,
+			"name":  dbUser.Name,
+			"email": dbUser.Email,
+			"role":  dbUser.Role,
+		},
+		"dashboard": map[string]interface{}{
+			"type": "coordinator",
+			"welcome_message": "Welcome to your coordinator dashboard!",
+			"stats": map[string]interface{}{
+				"total_courses":     15,
+				"total_teachers":    8,
+				"total_students":    300,
+				"active_programs":   3,
+			},
+			"google_integration": map[string]interface{}{
+				"enabled": false,
+				"fallback": true,
+			},
+		},
+		"timestamp": time.Now().Format("2006-01-02T15:04:05Z07:00"),
+	}
+	return c.JSON(http.StatusOK, dashboardData)
+}
+
+// getEnhancedAdminDashboard returns admin dashboard with Google Classroom integration
+func (h *DashboardHandler) getEnhancedAdminDashboard(c echo.Context, dbUser *models.User, userID string) error {
+	courses, err := h.googleService.ListCourses(userID)
+	if err != nil {
+		return h.getFallbackAdminDashboard(c, dbUser)
+	}
+
+	var allStudents []services.Student
+	var allAssignments []services.Assignment
+	for _, course := range courses {
+		students, err := h.googleService.ListStudents(course.ID)
+		if err != nil {
+			continue
+		}
+		allStudents = append(allStudents, students...)
+
+		assignments, err := h.googleService.ListAssignments(course.ID)
+		if err != nil {
+			continue
+		}
+		allAssignments = append(allAssignments, assignments...)
+	}
+
 	// Get system stats
 	allUsers, err := h.userRepo.ListUsers(0, 100)
 	if err != nil {
 		allUsers = []*models.User{}
 	}
 
-	// Mock admin dashboard data
+	courseMetrics := h.metricsService.CalculateCourseMetrics(courses)
+	studentMetrics := h.metricsService.CalculateStudentMetrics(allStudents)
+	assignmentMetrics := h.metricsService.CalculateAssignmentMetrics(allAssignments)
+	roleMetrics := h.metricsService.GetRoleSpecificMetrics("admin", courses, allStudents, allAssignments)
+
+	dashboardData := map[string]interface{}{
+		"user": map[string]interface{}{
+			"id":    dbUser.ID,
+			"name":  dbUser.Name,
+			"email": dbUser.Email,
+			"role":  dbUser.Role,
+		},
+		"dashboard": map[string]interface{}{
+			"type": "admin",
+			"welcome_message": "Welcome to your admin dashboard!",
+			"stats": map[string]interface{}{
+				"total_users":       len(allUsers),
+				"total_courses":     courseMetrics.TotalCourses,
+				"total_teachers":    courseMetrics.TotalCourses / 2, // Estimate
+				"total_students":    studentMetrics.TotalStudents,
+				"system_uptime":     "99.9%",
+			},
+			"google_integration": map[string]interface{}{
+				"enabled": true,
+				"courses_count": len(courses),
+				"students_count": len(allStudents),
+				"assignments_count": len(allAssignments),
+			},
+		},
+		"metrics": map[string]interface{}{
+			"course_metrics": courseMetrics,
+			"student_metrics": studentMetrics,
+			"assignment_metrics": assignmentMetrics,
+			"role_specific": roleMetrics,
+		},
+		"timestamp": time.Now().Format("2006-01-02T15:04:05Z07:00"),
+	}
+
+	return c.JSON(http.StatusOK, dashboardData)
+}
+
+// getFallbackAdminDashboard returns mock admin dashboard data
+func (h *DashboardHandler) getFallbackAdminDashboard(c echo.Context, dbUser *models.User) error {
+	// Get system stats
+	allUsers, err := h.userRepo.ListUsers(0, 100)
+	if err != nil {
+		allUsers = []*models.User{}
+	}
+
 	dashboardData := map[string]interface{}{
 		"user": map[string]interface{}{
 			"id":    dbUser.ID,
@@ -462,33 +641,9 @@ func (h *DashboardHandler) GetAdminDashboard(c echo.Context) error {
 				"total_students": 450,
 				"system_uptime": "99.9%",
 			},
-			"recent_activities": []map[string]interface{}{
-				{
-					"type": "user_registered",
-					"title": "New Student Registration",
-					"date": time.Now().AddDate(0, 0, -1).Format("2006-01-02"),
-					"user": "john.doe@example.com",
-				},
-				{
-					"type": "system_backup",
-					"title": "Daily Backup Completed",
-					"date": time.Now().AddDate(0, 0, -1).Format("2006-01-02"),
-					"status": "success",
-				},
-			},
-			"system_alerts": []map[string]interface{}{
-				{
-					"type": "warning",
-					"title": "High Server Load",
-					"message": "Server CPU usage above 80%",
-					"date": time.Now().AddDate(0, 0, -1).Format("2006-01-02"),
-				},
-				{
-					"type": "info",
-					"title": "Scheduled Maintenance",
-					"message": "System maintenance scheduled for Sunday",
-					"date": time.Now().AddDate(0, 0, 2).Format("2006-01-02"),
-				},
+			"google_integration": map[string]interface{}{
+				"enabled": false,
+				"fallback": true,
 			},
 		},
 		"timestamp": time.Now().Format("2006-01-02T15:04:05Z07:00"),
