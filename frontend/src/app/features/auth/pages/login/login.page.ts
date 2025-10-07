@@ -6,6 +6,7 @@ import { finalize } from 'rxjs/operators';
 import { LoginFormComponent } from '../../../../shared/components/login-form/login-form.component';
 import { OAuthButtonComponent } from '../../../../shared/components/oauth-button/oauth-button.component';
 import { AuthService } from '../../../../core/services/auth.service';
+import { NavigationService } from '../../../../core/services/navigation.service';
 import { Credentials } from '../../../../core/models/auth.model';
 
 @Component({
@@ -36,6 +37,7 @@ import { Credentials } from '../../../../core/models/auth.model';
 })
 export class LoginPageComponent {
   private readonly authService = inject(AuthService);
+  private readonly navigation = inject(NavigationService);
   private readonly destroyRef = inject(DestroyRef);
 
   readonly pending = signal(false);
@@ -66,7 +68,7 @@ export class LoginPageComponent {
       .pipe(takeUntilDestroyed(this.destroyRef), finalize(() => this.pending.set(false)))
       .subscribe({
         next: (response) => {
-          window.location.href = response.url;
+          this.navigation.redirectToExternal(response.url);
         },
         error: () => this.error.set('Unable to initiate Google sign-in.'),
       });
