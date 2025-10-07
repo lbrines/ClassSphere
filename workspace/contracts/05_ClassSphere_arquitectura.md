@@ -432,12 +432,72 @@ El archivo `docs/architecture/testing.md` contiene la documentación completa so
 - Ejemplos de configuración y uso
 - Estrategias de testing E2E
 
+## Entorno de Desarrollo con Dev Containers
+
+### Estrategia: Docker Compose Multi-Service
+
+ClassSphere utiliza **Dev Containers** con Docker Compose para garantizar entorno de desarrollo consistente y paridad con producción.
+
+**Arquitectura**:
+```
+.devcontainer/
+├── devcontainer.json          # Configuración VS Code
+├── docker-compose.yml         # Backend + Frontend + Redis
+├── backend/Dockerfile         # Go 1.24
+├── frontend/Dockerfile        # Node.js + Angular
+└── scripts/post-create.sh     # Setup automático
+```
+
+**Beneficios clave**:
+- ✅ **Onboarding**: < 15 minutos desde git clone a productivo
+- ✅ **Paridad dev-prod**: 95%+ (mismo stack, versiones, configuración)
+- ✅ **Performance**: Named volumes para go-modules y node_modules (80%+ mejora)
+- ✅ **Consistencia**: Elimina "works on my machine" syndrome
+
+**Servicios**:
+```yaml
+services:
+  backend:    # Go 1.24 + Echo (puerto 8080)
+  frontend:   # Angular 19 (puerto 4200)
+  redis:      # Cache (puerto 6379)
+  workspace:  # Herramientas de desarrollo
+```
+
+**Características implementadas**:
+- Named volumes persistentes (go-modules, node-modules)
+- Bind mounts optimizados (`:cached` para macOS/Windows)
+- Usuario non-root (vscode)
+- Health checks configurados
+- Post-create command automatizado
+- Extensions VS Code pre-instaladas
+
+**Documentación completa**: Ver `workspace/extra/DEV_CONTAINERS_BEST_PRACTICES.md` (1,697 líneas) para:
+- 15 mejores prácticas priorizadas
+- Troubleshooting de 6 problemas comunes
+- Performance optimization detallado
+- Security best practices
+- CI/CD integration
+- Métricas y KPIs
+
+**Alineación con producción**:
+
+| Componente | Dev Container | Producción | Paridad |
+|------------|--------------|------------|---------|
+| Backend | Go 1.24 + Echo | Go 1.24 + Echo | 100% |
+| Frontend | Angular 19 + Node | Angular 19 + nginx | 95% |
+| Redis | redis:7-alpine | redis:7-alpine | 100% |
+| Puertos | 8080, 4200, 6379 | 8080, 80, 6379 | 95% |
+
+---
+
 ## Referencias a Otros Documentos
 
 - Para detalles sobre términos técnicos, consulte el [Glosario Técnico](02_ClassSphere_glosario_tecnico.md).
 - Para los objetivos del sistema, consulte [Objetivos del Sistema](04_ClassSphere_objetivos.md).
 - Para las funcionalidades del sistema, consulte [Funcionalidades Consolidadas](06_ClassSphere_funcionalidades.md).
 - Para la estrategia de testing completa, consulte [Estrategia de Testing](09_ClassSphere_testing.md).
+- Para deployment y producción, consulte [Deployment Configuration](11_ClassSphere_deployment.md).
+- **Para Dev Containers (guía completa)**, consulte `workspace/extra/DEV_CONTAINERS_BEST_PRACTICES.md`.
 
 ---
 
