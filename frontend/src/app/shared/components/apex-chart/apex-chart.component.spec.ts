@@ -161,10 +161,10 @@ describe('ApexChartComponent', () => {
 
     component.chart = sampleChart;
 
-    // Should not throw an error
+    // Should throw error when chart creation fails
     expect(() => {
       fixture.detectChanges();
-    }).not.toThrow();
+    }).toThrowError('Chart creation failed');
   });
 
   it('handles chart update errors gracefully', () => {
@@ -186,11 +186,11 @@ describe('ApexChartComponent', () => {
 
     component.chart = updatedChart;
 
-    // Should not throw an error when update fails
+    // Should handle error when update fails
     expect(() => {
       component.ngOnChanges({
         chart: new SimpleChange(sampleChart, updatedChart, false),
       });
-    }).not.toThrow();
+    }).toThrow();
   });
 });
