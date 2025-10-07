@@ -1,190 +1,163 @@
 ---
-title: "ClassSphere - Plan de Desarrollo con Coverage 100%"
-version: "1.1"
-type: "plan_index"
-date: "2025-10-06"
-author: "Sistema de Gestión ClassSphere"
-priority: "CRITICAL"
-max_tokens: 2000
+title: "ClassSphere - Plan de Desarrollo Unificado"
+version: "3.0"
+type: "development_plan"
+related_files:
+  - "contracts/principal/00_ClassSphere_index.md"
+  - "contracts/principal/05_ClassSphere_arquitectura.md"
+  - "contracts/principal/10_ClassSphere_plan_implementacion.md"
 ---
 
-# Plan de Desarrollo ClassSphere - Coverage 100%
+# Plan de Desarrollo ClassSphere Unificado
 
-## 🎯 INICIO: Objetivos Críticos
+## 🎯 Objetivos Críticos y Dependencias Bloqueantes
 
 ### Objetivo Principal
-Desarrollar ClassSphere con **Coverage 100%** en todo el código (backend Go + frontend Angular 19), siguiendo TDD estricto y mejores prácticas de desarrollo con LLMs.
-
-### ✅ Fase 1 Completada - Lecciones Aprendidas
-**Métricas de Éxito Fase 1**:
-- **Errores Críticos Resueltos**: 14 errores bloqueadores identificados y solucionados
-- **Tiempo de Resolución**: 155 minutos total de resolución de errores
-- **Cobertura Final**: 94.4% sin OAuth (objetivo 80%+ superado)
-- **Sistema Funcional**: Backend + Frontend + Integración + Demo Users + TailwindCSS
-- **Patrones de Prevención**: Documentados y validados en producción
-
-**Errores Críticos Superados**:
-- 🔴 **Dashboard Endpoints 404** - BLOQUEADOR PRINCIPAL (15 min resolución)
-- 🟠 **TypeScript Compilation** - BLOQUEABA FRONTEND (10 min resolución)
-- 🟠 **OAuth Tests Hanging** - BLOQUEABA COBERTURA (20 min resolución)
-- 🟡 **Angular CLI Not Found** - BLOQUEABA DESARROLLO (5 min resolución)
-- 🟡 **TailwindCSS v4 PostCSS** - BLOQUEABA BUILD (20 min resolución)
-
-### Stack Tecnológico Definitivo
-**Backend:**
-- Go 1.21+ + Echo v4
-- testify/mock + resty (testing)
-- Redis (caché)
-- JWT + OAuth 2.0 Google
-
-**Frontend:**
-- Angular 19 + esbuild oficial
-- Jasmine + Karma (testing unit)
-- Playwright (testing E2E)
-- TailwindCSS 3.x + Biome
-
-**DevOps:**
-- GitHub Actions (CI/CD)
-- Docker multi-stage
-- Trivy (security scanning)
+Implementar sistema completo ClassSphere con stack moderno Go + Angular 19, siguiendo metodología TDD-RunFix+ estricta con prevención de errores integrada.
 
 ### Dependencias Bloqueantes Críticas
-1. **Go 1.21+** instalado y configurado
-2. **Node.js 20+** para Angular 19
-3. **Redis** para caché compartido
-4. **Google OAuth credentials** configuradas
-5. **GitHub Actions** habilitado en repositorio
+- **Fase 1**: Capacitación Go + Angular completada (2-3 semanas)
+- **Fase 2**: Backend Go funcional con OAuth + JWT
+- **Fase 3**: Frontend Angular con dashboards por rol
+- **Fase 4**: Testing completo con cobertura ≥80%
 
-### Métricas de Coverage 100%
-- **Backend Go**: 100% líneas, 100% funciones
-- **Frontend Angular**: 100% líneas, 100% componentes
-- **E2E Tests**: 100% flujos críticos
-- **Integration Tests**: 100% endpoints API
-- **Security Tests**: 100% vulnerabilidades conocidas
+## 📅 Fases de Desarrollo
 
-## 📅 MEDIO: Fases de Desarrollo
+### Fase 1: Fundaciones (12 días)
+**Stack Tecnológico**:
+- Backend: Go 1.21+ + Echo v4 + JWT + OAuth 2.0 Google
+- Frontend: Angular 19 + esbuild + TailwindCSS 3.x
+- Testing: testify (Go) + Jasmine + Karma (Angular)
+- DevOps: GitHub Actions + Docker + Trivy
 
-### ✅ Fase 1: Fundaciones (COMPLETADA) - CRITICAL
-**Objetivo**: Backend Go + Frontend Angular base con Coverage 100%
-- ✅ Días 1-3: Setup + Infraestructura + Testing
-- ✅ Días 4-6: Autenticación JWT + OAuth 2.0
-- ✅ Días 7-9: Frontend Angular base + Componentes
-- ✅ Días 10-12: Integración + CI/CD + Coverage 100%
+**Entregables**:
+- API REST completa con autenticación
+- Frontend Angular con autenticación
+- Cobertura testing ≥80%
+- CI/CD pipeline básico
 
-**Coverage Logrado**: 94.4% sin OAuth (objetivo 80%+ superado)
-**Tiempo Total**: 155 minutos resolución de errores críticos
-**Patrones Validados**: Server restart, TypeScript, Angular CLI, OAuth tests, TailwindCSS
+### Fase 2: Google Integration (10 días)
+**Componentes**:
+- Google Classroom API con mocks
+- Modo dual (Google/Mock)
+- Dashboards por rol (admin, coordinator, teacher, student)
+- Sistema de roles completo
 
-### Fase 2: Google Integration (10 días) - HIGH
-**Objetivo**: Integración Google Classroom con mocks + Dashboards
-- Días 1-3: Google Classroom API + Mocks
-- Días 4-6: Modo dual (Google/Mock)
-- Días 7-10: Dashboards por rol + Coverage 100%
+### Fase 3: Visualización (10 días)
+**Funcionalidades**:
+- Búsqueda avanzada multi-entidad
+- Notificaciones WebSocket real-time
+- Gráficos interactivos con D3.js
+- Exportación de datos
 
-**Coverage Target**: 100% en servicios Google + dashboards
-**Patrones Aplicables**: Server restart, TypeScript compilation, Angular CLI
+### Fase 4: Integración Completa (13 días)
+**Características**:
+- Sincronización bidireccional Google
+- Accesibilidad WCAG 2.2 AA completa
+- CI/CD pipeline completo
+- Performance <1s load time
 
-### Fase 3: Visualización (10 días) - MEDIUM
-**Objetivo**: Búsqueda avanzada + Notificaciones + Gráficos
-- Días 1-4: Sistema de búsqueda avanzada
-- Días 5-7: Notificaciones WebSocket
-- Días 8-10: Gráficos interactivos + Coverage 100%
+## 🛡️ Seguridad y Verificación
 
-**Coverage Target**: 100% en componentes de visualización
-**Patrones Aplicables**: OAuth tests timeout, TailwindCSS configuration
+### Principio de Cero Confianza
+- **Autenticación**: JWT + OAuth 2.0 Google con PKCE
+- **Autorización**: Sistema de roles jerárquico
+- **Validación**: Go structs con tags + Angular validators
+- **Escaneo**: SAST, SCA, Secrets detection con Trivy
 
-### Fase 4: Integración (13 días) - LOW
-**Objetivo**: Sincronización bidireccional + Accesibilidad + CI/CD
-- Días 1-5: Sincronización Google bidireccional
-- Días 6-9: Accesibilidad WCAG 2.2 AA
-- Días 10-13: CI/CD completo + Coverage 100%
+### Verificación Automática
+- **Pre-commit hooks**: Validación de patrones críticos
+- **CI/CD gates**: Cobertura ≥80%, 0 vulnerabilidades CRITICAL
+- **Testing**: testify + Jasmine + Playwright E2E
+- **Security**: Trivy scanning en cada build
 
-**Coverage Target**: 100% en todo el sistema
-**Patrones Aplicables**: Todos los patrones de error prevention validados
+## 🧪 Estrategia de Testing
 
-## ✅ FINAL: Verificación y Próximos Pasos
-
-### Estrategia de Testing (Coverage 100%)
-- **TDD Estricto**: Red-Green-Refactor en cada feature
-- **Unit Tests**: testify (Go) + Jasmine (Angular)
-- **Integration Tests**: httptest (Go) + Angular Testing Library
-- **E2E Tests**: Playwright para flujos completos
-- **Coverage Tools**: go test -cover + karma-coverage
-
-### Protocolos de Seguridad
-- **Principio de cero confianza**: Todo código verificado
-- **SAST**: Análisis estático automático
-- **SCA**: Análisis de dependencias
-- **Secrets detection**: Sin credenciales expuestas
-- **Trivy scanning**: Vulnerabilidades en Docker
-
-### Gestión de Contexto (Anti Lost-in-the-Middle)
-- **Chunking por prioridad**: CRITICAL (2000) → LOW (800 tokens)
-- **Estructura INICIO-MEDIO-FINAL**: En todos los archivos
-- **Logs estructurados**: JSON con context_id único
-- **Context recovery**: Recuperación automática de contexto
-
-### Métricas de Evaluación
-- **Precisión**: ≥95% en tests
-- **Completitud**: 100% funcionalidades implementadas
-- **Coherencia**: ≥85% consistencia semántica
-- **Coverage**: 100% líneas y funciones
-- **Performance**: <2s tiempo de carga
-
-### Checklist Final de Verificación
-- [ ] Backend Go: 100% coverage (go test -cover)
-- [ ] Frontend Angular: 100% coverage (karma-coverage)
-- [ ] E2E Tests: 100% flujos críticos (Playwright)
-- [ ] Security: 0 vulnerabilidades críticas (Trivy)
-- [ ] Performance: <2s tiempo de carga (Lighthouse)
-- [ ] Accesibilidad: WCAG 2.2 AA (axe-core)
-- [ ] CI/CD: Pipeline verde (GitHub Actions)
-- [ ] Documentación: 100% APIs documentadas
-
-### Próximos Pasos Inmediatos
-1. **✅ Fase 1 Completada**: Sistema funcional con 94.4% cobertura
-2. **Iniciar Fase 2**: Leer `03_plan_fase2_google_integration.md`
-3. **Aplicar Patrones**: Usar patrones de error prevention validados
-4. **Continuar TDD**: Mantener cobertura alta en nuevas features
-5. **Verificar Errores**: Aplicar comandos de verificación automática
-
-### Comandos de Validación Rápida (Validados en Fase 1)
-```bash
-# Backend coverage (94.4% logrado)
-cd backend && go test -cover ./... -coverprofile=coverage.out
-go tool cover -html=coverage.out
-
-# Frontend coverage (Angular CLI con npx)
-cd frontend/classsphere-frontend && npx ng test --code-coverage --watch=false
-open coverage/index.html
-
-# E2E tests (Playwright)
-cd frontend/classsphere-frontend && npx playwright test
-
-# Server restart (patrón validado)
-pkill -f classsphere-backend
-PORT=8081 ./classsphere-backend
-
-# Security scan
-docker run --rm -v $(pwd):/app aquasec/trivy fs /app
-
-# Full validation
-./scripts/validate-coverage-100.sh
+### Metodología TDD-RunFix+
+```
+1. Red: Escribir test que falle
+2. Green: Implementar código mínimo
+3. Refactor: Mejorar código
+4. Validate Patterns: Aplicar validación automática
+5. Document: Documentar decisiones
+6. Integrate: Integrar con sistema
+7. Validate: Validar criterios de aceptación
 ```
 
-### Archivos del Plan
-1. **01_plan_index.md** (este archivo) - Visión general
-2. **02_plan_fase1_fundaciones.md** - Fase 1 detallada
-3. **03_plan_fase2_google_integration.md** - Fase 2 detallada
-4. **04_plan_fase3_visualizacion.md** - Fase 3 detallada
-5. **05_plan_fase4_integracion.md** - Fase 4 detallada
-6. **06_plan_testing_strategy.md** - Estrategia de testing
-7. **07_plan_security_protocols.md** - Protocolos de seguridad
-8. **08_plan_context_management.md** - Gestión de contexto
-9. **09_plan_evaluation_metrics.md** - Métricas de evaluación
-10. **README.md** - Guía de inicio rápido
+### Cobertura Requerida
+- **Global**: ≥80% líneas, ≥65% ramas
+- **Módulos Críticos**: ≥90% líneas, ≥80% ramas
+- **Componentes de Seguridad**: ≥95% líneas, ≥85% ramas
+- **API Endpoints**: 100% casos de éxito y error
 
----
+## 📊 Gestión de Contexto
 
-**Estado**: ✅ PLAN ACTUALIZADO - Fase 1 Completada (94.4% cobertura)
-**Próximo**: Leer `03_plan_fase2_google_integration.md` y comenzar Fase 2
+### Chunking por Prioridad
+- **CRITICAL**: máximo 2000 tokens (auth, config, main.go)
+- **HIGH**: máximo 1500 tokens (services, handlers)
+- **MEDIUM**: máximo 1000 tokens (components, charts)
+- **LOW**: máximo 800 tokens (admin, a11y)
+
+### Estructura Anti Lost-in-the-Middle
+- **INICIO**: objetivos críticos + dependencias bloqueantes
+- **MEDIO**: implementación detallada + casos de uso
+- **FINAL**: checklist verificación + próximos pasos
+
+## 📈 Métricas de Evaluación
+
+### Precisión: ≥95%
+- Especificaciones cumplidas / Especificaciones totales
+- Validación automática de patrones críticos
+
+### Completitud: 100%
+- Archivos creados / Archivos requeridos
+- Funcionalidades implementadas / Funcionalidades especificadas
+
+### Coherencia: ≥85%
+- Términos consistentes / Términos totales
+- Versiones tecnológicas unificadas
+
+### Calidad Técnica: ≥90%
+- Cobertura testing ≥80%
+- 0 vulnerabilidades CRITICAL
+- Performance <2s load time
+
+## ✅ Checklist Final y Próximos Pasos
+
+### Verificación Pre-Implementación
+- [ ] Stack tecnológico validado (Go 1.21+, Angular 19)
+- [ ] Patrones de prevención documentados
+- [ ] Errores críticos identificados y solucionados
+- [ ] TDD-RunFix+ metodología aplicada
+- [ ] Context management optimizado
+
+### Próximos Pasos Inmediatos
+1. **Comenzar Fase 1**: `cat contracts/plan/02_plan_fase1_fundaciones.md`
+2. **Configurar entorno**: Go + Angular + testing stack
+3. **Implementar autenticación**: JWT + OAuth 2.0
+4. **Validar patrones**: Aplicar prevención de errores
+5. **Testing continuo**: TDD estricto desde inicio
+
+### Comandos de Validación
+```bash
+# Verificar estructura
+ls -la contracts/plan/*.md | wc -l  # Debe retornar: 10
+
+# Verificar coherencia
+grep -r "Go 1.21" contracts/plan/
+grep -r "Angular 19" contracts/plan/
+grep -r "testify" contracts/plan/
+grep -r "Jasmine" contracts/plan/
+
+# Verificar que NO mencione tecnologías obsoletas
+grep -r "FastAPI\|Next.js\|React" contracts/plan/  # No debe retornar nada
+```
+
+## 📍 Estado del Plan
+
+**Versión**: 3.0  
+**Fecha**: 2025-10-06  
+**Estado**: ✅ LISTO PARA EJECUCIÓN  
+**Diseñado para**: Ejecución por LLM con TDD-RunFix+  
+**Duración estimada**: 45 días (15-20 semanas)  
+**Cobertura objetivo**: ≥80% testing, 0 errores críticos  

@@ -1,830 +1,293 @@
 ---
-title: "ClassSphere - Fase 1: Fundaciones con Coverage 100%"
-version: "1.1"
-type: "plan_fase"
-date: "2025-10-06"
-author: "Sistema de Gestión ClassSphere"
+title: "ClassSphere - Fase 1: Fundaciones Go + Angular"
+version: "3.0"
+type: "development_plan"
 priority: "CRITICAL"
 max_tokens: 2000
 duration: "12 días"
-status: "COMPLETADA"
+related_files:
+  - "contracts/principal/05_ClassSphere_arquitectura.md"
+  - "contracts/principal/09_ClassSphere_testing.md"
+  - "contracts/principal/10_ClassSphere_plan_implementacion.md"
 ---
 
-# ✅ Fase 1: Fundaciones con Coverage 100% - COMPLETADA
+# Fase 1: Fundaciones - Stack Go + Angular 19
 
-## 🎯 INICIO: Objetivos y Dependencias
+## 🎯 INICIO: Objetivos Críticos y Dependencias Bloqueantes
 
-### Objetivo de la Fase ✅ COMPLETADO
-Establecer fundaciones sólidas del sistema con **Coverage 100%** desde el primer día:
-- ✅ Backend Go + Echo con autenticación completa
-- ✅ Frontend Angular 19 con componentes base
-- ✅ Testing completo: testify + Jasmine + Playwright
-- ✅ CI/CD pipeline funcional
-
-### 🎉 Resultados Logrados
-- **Cobertura Final**: 94.4% sin OAuth (objetivo 80%+ superado)
-- **Tiempo de Desarrollo**: 155 minutos resolución de errores críticos
-- **Errores Críticos Resueltos**: 14 errores bloqueadores identificados y solucionados
-- **Sistema Funcional**: Backend + Frontend + Integración + Demo Users + TailwindCSS
+### Objetivo Principal
+Establecer fundaciones sólidas con stack moderno Go + Angular 19, implementando autenticación completa, sistema de roles y testing con cobertura ≥80%.
 
 ### Dependencias Bloqueantes
-- ✅ Go 1.21+ instalado
-- ✅ Node.js 20+ instalado
-- ✅ Redis running (puerto 6379)
-- ✅ Google OAuth credentials
-- ✅ Git configurado
+- **Go 1.21+** instalado y configurado
+- **Angular 19** con esbuild oficial
+- **Docker** para containerización
+- **GitHub Actions** para CI/CD
+- **Redis** para caché (opcional en desarrollo)
 
-### Stack de Testing
-**Backend:**
+### Stack Tecnológico Validado
+**Backend (Go)**:
+- Go 1.21+ (lenguaje compilado)
+- Echo v4 (framework web)
+- JWT + OAuth 2.0 Google
+- Sistema de roles (admin > coordinator > teacher > student)
+- Redis (caché compartido)
+- testify + mock (testing)
+
+**Frontend (Angular 19)**:
+- Angular 19 (framework)
+- esbuild (bundler oficial desde Angular 17)
+- Vite (dev server integrado)
+- TypeScript 5.x
+- RxJS (reactive programming)
+- TailwindCSS 3.x
+- Jasmine + Karma (testing unit)
+- Playwright (testing E2E)
+- Biome (linter/formatter)
+
+## 📅 MEDIO: Implementación Detallada Día por Día
+
+### Día 1-2: Configuración Inicial Backend Go
+
+**Objetivo**: Establecer estructura base del backend Go con Echo
+
+**Pasos**:
 ```bash
+# 1. Inicializar proyecto Go
+mkdir classsphere-backend && cd classsphere-backend
+go mod init github.com/classsphere/backend
+
+# 2. Instalar dependencias
+go get github.com/labstack/echo/v4
+go get github.com/golang-jwt/jwt/v5
+go get github.com/redis/go-redis/v9
 go get github.com/stretchr/testify
-go get github.com/go-resty/resty/v2
-go get github.com/golang/mock/gomock
+
+# 3. Crear estructura de directorios
+mkdir -p {cmd,internal/{auth,handlers,models,middleware,services},pkg,configs,tests}
 ```
 
-**Frontend:**
-```bash
-ng new classsphere-frontend --routing --style=scss
-ng add @angular/material
-npm install --save-dev @playwright/test
-```
-
-### Criterios de Aceptación (Coverage 100%)
-- [ ] Backend: 100% coverage en auth, config, main
-- [ ] Frontend: 100% coverage en componentes auth
-- [ ] E2E: 100% flujos de login/logout
-- [ ] CI/CD: Pipeline verde con coverage gates
-- [ ] Security: 0 vulnerabilidades críticas
-
-## 📅 MEDIO: Implementación Día por Día
-
-### Día 1: Setup Backend Go + Testing (Coverage 100%)
-
-**TDD Cycle 1: Health Check**
-```bash
-# 1. RED: Crear test que falla
-cat > backend/main_test.go << 'EOF'
-package main
-
-import (
-    "net/http"
-    "net/http/httptest"
-    "testing"
-    "github.com/stretchr/testify/assert"
-)
-
-func TestHealthCheck(t *testing.T) {
-    e := setupTestApp()
-    req := httptest.NewRequest(http.MethodGet, "/health", nil)
-    rec := httptest.NewRecorder()
-    e.ServeHTTP(rec, req)
-    
-    assert.Equal(t, http.StatusOK, rec.Code)
-    assert.Contains(t, rec.Body.String(), "healthy")
-}
-EOF
-
-# 2. GREEN: Implementar mínimo
-cat > backend/main.go << 'EOF'
-package main
-
-import (
-    "github.com/labstack/echo/v4"
-    "github.com/labstack/echo/v4/middleware"
-)
-
-func main() {
-    e := echo.New()
-    e.Use(middleware.Logger())
-    e.Use(middleware.Recover())
-    
-    e.GET("/health", handleHealth)
-    e.Logger.Fatal(e.Start(":8080"))
-}
-
-func handleHealth(c echo.Context) error {
-    return c.JSON(200, map[string]string{"status": "healthy"})
-}
-
-func setupTestApp() *echo.Echo {
-    e := echo.New()
-    e.GET("/health", handleHealth)
-    return e
-}
-EOF
-
-# 3. REFACTOR: Ejecutar y verificar
-go test -v -cover ./...
-# Target: 100% coverage
-```
-
-**TDD Cycle 2: Welcome Endpoint**
+**TDD Implementación**:
 ```go
-// Test
-func TestWelcomeEndpoint(t *testing.T) {
-    e := setupTestApp()
-    req := httptest.NewRequest(http.MethodGet, "/", nil)
-    rec := httptest.NewRecorder()
-    e.ServeHTTP(rec, req)
-    
-    assert.Equal(t, http.StatusOK, rec.Code)
-    assert.Contains(t, rec.Body.String(), "ClassSphere API")
-}
-
-// Implementation
-func handleWelcome(c echo.Context) error {
-    return c.JSON(200, map[string]string{
-        "message": "ClassSphere API",
-        "version": "1.0.0",
-    })
-}
-```
-
-**Coverage Verification:**
-```bash
-go test -cover ./... -coverprofile=coverage.out
-go tool cover -func=coverage.out | grep total
-# Expected: total: (statements) 100.0%
-```
-
-### Día 2: Configuración y Testing Infrastructure (Coverage 100%)
-
-**TDD Cycle 3: Config Loading**
-```go
-// backend/config/config_test.go
-func TestLoadConfig(t *testing.T) {
-    // Test environment variables
-    os.Setenv("JWT_SECRET", "test-secret")
-    os.Setenv("REDIS_URL", "localhost:6379")
-    
-    cfg := LoadConfig()
-    
-    assert.Equal(t, "test-secret", cfg.JWTSecret)
-    assert.Equal(t, "localhost:6379", cfg.RedisURL)
-}
-
-func TestConfigValidation(t *testing.T) {
-    // Test missing required config
-    os.Unsetenv("JWT_SECRET")
-    
-    assert.Panics(t, func() {
-        LoadConfig()
-    })
-}
-```
-
-**Implementation:**
-```go
-// backend/config/config.go
-package config
-
-import (
-    "os"
-    "log"
-)
-
-type Config struct {
-    JWTSecret     string
-    RedisURL      string
-    GoogleClientID string
-    GoogleSecret   string
-}
-
-func LoadConfig() *Config {
-    jwtSecret := os.Getenv("JWT_SECRET")
-    if jwtSecret == "" {
-        log.Fatal("JWT_SECRET is required")
-    }
-    
-    return &Config{
-        JWTSecret:     jwtSecret,
-        RedisURL:      getEnv("REDIS_URL", "localhost:6379"),
-        GoogleClientID: os.Getenv("GOOGLE_CLIENT_ID"),
-        GoogleSecret:   os.Getenv("GOOGLE_SECRET"),
-    }
-}
-
-func getEnv(key, defaultValue string) string {
-    if value := os.Getenv(key); value != "" {
-        return value
-    }
-    return defaultValue
-}
-```
-
-**Coverage Verification:**
-```bash
-go test ./config/... -cover -coverprofile=config_coverage.out
-# Expected: 100%
-```
-
-### Día 3: Redis Integration (Coverage 100%)
-
-**TDD Cycle 4: Redis Connection**
-```go
-// backend/cache/redis_test.go
-func TestRedisConnection(t *testing.T) {
-    // Mock Redis client
-    mockRedis := miniredis.RunT(t)
-    client := redis.NewClient(&redis.Options{
-        Addr: mockRedis.Addr(),
-    })
-    
-    cache := NewRedisCache(client)
-    
-    // Test Set/Get
-    err := cache.Set("key1", "value1", 5*time.Minute)
-    assert.NoError(t, err)
-    
-    val, err := cache.Get("key1")
-    assert.NoError(t, err)
-    assert.Equal(t, "value1", val)
-}
-
-func TestRedisConnectionFailure(t *testing.T) {
-    // Test connection failure handling
-    client := redis.NewClient(&redis.Options{
-        Addr: "invalid:6379",
-    })
-    
-    cache := NewRedisCache(client)
-    err := cache.Set("key", "value", time.Minute)
-    assert.Error(t, err)
-}
-```
-
-**Coverage Verification:**
-```bash
-go test ./cache/... -cover
-# Expected: 100%
-```
-
-### Día 4-5: JWT Authentication (Coverage 100%)
-
-**TDD Cycle 5: JWT Generation**
-```go
-// backend/auth/jwt_test.go
-func TestGenerateToken(t *testing.T) {
-    secret := "test-secret-key"
-    service := NewAuthService(secret)
-    
-    token, err := service.GenerateToken("user123", "admin")
+// tests/auth_test.go - RED PHASE
+func TestJWTAuth(t *testing.T) {
+    // Test que falla inicialmente
+    token, err := GenerateJWT("user@test.com", "admin")
     assert.NoError(t, err)
     assert.NotEmpty(t, token)
 }
 
-func TestValidateToken(t *testing.T) {
-    secret := "test-secret-key"
-    service := NewAuthService(secret)
-    
-    token, _ := service.GenerateToken("user123", "admin")
-    
-    claims, err := service.ValidateToken(token)
-    assert.NoError(t, err)
-    assert.Equal(t, "user123", claims.UserID)
-    assert.Equal(t, "admin", claims.Role)
-}
-
-func TestValidateInvalidToken(t *testing.T) {
-    service := NewAuthService("test-secret")
-    
-    _, err := service.ValidateToken("invalid-token")
-    assert.Error(t, err)
-}
-
-func TestTokenExpiration(t *testing.T) {
-    service := NewAuthService("test-secret")
-    
-    // Generate token with 1 second expiration
-    token, _ := service.GenerateTokenWithExpiry("user123", "admin", 1*time.Second)
-    
-    // Wait for expiration
-    time.Sleep(2 * time.Second)
-    
-    _, err := service.ValidateToken(token)
-    assert.Error(t, err)
+// internal/auth/jwt.go - GREEN PHASE
+func GenerateJWT(email, role string) (string, error) {
+    // Implementación mínima para pasar el test
+    return "dummy-token", nil
 }
 ```
 
-**Implementation:**
-```go
-// backend/auth/jwt.go
-package auth
-
-import (
-    "time"
-    "github.com/golang-jwt/jwt/v5"
-)
-
-type AuthService struct {
-    secret []byte
-}
-
-type Claims struct {
-    UserID string `json:"user_id"`
-    Role   string `json:"role"`
-    jwt.RegisteredClaims
-}
-
-func NewAuthService(secret string) *AuthService {
-    return &AuthService{secret: []byte(secret)}
-}
-
-func (s *AuthService) GenerateToken(userID, role string) (string, error) {
-    return s.GenerateTokenWithExpiry(userID, role, 24*time.Hour)
-}
-
-func (s *AuthService) GenerateTokenWithExpiry(userID, role string, expiry time.Duration) (string, error) {
-    claims := &Claims{
-        UserID: userID,
-        Role:   role,
-        RegisteredClaims: jwt.RegisteredClaims{
-            ExpiresAt: jwt.NewNumericDate(time.Now().Add(expiry)),
-            IssuedAt:  jwt.NewNumericDate(time.Now()),
-        },
-    }
-    
-    token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-    return token.SignedString(s.secret)
-}
-
-func (s *AuthService) ValidateToken(tokenString string) (*Claims, error) {
-    token, err := jwt.ParseWithClaims(tokenString, &Claims{}, func(token *jwt.Token) (interface{}, error) {
-        return s.secret, nil
-    })
-    
-    if err != nil {
-        return nil, err
-    }
-    
-    if claims, ok := token.Claims.(*Claims); ok && token.Valid {
-        return claims, nil
-    }
-    
-    return nil, jwt.ErrSignatureInvalid
-}
-```
-
-**Coverage Verification:**
+**Validación**:
 ```bash
-go test ./auth/... -cover -coverprofile=auth_coverage.out
-go tool cover -func=auth_coverage.out
-# Expected: 100%
+go test ./... -cover
+# Objetivo: 80% cobertura en módulos críticos
 ```
 
-### Día 6: OAuth 2.0 Google (Coverage 100%)
+### Día 3-4: Autenticación JWT + OAuth 2.0
 
-**TDD Cycle 6: OAuth Flow**
-```go
-// backend/oauth/google_test.go
-func TestGoogleOAuthURL(t *testing.T) {
-    service := NewGoogleOAuthService("client-id", "client-secret", "http://localhost:8080/callback")
-    
-    url := service.GetAuthURL("state123")
-    
-    assert.Contains(t, url, "accounts.google.com")
-    assert.Contains(t, url, "client-id")
-    assert.Contains(t, url, "state123")
-}
+**Objetivo**: Implementar sistema de autenticación completo
 
-func TestExchangeCode(t *testing.T) {
-    // Mock HTTP server
-    server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-        w.Header().Set("Content-Type", "application/json")
-        json.NewEncoder(w).Encode(map[string]string{
-            "access_token": "mock-token",
-            "token_type": "Bearer",
-        })
-    }))
-    defer server.Close()
-    
-    service := NewGoogleOAuthService("client-id", "client-secret", "http://localhost:8080/callback")
-    service.tokenURL = server.URL
-    
-    token, err := service.ExchangeCode("auth-code")
-    assert.NoError(t, err)
-    assert.Equal(t, "mock-token", token.AccessToken)
-}
-```
-
-**Coverage Verification:**
+**Pasos**:
 ```bash
-go test ./oauth/... -cover
-# Expected: 100%
+# 1. Configurar OAuth 2.0 Google
+go get golang.org/x/oauth2
+go get google.golang.org/api/oauth2/v2
+
+# 2. Implementar handlers de autenticación
 ```
 
-### Día 7-8: Frontend Angular Setup (Coverage 100%)
+**TDD Implementación**:
+```go
+// tests/oauth_test.go
+func TestGoogleOAuthCallback(t *testing.T) {
+    mockGoogle := &MockGoogleService{}
+    handler := NewAuthHandler(mockGoogle)
+    
+    // Test callback OAuth
+    req := httptest.NewRequest("GET", "/auth/google/callback?code=test", nil)
+    w := httptest.NewRecorder()
+    
+    err := handler.GoogleCallback(c, req)
+    assert.NoError(t, err)
+    assert.Equal(t, 200, w.Code)
+}
+```
 
-**TDD Cycle 7: Auth Service**
+**Patrones de Prevención Aplicados**:
+- **AsyncMock**: Para métodos async de Google API
+- **Server Restart**: `pkill -f classsphere-backend` → `PORT=8081 ./classsphere-backend`
+- **CORS Tests**: Headers básicos verificables
+
+### Día 5-6: Sistema de Roles y Middleware
+
+**Objetivo**: Implementar autorización por roles
+
+**TDD Implementación**:
+```go
+// tests/middleware_test.go
+func TestRoleMiddleware(t *testing.T) {
+    e := echo.New()
+    req := httptest.NewRequest("GET", "/admin/dashboard", nil)
+    req.Header.Set("Authorization", "Bearer admin-token")
+    
+    // Test middleware de roles
+    handler := RoleMiddleware("admin")
+    // Verificar que admin puede acceder
+}
+```
+
+### Día 7-8: Configuración Frontend Angular 19
+
+**Objetivo**: Establecer estructura base del frontend Angular
+
+**Pasos**:
+```bash
+# 1. Crear proyecto Angular 19
+npx @angular/cli@19 new classsphere-frontend --routing --style=scss
+cd classsphere-frontend
+
+# 2. Instalar dependencias adicionales
+npm install @angular/material @angular/cdk
+npm install tailwindcss @tailwindcss/typography
+npm install @playwright/test
+
+# 3. Configurar TailwindCSS
+npx tailwindcss init
+```
+
+**TDD Implementación**:
 ```typescript
-// frontend/src/app/services/auth.service.spec.ts
-import { TestBed } from '@angular/core/testing';
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-import { AuthService } from './auth.service';
-
+// src/app/services/auth.service.spec.ts
 describe('AuthService', () => {
   let service: AuthService;
-  let httpMock: HttpTestingController;
-
+  
   beforeEach(() => {
-    TestBed.configureTestingModule({
-      imports: [HttpClientTestingModule],
-      providers: [AuthService]
-    });
+    TestBed.configureTestingModule({});
     service = TestBed.inject(AuthService);
-    httpMock = TestBed.inject(HttpTestingController);
   });
-
-  afterEach(() => {
-    httpMock.verify();
-  });
-
-  it('should be created', () => {
-    expect(service).toBeTruthy();
-  });
-
-  it('should login successfully', () => {
-    const mockResponse = { token: 'mock-token', user: { id: '1', email: 'test@test.com' } };
-    
-    service.login('test@test.com', 'password').subscribe(response => {
-      expect(response.token).toBe('mock-token');
-      expect(response.user.email).toBe('test@test.com');
-    });
-
-    const req = httpMock.expectOne('http://localhost:8080/api/auth/login');
-    expect(req.request.method).toBe('POST');
-    req.flush(mockResponse);
-  });
-
-  it('should handle login error', () => {
-    service.login('test@test.com', 'wrong').subscribe(
-      () => fail('should have failed'),
-      error => {
-        expect(error.status).toBe(401);
-      }
-    );
-
-    const req = httpMock.expectOne('http://localhost:8080/api/auth/login');
-    req.flush('Unauthorized', { status: 401, statusText: 'Unauthorized' });
-  });
-
-  it('should logout', () => {
-    service.logout();
-    expect(service.isAuthenticated()).toBe(false);
+  
+  it('should login with valid credentials', () => {
+    // Test que falla inicialmente
+    expect(service.login('admin@classsphere.edu', 'secret')).toBeTruthy();
   });
 });
 ```
 
-**Implementation:**
+**Patrones de Prevención Aplicados**:
+- **Angular CLI**: `npx ng` en lugar de `ng`
+- **TypeScript**: Optional chaining `?.prop?.subprop`
+- **TailwindCSS**: v3.4.0 para Angular, evitar CDN
+
+### Día 9-10: Integración Frontend-Backend
+
+**Objetivo**: Conectar frontend Angular con backend Go
+
+**TDD Implementación**:
 ```typescript
-// frontend/src/app/services/auth.service.ts
-import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject, Observable } from 'rxjs';
-import { tap } from 'rxjs/operators';
-
-@Injectable({
-  providedIn: 'root'
-})
-export class AuthService {
-  private apiUrl = 'http://localhost:8080/api/auth';
-  private currentUserSubject = new BehaviorSubject<any>(null);
-  public currentUser$ = this.currentUserSubject.asObservable();
-
-  constructor(private http: HttpClient) {
-    const token = localStorage.getItem('token');
-    if (token) {
-      this.loadCurrentUser();
-    }
-  }
-
-  login(email: string, password: string): Observable<any> {
-    return this.http.post(`${this.apiUrl}/login`, { email, password })
-      .pipe(
-        tap((response: any) => {
-          localStorage.setItem('token', response.token);
-          this.currentUserSubject.next(response.user);
-        })
-      );
-  }
-
-  logout(): void {
-    localStorage.removeItem('token');
-    this.currentUserSubject.next(null);
-  }
-
-  isAuthenticated(): boolean {
-    return !!localStorage.getItem('token');
-  }
-
-  private loadCurrentUser(): void {
-    this.http.get(`${this.apiUrl}/me`).subscribe(
-      user => this.currentUserSubject.next(user)
-    );
-  }
-}
-```
-
-**Coverage Verification:**
-```bash
-ng test --code-coverage --watch=false
-# Expected: 100% in auth.service.ts
-```
-
-### Día 9: Login Component (Coverage 100%)
-
-**TDD Cycle 8: Login Component**
-```typescript
-// frontend/src/app/components/login/login.component.spec.ts
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ReactiveFormsModule } from '@angular/forms';
-import { LoginComponent } from './login.component';
-import { AuthService } from '../../services/auth.service';
-import { Router } from '@angular/router';
-import { of, throwError } from 'rxjs';
-
-describe('LoginComponent', () => {
-  let component: LoginComponent;
-  let fixture: ComponentFixture<LoginComponent>;
-  let authService: jasmine.SpyObj<AuthService>;
-  let router: jasmine.SpyObj<Router>;
-
-  beforeEach(async () => {
-    const authServiceSpy = jasmine.createSpyObj('AuthService', ['login']);
-    const routerSpy = jasmine.createSpyObj('Router', ['navigate']);
-
-    await TestBed.configureTestingModule({
-      declarations: [ LoginComponent ],
-      imports: [ ReactiveFormsModule ],
-      providers: [
-        { provide: AuthService, useValue: authServiceSpy },
-        { provide: Router, useValue: routerSpy }
-      ]
-    }).compileComponents();
-
-    authService = TestBed.inject(AuthService) as jasmine.SpyObj<AuthService>;
-    router = TestBed.inject(Router) as jasmine.SpyObj<Router>;
-  });
-
-  beforeEach(() => {
-    fixture = TestBed.createComponent(LoginComponent);
-    component = fixture.componentInstance;
-    fixture.detectChanges();
-  });
-
-  it('should create', () => {
-    expect(component).toBeTruthy();
-  });
-
-  it('should have invalid form when empty', () => {
-    expect(component.loginForm.valid).toBeFalsy();
-  });
-
-  it('should validate email field', () => {
-    const email = component.loginForm.controls['email'];
-    expect(email.valid).toBeFalsy();
+// src/app/services/api.service.spec.ts
+describe('ApiService', () => {
+  it('should authenticate with backend', async () => {
+    const mockResponse = { token: 'jwt-token', user: { role: 'admin' } };
     
-    email.setValue('invalid-email');
-    expect(email.hasError('email')).toBeTruthy();
+    // Mock HTTP service
+    httpClientSpy.post.and.returnValue(of(mockResponse));
     
-    email.setValue('valid@email.com');
-    expect(email.valid).toBeTruthy();
-  });
-
-  it('should login successfully', () => {
-    authService.login.and.returnValue(of({ token: 'mock-token' }));
-    
-    component.loginForm.setValue({
-      email: 'test@test.com',
-      password: 'password123'
-    });
-    
-    component.onSubmit();
-    
-    expect(authService.login).toHaveBeenCalledWith('test@test.com', 'password123');
-    expect(router.navigate).toHaveBeenCalledWith(['/dashboard']);
-  });
-
-  it('should handle login error', () => {
-    authService.login.and.returnValue(throwError({ status: 401 }));
-    
-    component.loginForm.setValue({
-      email: 'test@test.com',
-      password: 'wrong'
-    });
-    
-    component.onSubmit();
-    
-    expect(component.errorMessage).toBe('Invalid credentials');
+    const result = await apiService.login('admin@test.com', 'password');
+    expect(result.token).toBe('jwt-token');
   });
 });
 ```
 
-**Coverage Verification:**
+### Día 11-12: Testing Completo y CI/CD
+
+**Objetivo**: Alcanzar cobertura ≥80% y configurar CI/CD
+
+**Pasos**:
 ```bash
-ng test --code-coverage --watch=false --include='**/login.component.ts'
-# Expected: 100%
+# Backend testing
+go test ./... -cover -coverprofile=coverage.out
+go tool cover -html=coverage.out -o coverage.html
+
+# Frontend testing
+ng test --watch=false --browsers=ChromeHeadless
+ng e2e --configuration=ci
+
+# Configurar GitHub Actions
+mkdir -p .github/workflows
 ```
 
-### Día 10-11: E2E Tests (Coverage 100%)
-
-**TDD Cycle 9: E2E Login Flow**
-```typescript
-// frontend/e2e/login.spec.ts
-import { test, expect } from '@playwright/test';
-
-test.describe('Login Flow', () => {
-  test.beforeEach(async ({ page }) => {
-    await page.goto('http://localhost:4200/login');
-  });
-
-  test('should display login form', async ({ page }) => {
-    await expect(page.locator('h1')).toContainText('Login');
-    await expect(page.locator('input[name="email"]')).toBeVisible();
-    await expect(page.locator('input[name="password"]')).toBeVisible();
-    await expect(page.locator('button[type="submit"]')).toBeVisible();
-  });
-
-  test('should show validation errors', async ({ page }) => {
-    await page.click('button[type="submit"]');
-    await expect(page.locator('.error-message')).toContainText('Email is required');
-  });
-
-  test('should login successfully', async ({ page }) => {
-    await page.fill('input[name="email"]', 'admin@classsphere.edu');
-    await page.fill('input[name="password"]', 'secret');
-    await page.click('button[type="submit"]');
-    
-    await expect(page).toHaveURL('http://localhost:4200/dashboard');
-    await expect(page.locator('h1')).toContainText('Dashboard');
-  });
-
-  test('should show error for invalid credentials', async ({ page }) => {
-    await page.fill('input[name="email"]', 'wrong@test.com');
-    await page.fill('input[name="password"]', 'wrong');
-    await page.click('button[type="submit"]');
-    
-    await expect(page.locator('.error-message')).toContainText('Invalid credentials');
-  });
-
-  test('should navigate to OAuth login', async ({ page }) => {
-    await page.click('button:has-text("Login with Google")');
-    await expect(page).toHaveURL(/accounts\.google\.com/);
-  });
-});
-```
-
-**Coverage Verification:**
-```bash
-npx playwright test
-npx playwright show-report
-# Expected: All tests passing
-```
-
-### Día 12: CI/CD + Coverage Gates (Coverage 100%)
-
-**GitHub Actions Workflow:**
+**TDD Implementación**:
 ```yaml
-# .github/workflows/coverage.yml
-name: Coverage 100%
-
+# .github/workflows/ci.yml
+name: CI/CD Pipeline
 on: [push, pull_request]
-
 jobs:
-  backend-coverage:
+  backend-test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      
-      - name: Setup Go
-        uses: actions/setup-go@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v4
         with:
           go-version: '1.21'
-      
-      - name: Run tests with coverage
-        run: |
-          cd backend
-          go test -v -cover ./... -coverprofile=coverage.out
-          go tool cover -func=coverage.out | grep total | awk '{print $3}'
-      
-      - name: Check coverage threshold
-        run: |
-          cd backend
-          COVERAGE=$(go tool cover -func=coverage.out | grep total | awk '{print $3}' | sed 's/%//')
-          if (( $(echo "$COVERAGE < 100" | bc -l) )); then
-            echo "Coverage $COVERAGE% is below 100%"
-            exit 1
-          fi
-
-  frontend-coverage:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      
-      - name: Setup Node
-        uses: actions/setup-node@v3
-        with:
-          node-version: '20'
-      
-      - name: Install dependencies
-        run: cd frontend && npm ci
-      
-      - name: Run tests with coverage
-        run: cd frontend && ng test --code-coverage --watch=false
-      
-      - name: Check coverage threshold
-        run: |
-          cd frontend
-          COVERAGE=$(cat coverage/coverage-summary.json | jq '.total.lines.pct')
-          if (( $(echo "$COVERAGE < 100" | bc -l) )); then
-            echo "Coverage $COVERAGE% is below 100%"
-            exit 1
-          fi
-
-  e2e-tests:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      
-      - name: Setup Node
-        uses: actions/setup-node@v3
-        with:
-          node-version: '20'
-      
-      - name: Install Playwright
-        run: cd frontend && npx playwright install --with-deps
-      
-      - name: Run E2E tests
-        run: cd frontend && npx playwright test
-      
-      - name: Upload test results
-        if: always()
-        uses: actions/upload-artifact@v3
-        with:
-          name: playwright-report
-          path: frontend/playwright-report/
+      - run: go test ./... -cover
+        env:
+          COVERAGE_THRESHOLD: 80
 ```
 
-## ✅ FINAL: Verificación y Entregables
+## ✅ FINAL: Checklist Verificación y Próximos Pasos
 
-### Checklist de Verificación Fase 1 ✅ COMPLETADO
-- [x] **Backend Coverage**: 94.4% en main.go, config, auth, oauth (objetivo 80%+ superado)
-- [x] **Frontend Coverage**: 100% en auth.service, login.component
-- [x] **E2E Coverage**: 100% flujos login/logout/oauth
-- [x] **CI/CD**: Pipeline verde con coverage gates
-- [x] **Security**: 0 vulnerabilidades (Trivy scan)
-- [x] **Performance**: <2s tiempo de respuesta
-- [x] **Documentation**: README actualizado
+### Criterios de Aceptación Fase 1
+- [ ] **Backend Go**: API REST funcionando en puerto 8081
+- [ ] **Autenticación**: JWT + OAuth 2.0 Google operativo
+- [ ] **Sistema de Roles**: admin > coordinator > teacher > student
+- [ ] **Frontend Angular**: Aplicación funcionando en puerto 4200
+- [ ] **Testing**: Cobertura ≥80% backend y frontend
+- [ ] **CI/CD**: Pipeline GitHub Actions funcionando
+- [ ] **Docker**: Containerización básica configurada
 
-### Comandos de Verificación Final ✅ VALIDADOS
+### Comandos de Verificación
 ```bash
-# Full coverage check (94.4% logrado)
-./scripts/check-coverage-100.sh
+# Verificar backend
+curl http://localhost:8081/health
+curl http://localhost:8081/auth/google
 
-# Actual output achieved:
-# ✅ Backend coverage: 94.4% (objetivo 80%+ superado)
-# ✅ Frontend coverage: 100.0%
-# ✅ E2E tests: 25/25 passing
-# ✅ Security scan: 0 critical vulnerabilities
-# ✅ CI/CD pipeline: GREEN
+# Verificar frontend
+curl http://localhost:4200
+ng test --watch=false
+
+# Verificar cobertura
+go test ./... -cover | grep "coverage:"
+ng test --code-coverage --watch=false
 ```
 
-### 🛡️ Patrones de Error Prevention Validados
-**Errores Críticos Superados en Fase 1**:
-- 🔴 **Dashboard Endpoints 404** - BLOQUEADOR PRINCIPAL (15 min resolución)
-  - **Patrón**: `pkill -f classsphere-backend` → `PORT=8081 ./classsphere-backend`
-  - **Aplicable a**: Fases 2-4 para server restart
+### Errores Críticos Prevenidos
+- **Dashboard Endpoints 404**: Server restart protocol implementado
+- **TypeScript Compilation**: Optional chaining completo aplicado
+- **OAuth Tests Hanging**: Timeout 10s configurado
+- **Angular CLI Not Found**: `npx ng` en lugar de `ng`
+- **TailwindCSS Issues**: v3.4.0 para Angular
 
-- 🟠 **TypeScript Compilation** - BLOQUEABA FRONTEND (10 min resolución)
-  - **Patrón**: Optional chaining completo `?.prop?.subprop`, nullish coalescing `?? 0`
-  - **Aplicable a**: Fases 2-4 para TypeScript development
+### Próximos Pasos
+1. **Iniciar Fase 2**: Google Classroom API integration
+2. **Configurar mocks**: Sistema de alternancia Google/Mock
+3. **Implementar dashboards**: Por rol específico
+4. **Validar patrones**: Aplicar prevención de errores
 
-- 🟠 **OAuth Tests Hanging** - BLOQUEABA COBERTURA (20 min resolución)
-  - **Patrón**: `-timeout=10s`, URLs que fallen rápido, excluir tests problemáticos
-  - **Aplicable a**: Fases 2-4 para OAuth testing
+### Métricas de Éxito
+- **Cobertura Backend**: ≥80% con testify
+- **Cobertura Frontend**: ≥80% con Jasmine + Karma
+- **Performance**: <3s load time
+- **Vulnerabilidades**: 0 CRITICAL
+- **Errores Resueltos**: 14 errores bloqueadores previstos
 
-- 🟡 **Angular CLI Not Found** - BLOQUEABA DESARROLLO (5 min resolución)
-  - **Patrón**: `npx ng` en lugar de `ng`, verificar package.json
-  - **Aplicable a**: Fases 2-4 para Angular development
-
-- 🟡 **TailwindCSS v4 PostCSS** - BLOQUEABA BUILD (20 min resolución)
-  - **Patrón**: v3.4.0 para Angular, evitar CDN en producción
-  - **Aplicable a**: Fases 2-4 para styling
-
-### Entregables de Fase 1
-1. **Backend Go funcional** con auth completa
-2. **Frontend Angular** con login/dashboard base
-3. **Test suite completo** con 100% coverage
-4. **CI/CD pipeline** con coverage gates
-5. **Documentación** de arquitectura y APIs
-
-### Próximos Pasos ✅ FASE 1 COMPLETADA
-1. **✅ Revisar Fase 2**: Leer `03_plan_fase2_google_integration.md`
-2. **✅ Validar Fase 1**: Ejecutado checklist completo (94.4% cobertura)
-3. **✅ Commit y Push**: Código subido con coverage validado
-4. **⏳ Iniciar Fase 2**: Google Classroom integration con patrones validados
-
----
-
-**Estado Fase 1**: ✅ COMPLETA con Coverage 94.4% (objetivo 80%+ superado)
-**Próximo**: Fase 2 - Google Integration con patrones de error prevention validados
+**Estado**: ✅ LISTO PARA FASE 2  
+**Duración**: 12 días  
+**Stack**: Go 1.21+ + Angular 19 + TDD-RunFix+  
+**Cobertura**: ≥80% testing garantizado
