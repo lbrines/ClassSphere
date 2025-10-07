@@ -242,35 +242,18 @@ describe('AuthService - Corrupted Session Handling', () => {
     expect(receivedUser).toBeNull();
   });
 
-  it('should handle OAuth start with different providers', () => {
-    const providers = ['google', 'github', 'microsoft'];
-
-    providers.forEach((provider) => {
-      service.startOAuth(provider).subscribe({
-        next: (response) => {
-          expect(response.state).toBeTruthy();
-          expect(response.url).toBeTruthy();
-        },
-        error: (error) => fail(`Should not have thrown error for ${provider}`),
-      });
-
-      const req = httpMock.expectOne(`${environment.apiUrl}/auth/oauth/${provider}`);
-      expect(req.request.method).toBe('GET');
-      req.flush({ state: `state-${provider}`, url: `https://auth.${provider}.com` });
-    });
-  });
-
-  it('should handle OAuth start with invalid provider', () => {
-    service.startOAuth('invalid-provider').subscribe({
+  it('should handle OAuth start with error', () => {
+    service.startOAuth().subscribe({
       next: () => fail('Should have thrown error'),
       error: (error) => expect(error).toBeTruthy(),
     });
 
-    httpMock.expectNone(`${environment.apiUrl}/auth/oauth/invalid-provider`);
+    const req = httpMock.expectOne(`${environment.apiUrl}/auth/oauth/google`);
+    req.flush({}, { status: 500, statusText: 'Internal Server Error' });
   });
 
-  it('should handle OAuth callback with missing state', () => {
-    service.oauthCallback('code-123').subscribe({
+  it('should handle OAuth completion with missing state', () => {
+    service.completeOAuth('code-123', '').subscribe({
       next: () => fail('Should have thrown error'),
       error: (error) => expect(error).toBeTruthy(),
     });
@@ -279,11 +262,8 @@ describe('AuthService - Corrupted Session Handling', () => {
     httpMock.expectNone(`${environment.apiUrl}/auth/oauth/callback`);
   });
 
-  it('should handle OAuth callback with state but no code', () => {
-    // Set state in sessionStorage
-    sessionStorage.setItem('classsphere.oauth.state', 'test-state');
-
-    service.oauthCallback('').subscribe({
+  it('should handle OAuth completion with missing code', () => {
+    service.completeOAuth('', 'state-123').subscribe({
       next: () => fail('Should have thrown error'),
       error: (error) => expect(error).toBeTruthy(),
     });
@@ -291,10 +271,8 @@ describe('AuthService - Corrupted Session Handling', () => {
     httpMock.expectNone(`${environment.apiUrl}/auth/oauth/callback`);
   });
 
-  it('should handle OAuth callback with network error', () => {
-    sessionStorage.setItem('classsphere.oauth.state', 'test-state');
-
-    service.oauthCallback('code-123').subscribe({
+  it('should handle OAuth completion with network error', () => {
+    service.completeOAuth('code-123', 'state-123').subscribe({
       next: () => fail('Should have thrown error'),
       error: (error) => expect(error).toBeTruthy(),
     });
@@ -303,10 +281,8 @@ describe('AuthService - Corrupted Session Handling', () => {
     req.flush({}, { status: 500, statusText: 'Internal Server Error' });
   });
 
-  it('should handle OAuth callback with malformed response', () => {
-    sessionStorage.setItem('classsphere.oauth.state', 'test-state');
-
-    service.oauthCallback('code-123').subscribe({
+  it('should handle OAuth completion with malformed response', () => {
+    service.completeOAuth('code-123', 'state-123').subscribe({
       next: (user) => fail('Should have thrown error'),
       error: (error) => expect(error).toBeTruthy(),
     });
@@ -369,97 +345,66 @@ describe('AuthService - Corrupted Session Handling', () => {
     expect(service.getAccessToken()).toBeNull();
   });
 
-  it('should handle refresh token when no token exists', () => {
-    service.refreshToken().subscribe({
-      next: () => fail('Should have thrown error'),
-      error: (error) => expect(error).toBeTruthy(),
-    });
+  it('should handle hasRole with different roles', () => {
+    // Set user as admin
+    service['currentUserSubject'].next({ id: '1', email: 'admin@test.com', displayName: 'Admin', role: 'admin' });
 
-    httpMock.expectNone(`${environment.apiUrl}/auth/refresh`);
+    expect(service.hasRole('admin')).toBe(true);
+    expect(service.hasRole('teacher')).toBe(false);
+    expect(service.hasRole('student')).toBe(false);
   });
 
-  it('should handle refresh token with network error', () => {
-    // Set a token first
+  it('should handle hasRole when no user is logged in', () => {
+    service['currentUserSubject'].next(null);
+
+    expect(service.hasRole('admin')).toBe(false);
+    expect(service.hasRole('teacher')).toBe(false);
+  });
+
+  it('should handle routeForRole correctly', () => {
+    expect(service.routeForRole('admin')).toBe('/dashboard/admin');
+    expect(service.routeForRole('coordinator')).toBe('/dashboard/coordinator');
+    expect(service.routeForRole('teacher')).toBe('/dashboard/teacher');
+    expect(service.routeForRole('student')).toBe('/dashboard/student');
+  });
+
+  it('should handle navigateToRoleDashboard', () => {
+    spyOn(service['router'], 'navigateByUrl');
+
+    const user: User = { id: '1', email: 'admin@test.com', displayName: 'Admin', role: 'admin' };
+    service.navigateToRoleDashboard(user);
+
+    expect(service['router'].navigateByUrl).toHaveBeenCalledWith('/dashboard/admin');
+  });
+
+  it('should handle session restoration with malformed user data', () => {
+    localStorage.setItem('classsphere.token', 'test-token');
+    localStorage.setItem('classsphere.user', 'invalid-json');
+
+    // Should not throw error and should clear corrupted data
+    expect(() => service['restoreSession']()).not.toThrow();
+
+    // Should have cleared the corrupted data
+    expect(localStorage.getItem('classsphere.token')).toBeNull();
+    expect(localStorage.getItem('classsphere.user')).toBeNull();
+  });
+
+  it('should handle session restoration with missing token', () => {
+    localStorage.setItem('classsphere.user', JSON.stringify(mockResponse.user));
+
+    service['restoreSession']();
+
+    // Should not restore session without token
+    expect(service['currentUserSubject'].value).toBeNull();
+  });
+
+  it('should handle session restoration with missing user data', () => {
     localStorage.setItem('classsphere.token', 'test-token');
 
-    service.refreshToken().subscribe({
-      next: () => fail('Should have thrown error'),
-      error: (error) => expect(error).toBeTruthy(),
-    });
+    service['restoreSession']();
 
-    const req = httpMock.expectOne(`${environment.apiUrl}/auth/refresh`);
-    req.flush({}, { status: 500, statusText: 'Internal Server Error' });
-  });
-
-  it('should handle refresh token with malformed response', () => {
-    localStorage.setItem('classsphere.token', 'test-token');
-
-    service.refreshToken().subscribe({
-      next: () => fail('Should have thrown error'),
-      error: (error) => expect(error).toBeTruthy(),
-    });
-
-    const req = httpMock.expectOne(`${environment.apiUrl}/auth/refresh`);
-    req.flush({ invalid: 'response' });
-  });
-
-  it('should handle getUserInfo when not authenticated', () => {
-    service.getUserInfo().subscribe({
-      next: () => fail('Should have thrown error'),
-      error: (error) => expect(error).toBeTruthy(),
-    });
-
-    httpMock.expectNone(`${environment.apiUrl}/users/me`);
-  });
-
-  it('should handle getUserInfo with network error', () => {
-    localStorage.setItem('classsphere.token', 'test-token');
-
-    service.getUserInfo().subscribe({
-      next: () => fail('Should have thrown error'),
-      error: (error) => expect(error).toBeTruthy(),
-    });
-
-    const req = httpMock.expectOne(`${environment.apiUrl}/users/me`);
-    req.flush({}, { status: 500, statusText: 'Internal Server Error' });
-  });
-
-  it('should handle getUserInfo with malformed response', () => {
-    localStorage.setItem('classsphere.token', 'test-token');
-
-    service.getUserInfo().subscribe({
-      next: () => fail('Should have thrown error'),
-      error: (error) => expect(error).toBeTruthy(),
-    });
-
-    const req = httpMock.expectOne(`${environment.apiUrl}/users/me`);
-    req.flush({ invalid: 'response' });
-  });
-
-  it('should handle expired token scenario', () => {
-    // Set an expired token
-    const expiredToken = 'expired-token';
-    localStorage.setItem('classsphere.token', expiredToken);
-
-    // Mock token validation to return false
-    spyOn(service as any, 'isTokenValid').and.returnValue(false);
-
-    expect(service.getAccessToken()).toBe(expiredToken);
-    expect(service.isAuthenticated()).toBe(false);
-  });
-
-  it('should handle token validation edge cases', () => {
-    // Test with null token
-    expect((service as any).isTokenValid(null)).toBe(false);
-
-    // Test with empty token
-    expect((service as any).isTokenValid('')).toBe(false);
-
-    // Test with undefined token
-    expect((service as any).isTokenValid(undefined)).toBe(false);
-
-    // Test with token containing only whitespace
-    expect((service as any).isTokenValid('   ')).toBe(false);
+    // Should not restore session without user data
+    expect(service['currentUserSubject'].value).toBeNull();
   });
 
   it('should handle localStorage being unavailable', () => {
@@ -470,7 +415,6 @@ describe('AuthService - Corrupted Session Handling', () => {
 
     // Should not throw errors
     expect(() => service.getAccessToken()).not.toThrow();
-    expect(() => service.setAccessToken('test')).not.toThrow();
     expect(() => service.logout()).not.toThrow();
 
     expect(service.getAccessToken()).toBeNull();
@@ -478,13 +422,13 @@ describe('AuthService - Corrupted Session Handling', () => {
 
   it('should handle very long token values', () => {
     const longToken = 'a'.repeat(10000);
-    expect(() => service.setAccessToken(longToken)).not.toThrow();
+    localStorage.setItem('classsphere.token', longToken);
     expect(service.getAccessToken()).toBe(longToken);
   });
 
   it('should handle special characters in tokens', () => {
     const specialToken = 'token!@#$%^&*()_+{}|:<>?[]\\;\'",./`~';
-    expect(() => service.setAccessToken(specialToken)).not.toThrow();
+    localStorage.setItem('classsphere.token', specialToken);
     expect(service.getAccessToken()).toBe(specialToken);
   });
 });
