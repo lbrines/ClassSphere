@@ -256,7 +256,7 @@ Todo el sistema sigue **Test-Driven Development** estricto con **Prevención de 
 
 ### Fase 1 - Fundaciones (En Progreso - 5/12 días completados)
 
-- [x] Backend: Go 1.21+ + Echo + JWT + OAuth functioning ✅
+- [x] Backend: Go 1.24.7 + Echo + JWT + OAuth functioning ✅
 - [ ] Frontend: Angular 19 + Auth + Responsive layout (Pending - Day 7)
 - [x] Testing: ≥80% cobertura + CI básico ✅
 - [ ] Integration: Frontend-Backend comunicación (Pendiente - Día 10)
@@ -279,7 +279,7 @@ Todo el sistema sigue **Test-Driven Development** estricto con **Prevención de 
 - [ ] **Verification Commands**: Comandos automáticos para validar cada funcionalidad
 
 **Implementation Details Completed**:
-- ✅ **Backend Complete**: Go 1.21+ + Echo v4 + JWT + OAuth 2.0 Google
+- ✅ **Backend Complete**: Go 1.24.7 + Echo v4 + JWT + OAuth 2.0 Google
 - ✅ **Robust Authentication**: JWT tokens + refresh rotation + password hashing with bcrypt
 - ✅ **OAuth 2.0 Google**: PKCE + State validation + complete integration
 - ✅ **Role System**: admin > coordinator > teacher > student with middleware

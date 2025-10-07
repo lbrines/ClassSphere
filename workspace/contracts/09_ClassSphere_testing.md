@@ -83,10 +83,10 @@ El sistema completo sigue Test-Driven Development (TDD) estricto:
 Esta sección implementa los patterns documentados en `contracts/extra/revision/llm_error_prevention_guide.md`.
 
 **Patterns Aplicados:**
-- **Pattern 1**: Missing Pydantic Imports (ConfigDict)
-- **Pattern 2**: Deprecated Next.js Configuration (swcMinify)
-- **Pattern 3**: Zod Schema Issues (z.record, error.issues)
-- **Pattern 4**: Async Function Mocking Errors (AsyncMock, mock paths)
+- **Pattern 1**: Go Struct Validation (tags, custom validators)
+- **Pattern 2**: Angular Testing Best Practices (TestBed, ComponentFixture)
+- **Pattern 3**: TypeScript Type Safety (strict mode, null checks)
+- **Pattern 4**: Async Testing (fakeAsync, tick, waitForAsync)
 - **Pattern 5**: Frontend Dependency Mocking Issues (debounce, safeTry, logger)
 - **Pattern 6**: Missing E2E Test Coverage (frontend-backend integration)
 
@@ -163,21 +163,32 @@ grep -r "model_config = ConfigDict" --include="*.py" | while read line; do
 done
 ```
 
-### 4. Next.js Configuration Validation (Pattern 2)
+### 4. Angular Testing Configuration (Pattern 2)
 
-**Metodología**: Evitar opciones deprecated en next.config.js
-```javascript
-// ✅ CORRECTO - Pattern 2
-module.exports = {
-  reactStrictMode: true,
-  // swcMinify removido (deprecated en Next.js 14+)
+**Metodología**: Configuración óptima de karma.conf.js y TestBed
+```typescript
+// ✅ CORRECTO - Pattern 2: karma.conf.js
+module.exports = function(config) {
+  config.set({
+    frameworks: ['jasmine', '@angular-devkit/build-angular'],
+    plugins: [
+      require('karma-jasmine'),
+      require('karma-chrome-launcher'),
+      require('karma-coverage')
+    ],
+    coverageReporter: {
+      reporters: [{ type: 'html' }, { type: 'text-summary' }]
+    }
+  });
 }
 
-// ❌ INCORRECTO - Deprecated option
-module.exports = {
-  reactStrictMode: true,
-  swcMinify: true  // Unrecognized key error!
-}
+// ✅ CORRECTO - Pattern 2: TestBed configuration
+beforeEach(() => {
+  TestBed.configureTestingModule({
+    imports: [HttpClientTestingModule],
+    providers: [AuthService]
+  });
+});
 ```
 
 ### 5. Zod Schema Validation (Pattern 3)
@@ -251,9 +262,9 @@ vi.mock('@/lib/logger', () => ({
 - ✅ **Día 4**: JWT Authentication TDD - tokens, middleware, refresh rotation
 - ✅ **Día 5**: OAuth 2.0 TDD - Google OAuth, PKCE, integración usuarios
 - ⏳ **Día 6**: Sistema de Roles TDD - roles, middleware seguridad, rate limiting (En progreso)
-- ⏳ **Día 7**: UI Base TDD - Next.js, TypeScript, Tailwind CSS (Pendiente)
-- ⏳ **Día 8**: Componentes de Autenticación TDD - LoginForm, OAuthButton, hooks (Pendiente)
-- ⏳ **Día 9**: Servicios de API TDD - servicios API, manejo errores, integración (Pendiente)
+- ⏳ **Día 7**: UI Base TDD - Angular 19, TypeScript, Tailwind CSS (Pendiente)
+- ⏳ **Día 8**: Componentes de Autenticación TDD - LoginForm, OAuthButton, Angular services (Pendiente)
+- ⏳ **Día 9**: Servicios de API TDD - servicios HTTP, manejo errores RxJS, integración (Pendiente)
 - ⏳ **Día 10**: Comunicación Frontend-Backend TDD - tests integración, envelope estándar (Pendiente)
 - ⏳ **Día 11**: Protección de Rutas TDD - protección por rol, tests E2E Playwright (Pendiente)
 - ⏳ **Día 12**: CI/CD y Documentación TDD - pipeline, documentación completa (Pendiente)
@@ -285,21 +296,21 @@ vi.mock('@/lib/logger', () => ({
 ### Fase 3 - Frontend TDD
 
 **Verificaciones Automáticas**:
-- [ ] Componentes React renderizan correctamente (Pattern 5: Mocks comprehensivos)
-- [ ] Hooks personalizados funcionan (Pattern 5: Dependency mocking)
-- [ ] Tests de integración frontend-backend (Pattern 6: E2E coverage)
-- [ ] Tests de UI con Testing Library (Pattern 2: Next.js config limpio)
+- [ ] Componentes Angular renderizan correctamente (Pattern 2: TestBed configuration)
+- [ ] Services inyectados funcionan (Pattern 4: Async testing)
+- [ ] Tests de integración frontend-backend (E2E con Playwright)
+- [ ] Tests de UI con Jasmine + Karma (Pattern 2: Angular testing limpio)
 
 **Patterns Aplicados en Fase 3:**
-- Pattern 2: Next.js config sin opciones deprecated
-- Pattern 3: Zod schemas en validación de métricas
-- Pattern 5: Mocks comprehensivos en componentes de visualización
+- Pattern 2: Angular testing configuration óptima
+- Pattern 3: TypeScript strict mode en validación
+- Pattern 4: Async testing con fakeAsync/waitForAsync
 - Pattern 6: E2E tests para dashboards por rol
 
 **Templates TDD Estándar**:
-- Template para componentes React
-- Template para hooks personalizados
-- Template para tests de integración
+- Template para componentes Angular con TestBed
+- Template para services con HttpClientTestingModule
+- Template para tests E2E con Playwright
 
 ### Fase 4 - Integración TDD
 
@@ -578,18 +589,35 @@ tests/e2e/
     └── screenreader.spec.ts      # Screen reader
 ```
 
-## Configuración de Vitest para Next.js 15 + React 19
+## Configuración de Karma para Angular 19 + Jasmine
 
 ```typescript
-// vitest.config.ts
-import { defineConfig } from 'vitest/config';
-import react from '@vitejs/plugin-react';
-import { resolve } from 'path';
-
-export default defineConfig({
-  plugins: [react()],
-  test: {
-    environment: 'jsdom',
+// karma.conf.js
+module.exports = function(config) {
+  config.set({
+    basePath: '',
+    frameworks: ['jasmine', '@angular-devkit/build-angular'],
+    plugins: [
+      require('karma-jasmine'),
+      require('karma-chrome-launcher'),
+      require('karma-jasmine-html-reporter'),
+      require('karma-coverage')
+    ],
+    client: {
+      jasmine: {},
+      clearContext: false
+    },
+    coverageReporter: {
+      dir: require('path').join(__dirname, './coverage'),
+      subdir: '.',
+      reporters: [
+        { type: 'html' },
+        { type: 'text-summary' },
+        { type: 'lcovonly' }
+      ]
+    },
+    test: {
+      environment: 'jsdom',
     globals: true,
     setupFiles: ['./src/test/setup.ts'],
     coverage: {
@@ -605,15 +633,18 @@ export default defineConfig({
 });
 ```
 
-## Ejemplos de Tests con Vitest + React Testing Library
+## Ejemplos de Tests con Jasmine + Karma + Angular Testing
 
-### Test de Componente React
+### Test de Componente Angular
 
-```tsx
-// Button.test.tsx
-import { render, screen, fireEvent } from '@testing-library/react';
-import { describe, it, expect, vi } from 'vitest';
-import Button from './Button';
+```typescript
+// button.component.spec.ts
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ButtonComponent } from './button.component';
+
+describe('ButtonComponent', () => {
+  let component: ButtonComponent;
+  let fixture: ComponentFixture<ButtonComponent>;
 
 describe('Button', () => {
   it('renders correctly', () => {
@@ -790,10 +821,11 @@ def test_users():
 ```
 
 ```typescript
-// src/test/setup.ts - Frontend mocks centralizados para Vitest
-import { expect, afterEach } from 'vitest';
-import { cleanup } from '@testing-library/react';
-import matchers from '@testing-library/jest-dom/matchers';
+// src/test-setup.ts - Frontend test configuration para Jasmine + Angular
+import 'zone.js';
+import 'zone.js/testing';
+import { getTestBed } from '@angular/core/testing';
+import { BrowserDynamicTestingModule, platformBrowserDynamicTesting } from '@angular/platform-browser-dynamic/testing';
 
 // Extender matchers de Vitest con los de Testing Library
 expect.extend(matchers);
@@ -803,10 +835,15 @@ afterEach(() => {
   cleanup();
 });
 
-// Mocks globales para Next.js
-vi.mock('next/navigation', () => ({
-  useRouter: () => mockRouter,
-  usePathname: () => '/',
+// Mocks globales para Angular Router
+class MockRouter {
+  navigate = jasmine.createSpy('navigate');
+  navigateByUrl = jasmine.createSpy('navigateByUrl');
+}
+
+// En beforeEach de cada test:
+TestBed.configureTestingModule({
+  providers: [{ provide: Router, useClass: MockRouter }]
   useSearchParams: () => new URLSearchParams(),
 }))
 
@@ -818,10 +855,14 @@ vi.mock('@/hooks/useAuth', () => ({
 // Mocks para WebSocket
 global.WebSocket = MockWebSocket
 
-// Mocks para ApexCharts
-vi.mock('react-apexcharts', () => ({
-  default: MockApexChart,
-}))
+// Mocks para ApexCharts en Angular
+class MockApexChart {
+  updateOptions = jasmine.createSpy('updateOptions');
+  updateSeries = jasmine.createSpy('updateSeries');
+}
+
+// En component test:
+spyOn(component.chartOptions, 'updateSeries');
 ```
 
 ## Scripts de Auto-Corrección
@@ -930,9 +971,9 @@ cd frontend && npm run test:e2e -- oauth-flow.spec.ts
 # 3. Navigate to http://localhost:4200 and click Google OAuth button
 ```
 
-### React Query Usage:
+### RxJS Observable Testing:
 ```bash
-# Coverage verification
+# Coverage verification con Karma
 npm run test:coverage:frontend
 
 # Hook testing
@@ -942,7 +983,7 @@ npm run test:hooks
 npm run test:integration:api
 
 # Manual verification
-# Check Network tab for API calls using React Query
+# Check Network tab for API calls using HttpClient + RxJS
 ```
 
 ### Role-Based Dashboard:

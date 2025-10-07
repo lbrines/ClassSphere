@@ -85,7 +85,7 @@ related_files:
 ## 4. Visualizaciones Avanzadas (Stage 3)
 - **ApexCharts v5.3.5**: Gráficos interactivos + drill-down
 - **D3.js Integration**: Visualizaciones custom + animaciones
-- **Real-time Updates**: WebSocket + React Query sync
+- **Real-time Updates**: WebSocket + RxJS reactive sync
 - **Export Features**: PDF + PNG + SVG + Data export
 - **Responsive Charts**: Mobile-first + adaptive layouts
 - **Accessibility**: Screen reader + keyboard navigation
