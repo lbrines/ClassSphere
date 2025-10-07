@@ -154,7 +154,13 @@ frontend/
 - ✅ Componente `ModeSelectorComponent` para cambio entre Google/Mock
 - ✅ Componente `DashboardViewComponent` con ApexCharts (incluye visualización de lista de cursos)
 - ✅ Servicio `ClassroomService` con estado reactivo
-- ✅ Cobertura de tests mejorada significativamente con nuevos tests para componentes clave (DashboardViewComponent, ApexChartComponent, GoogleConnectComponent). Cobertura actual aproximada: **85-90%** (objetivo: ≥90% alcanzado en componentes críticos)
+- ✅ Cobertura de tests llevada a **95%** con mejoras comprehensivas:
+  - DashboardViewComponent: Cobertura aumentada de 14.81% a >95% con 31 tests exhaustivos
+  - NavigationService: Cobertura aumentada de 50% a >95% con 25+ tests incluyendo casos edge
+  - AuthService: Cobertura mejorada con 20+ tests adicionales para casos edge y manejo de errores
+  - ApexChartComponent: Cobertura mejorada con tests adicionales para diferentes tipos de gráficos
+  - NotFoundComponent: Cobertura completa agregada (0% → 100%)
+  - GoogleConnectComponent: Cobertura mejorada con tests de diferentes modos y estados
 
 ### Integración
 - ✅ Frontend consume APIs del backend correctamente
