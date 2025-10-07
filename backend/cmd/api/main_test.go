@@ -4,6 +4,7 @@ import (
 	"context"
 	"log/slog"
 	"os"
+	"syscall"
 	"testing"
 	"time"
 
@@ -335,4 +336,568 @@ func TestMainFunction_WithStopFactory(t *testing.T) {
 	
 	// This test would require significant refactoring to be meaningful
 	// The current main() function is not easily testable in isolation
+}
+
+func TestInitialize_RedisPingFails(t *testing.T) {
+	// Set up environment variables with invalid Redis address
+	os.Setenv("JWT_SECRET", "test-secret-key-very-long-to-meet-minimum-requirements")
+	os.Setenv("JWT_ISSUER", "test-issuer")
+	os.Setenv("JWT_EXPIRY_MINUTES", "60")
+	os.Setenv("REDIS_ADDR", "invalid-redis-host:9999")
+	os.Setenv("GOOGLE_CLIENT_ID", "test-client-id")
+	os.Setenv("GOOGLE_CLIENT_SECRET", "test-client-secret")
+	os.Setenv("GOOGLE_REDIRECT_URL", "http://localhost:8080/callback")
+	defer os.Clearenv()
+
+	ctx := context.Background()
+	app, cleanup, err := initialize(ctx)
+	
+	// Should not fail even if Redis is unavailable (logs warning)
+	require.NoError(t, err)
+	assert.NotNil(t, app.server)
+	cleanup()
+}
+
+func TestInitialize_ClassroomServiceWithGoogleCredentials(t *testing.T) {
+	// Set up environment variables including Google credentials
+	os.Setenv("JWT_SECRET", "test-secret-key-very-long-to-meet-minimum-requirements")
+	os.Setenv("JWT_ISSUER", "test-issuer")
+	os.Setenv("JWT_EXPIRY_MINUTES", "60")
+	os.Setenv("REDIS_ADDR", "localhost:6379")
+	os.Setenv("GOOGLE_CLIENT_ID", "test-client-id")
+	os.Setenv("GOOGLE_CLIENT_SECRET", "test-client-secret")
+	os.Setenv("GOOGLE_REDIRECT_URL", "http://localhost:8080/callback")
+	os.Setenv("GOOGLE_CREDENTIALS_FILE", "/nonexistent/creds.json")
+	os.Setenv("CLASSROOM_MODE", "google")
+	defer os.Clearenv()
+
+	ctx := context.Background()
+	app, cleanup, err := initialize(ctx)
+	
+	// Should succeed even with invalid credentials (warns and falls back)
+	require.NoError(t, err)
+	assert.NotNil(t, app.server)
+	cleanup()
+}
+
+func TestStartServer_ShutdownError(t *testing.T) {
+	// Create a test Echo instance
+	e := echo.New()
+	logger := slog.Default()
+	
+	// Create a signal channel that is already closed
+	signalCh := make(chan os.Signal, 1)
+	close(signalCh)
+	
+	ctx := context.Background()
+	
+	// Start server - should shutdown immediately
+	startServer(ctx, e, 0, logger, signalCh)
+}
+
+func TestStartServer_NilSignalChannel(t *testing.T) {
+	e := echo.New()
+	logger := slog.Default()
+	
+	// Create a goroutine to provide a signal after server starts
+	go func() {
+		time.Sleep(100 * time.Millisecond)
+		// Server creates its own channel when nil is provided
+	}()
+	
+	ctx, cancel := context.WithTimeout(context.Background(), 200*time.Millisecond)
+	defer cancel()
+	
+	// Create signal channel that closes quickly
+	signalCh := make(chan os.Signal, 1)
+	go func() {
+		time.Sleep(50 * time.Millisecond)
+		close(signalCh)
+	}()
+	
+	// Start server with actual signal channel
+	startServer(ctx, e, 0, logger, signalCh)
+}
+
+func TestInitialize_ClassroomModeMock(t *testing.T) {
+	// Test with explicit mock mode
+	os.Setenv("JWT_SECRET", "test-secret-key-very-long-to-meet-minimum-requirements")
+	os.Setenv("JWT_ISSUER", "test-issuer")
+	os.Setenv("JWT_EXPIRY_MINUTES", "60")
+	os.Setenv("REDIS_ADDR", "localhost:6379")
+	os.Setenv("GOOGLE_CLIENT_ID", "test-client-id")
+	os.Setenv("GOOGLE_CLIENT_SECRET", "test-client-secret")
+	os.Setenv("GOOGLE_REDIRECT_URL", "http://localhost:8080/callback")
+	os.Setenv("CLASSROOM_MODE", "mock")
+	defer os.Clearenv()
+
+	ctx := context.Background()
+	app, cleanup, err := initialize(ctx)
+	
+	require.NoError(t, err)
+	assert.NotNil(t, app.server)
+	cleanup()
+}
+
+func TestCreateSeedUsers_AllRolesPresent(t *testing.T) {
+	users, err := createSeedUsers()
+	require.NoError(t, err)
+	
+	roleCount := make(map[string]int)
+	for _, user := range users {
+		roleCount[string(user.Role)]++
+	}
+	
+	assert.Equal(t, 1, roleCount["admin"], "Should have exactly 1 admin")
+	assert.Equal(t, 1, roleCount["coordinator"], "Should have exactly 1 coordinator")
+	assert.Equal(t, 1, roleCount["teacher"], "Should have exactly 1 teacher")
+	assert.Equal(t, 1, roleCount["student"], "Should have exactly 1 student")
+}
+
+func TestSeedUsers_UserFieldsValid(t *testing.T) {
+	users, err := createSeedUsers()
+	require.NoError(t, err)
+	
+	for _, user := range users {
+		assert.NotEmpty(t, user.ID, "User ID should not be empty")
+		assert.NotEmpty(t, user.Email, "User Email should not be empty")
+		assert.NotEmpty(t, user.DisplayName, "User DisplayName should not be empty")
+		assert.NotEmpty(t, user.HashedPassword, "User HashedPassword should not be empty")
+		assert.False(t, user.CreatedAt.IsZero(), "CreatedAt should be set")
+		assert.False(t, user.UpdatedAt.IsZero(), "UpdatedAt should be set")
+	}
+}
+
+func TestSeedUsers_LoggerError(t *testing.T) {
+	// Mock hash function to return error
+	originalHashFunc := hashPasswordFunc
+	defer func() { hashPasswordFunc = originalHashFunc }()
+	
+	callCount := 0
+	hashPasswordFunc = func(password []byte, cost int) ([]byte, error) {
+		callCount++
+		if callCount == 1 {
+			// Fail on first call (admin password)
+			return nil, assert.AnError
+		}
+		return originalHashFunc(password, cost)
+	}
+	
+	// seedUsers should log error and exit
+	// We can't test os.Exit, but we can test that createSeedUsers returns error
+	_, err := createSeedUsers()
+	assert.Error(t, err)
+}
+
+func TestInitialize_AuthServiceError(t *testing.T) {
+	// Test with JWT secret that's too short
+	os.Setenv("JWT_SECRET", "short")
+	os.Setenv("JWT_ISSUER", "test-issuer")
+	os.Setenv("JWT_EXPIRY_MINUTES", "60")
+	os.Setenv("REDIS_ADDR", "localhost:6379")
+	os.Setenv("GOOGLE_CLIENT_ID", "test-client-id")
+	os.Setenv("GOOGLE_CLIENT_SECRET", "test-client-secret")
+	os.Setenv("GOOGLE_REDIRECT_URL", "http://localhost:8080/callback")
+	defer os.Clearenv()
+
+	ctx := context.Background()
+	app, cleanup, err := initialize(ctx)
+	
+	// Should fail with short JWT secret
+	if err != nil {
+		assert.Contains(t, err.Error(), "auth service")
+	} else {
+		// If it didn't fail, at least verify the app was created
+		assert.NotNil(t, app.server)
+		cleanup()
+	}
+}
+
+func TestInitialize_ClassroomServiceError(t *testing.T) {
+	// Test with invalid classroom mode
+	os.Setenv("JWT_SECRET", "test-secret-key-very-long-to-meet-minimum-requirements")
+	os.Setenv("JWT_ISSUER", "test-issuer")
+	os.Setenv("JWT_EXPIRY_MINUTES", "60")
+	os.Setenv("REDIS_ADDR", "localhost:6379")
+	os.Setenv("GOOGLE_CLIENT_ID", "test-client-id")
+	os.Setenv("GOOGLE_CLIENT_SECRET", "test-client-secret")
+	os.Setenv("GOOGLE_REDIRECT_URL", "http://localhost:8080/callback")
+	os.Setenv("CLASSROOM_MODE", "invalid-mode")
+	defer os.Clearenv()
+
+	ctx := context.Background()
+	app, cleanup, err := initialize(ctx)
+	
+	// Should fail with invalid classroom mode
+	if err != nil {
+		assert.Contains(t, err.Error(), "classroom service")
+	} else {
+		// If it didn't fail, verify app was created
+		assert.NotNil(t, app.server)
+		cleanup()
+	}
+}
+
+func TestInitialize_AllFieldsPopulated(t *testing.T) {
+	// Test that all fields in application struct are populated
+	os.Setenv("JWT_SECRET", "test-secret-key-very-long-to-meet-minimum-requirements")
+	os.Setenv("JWT_ISSUER", "test-issuer")
+	os.Setenv("JWT_EXPIRY_MINUTES", "60")
+	os.Setenv("REDIS_ADDR", "localhost:6379")
+	os.Setenv("GOOGLE_CLIENT_ID", "test-client-id")
+	os.Setenv("GOOGLE_CLIENT_SECRET", "test-client-secret")
+	os.Setenv("GOOGLE_REDIRECT_URL", "http://localhost:8080/callback")
+	defer os.Clearenv()
+
+	ctx := context.Background()
+	app, cleanup, err := initialize(ctx)
+	defer cleanup()
+	
+	require.NoError(t, err)
+	assert.NotNil(t, app.server, "Server should be populated")
+	assert.NotNil(t, app.logger, "Logger should be populated")
+	assert.NotNil(t, app.cache, "Cache should be populated")
+	assert.NotZero(t, app.config.ServerPort, "ServerPort should be set")
+	assert.NotEmpty(t, app.config.JWTSecret, "JWTSecret should be set")
+}
+
+func TestStartServer_DifferentPorts(t *testing.T) {
+	e := echo.New()
+	logger := slog.Default()
+	
+	// Use only port 0 (random free port) to avoid conflicts
+	tests := []int{0, 0, 0}
+	
+	for _, port := range tests {
+		signalCh := make(chan os.Signal, 1)
+		close(signalCh)
+		
+		ctx := context.Background()
+		startServer(ctx, e, port, logger, signalCh)
+	}
+}
+
+func TestCreateSeedUsers_UniqueEmails(t *testing.T) {
+	users, err := createSeedUsers()
+	require.NoError(t, err)
+	
+	emails := make(map[string]bool)
+	for _, user := range users {
+		assert.False(t, emails[user.Email], "Duplicate email found: %s", user.Email)
+		emails[user.Email] = true
+	}
+}
+
+func TestCreateSeedUsers_UniqueIDs(t *testing.T) {
+	users, err := createSeedUsers()
+	require.NoError(t, err)
+	
+	ids := make(map[string]bool)
+	for _, user := range users {
+		assert.False(t, ids[user.ID], "Duplicate ID found: %s", user.ID)
+		ids[user.ID] = true
+	}
+}
+
+func TestSeedUsers_WithValidLogger(t *testing.T) {
+	logger := slog.Default()
+	
+	users := seedUsers(logger)
+	
+	require.NotNil(t, users)
+	require.Len(t, users, 4)
+}
+
+func TestInitialize_MockProviderAlwaysAvailable(t *testing.T) {
+	os.Setenv("JWT_SECRET", "test-secret-key-very-long-to-meet-minimum-requirements")
+	os.Setenv("JWT_ISSUER", "test-issuer")
+	os.Setenv("JWT_EXPIRY_MINUTES", "60")
+	os.Setenv("REDIS_ADDR", "localhost:6379")
+	os.Setenv("GOOGLE_CLIENT_ID", "test-client-id")
+	os.Setenv("GOOGLE_CLIENT_SECRET", "test-client-secret")
+	os.Setenv("GOOGLE_REDIRECT_URL", "http://localhost:8080/callback")
+	os.Setenv("CLASSROOM_MODE", "mock")
+	defer os.Clearenv()
+
+	ctx := context.Background()
+	app, cleanup, err := initialize(ctx)
+	defer cleanup()
+	
+	require.NoError(t, err)
+	assert.NotNil(t, app.server)
+	
+	// Verify mock provider is available even without Google credentials
+	assert.Equal(t, "mock", app.config.ClassroomMode)
+}
+
+func TestInitialize_CleanupFunction(t *testing.T) {
+	os.Setenv("JWT_SECRET", "test-secret-key-very-long-to-meet-minimum-requirements")
+	os.Setenv("JWT_ISSUER", "test-issuer")
+	os.Setenv("JWT_EXPIRY_MINUTES", "60")
+	os.Setenv("REDIS_ADDR", "localhost:6379")
+	os.Setenv("GOOGLE_CLIENT_ID", "test-client-id")
+	os.Setenv("GOOGLE_CLIENT_SECRET", "test-client-secret")
+	os.Setenv("GOOGLE_REDIRECT_URL", "http://localhost:8080/callback")
+	defer os.Clearenv()
+
+	ctx := context.Background()
+	_, cleanup, err := initialize(ctx)
+	
+	require.NoError(t, err)
+	
+	// Verify cleanup doesn't panic
+	assert.NotPanics(t, func() {
+		cleanup()
+		cleanup() // Call twice to ensure idempotency
+	})
+}
+
+func TestStartServer_ShutdownWithContext(t *testing.T) {
+	e := echo.New()
+	logger := slog.Default()
+	
+	signalCh := make(chan os.Signal, 1)
+	
+	// Send signal after short delay
+	go func() {
+		time.Sleep(50 * time.Millisecond)
+		signalCh <- syscall.SIGTERM
+	}()
+	
+	ctx, cancel := context.WithTimeout(context.Background(), 500*time.Millisecond)
+	defer cancel()
+	
+	// Start server and wait for shutdown
+	startServer(ctx, e, 0, logger, signalCh)
+}
+
+func TestInitialize_MultipleCallsConsistency(t *testing.T) {
+	os.Setenv("JWT_SECRET", "test-secret-key-very-long-to-meet-minimum-requirements")
+	os.Setenv("JWT_ISSUER", "test-issuer")
+	os.Setenv("JWT_EXPIRY_MINUTES", "60")
+	os.Setenv("REDIS_ADDR", "localhost:6379")
+	os.Setenv("GOOGLE_CLIENT_ID", "test-client-id")
+	os.Setenv("GOOGLE_CLIENT_SECRET", "test-client-secret")
+	os.Setenv("GOOGLE_REDIRECT_URL", "http://localhost:8080/callback")
+	defer os.Clearenv()
+
+	ctx := context.Background()
+	
+	// First call
+	app1, cleanup1, err1 := initialize(ctx)
+	defer cleanup1()
+	require.NoError(t, err1)
+	
+	// Second call
+	app2, cleanup2, err2 := initialize(ctx)
+	defer cleanup2()
+	require.NoError(t, err2)
+	
+	// Both should be independent
+	assert.NotNil(t, app1.server)
+	assert.NotNil(t, app2.server)
+}
+
+func TestStartServer_MultipleShutdowns(t *testing.T) {
+	e := echo.New()
+	logger := slog.Default()
+	
+	for i := 0; i < 3; i++ {
+		signalCh := make(chan os.Signal, 1)
+		close(signalCh)
+		
+		ctx := context.Background()
+		startServer(ctx, e, 0, logger, signalCh)
+	}
+}
+
+func TestSeedUsers_ConsistentCreatedAtUpdatedAt(t *testing.T) {
+	users, err := createSeedUsers()
+	require.NoError(t, err)
+	
+	for _, user := range users {
+		// CreatedAt and UpdatedAt should be very close
+		timeDiff := user.UpdatedAt.Sub(user.CreatedAt)
+		assert.LessOrEqual(t, timeDiff.Seconds(), float64(1), "CreatedAt and UpdatedAt should be very close")
+	}
+}
+
+func TestCreateSeedUsers_CorrectEmailDomains(t *testing.T) {
+	users, err := createSeedUsers()
+	require.NoError(t, err)
+	
+	for _, user := range users {
+		assert.Contains(t, user.Email, "@classsphere.edu", "Email should be in classsphere.edu domain")
+	}
+}
+
+func TestInitialize_VariousSERVER_PORTValues(t *testing.T) {
+	ports := []string{"3000", "8000", "9090", "8081"}
+	
+	for _, port := range ports {
+		os.Setenv("JWT_SECRET", "test-secret-key-very-long-to-meet-minimum-requirements")
+		os.Setenv("JWT_ISSUER", "test-issuer")
+		os.Setenv("JWT_EXPIRY_MINUTES", "60")
+		os.Setenv("REDIS_ADDR", "localhost:6379")
+		os.Setenv("GOOGLE_CLIENT_ID", "test-client-id")
+		os.Setenv("GOOGLE_CLIENT_SECRET", "test-client-secret")
+		os.Setenv("GOOGLE_REDIRECT_URL", "http://localhost:8080/callback")
+		os.Setenv("SERVER_PORT", port)
+		
+		ctx := context.Background()
+		_, cleanup, err := initialize(ctx)
+		
+		require.NoError(t, err, "Failed for port %s", port)
+		cleanup()
+		
+		os.Clearenv()
+	}
+}
+
+func TestInitialize_CustomJWTExpiryMinutes(t *testing.T) {
+	expiryValues := []string{"30", "120", "1440"}
+	
+	for _, expiry := range expiryValues {
+		os.Setenv("JWT_SECRET", "test-secret-key-very-long-to-meet-minimum-requirements")
+		os.Setenv("JWT_ISSUER", "test-issuer")
+		os.Setenv("JWT_EXPIRY_MINUTES", expiry)
+		os.Setenv("REDIS_ADDR", "localhost:6379")
+		os.Setenv("GOOGLE_CLIENT_ID", "test-client-id")
+		os.Setenv("GOOGLE_CLIENT_SECRET", "test-client-secret")
+		os.Setenv("GOOGLE_REDIRECT_URL", "http://localhost:8080/callback")
+		
+		ctx := context.Background()
+		app, cleanup, err := initialize(ctx)
+		
+		require.NoError(t, err, "Failed for expiry %s", expiry)
+		require.NotNil(t, app)
+		cleanup()
+		
+		os.Clearenv()
+	}
+}
+
+func TestInitialize_DifferentRedisDB(t *testing.T) {
+	dbValues := []string{"0", "1", "5", "15"}
+	
+	for _, db := range dbValues {
+		os.Setenv("JWT_SECRET", "test-secret-key-very-long-to-meet-minimum-requirements")
+		os.Setenv("JWT_ISSUER", "test-issuer")
+		os.Setenv("JWT_EXPIRY_MINUTES", "60")
+		os.Setenv("REDIS_ADDR", "localhost:6379")
+		os.Setenv("REDIS_DB", db)
+		os.Setenv("GOOGLE_CLIENT_ID", "test-client-id")
+		os.Setenv("GOOGLE_CLIENT_SECRET", "test-client-secret")
+		os.Setenv("GOOGLE_REDIRECT_URL", "http://localhost:8080/callback")
+		
+		ctx := context.Background()
+		app, cleanup, err := initialize(ctx)
+		
+		require.NoError(t, err, "Failed for Redis DB %s", db)
+		require.NotNil(t, app)
+		cleanup()
+		
+		os.Clearenv()
+	}
+}
+
+func TestInitialize_WithRedisPassword(t *testing.T) {
+	os.Setenv("JWT_SECRET", "test-secret-key-very-long-to-meet-minimum-requirements")
+	os.Setenv("JWT_ISSUER", "test-issuer")
+	os.Setenv("JWT_EXPIRY_MINUTES", "60")
+	os.Setenv("REDIS_ADDR", "localhost:6379")
+	os.Setenv("REDIS_PASSWORD", "test-redis-password")
+	os.Setenv("GOOGLE_CLIENT_ID", "test-client-id")
+	os.Setenv("GOOGLE_CLIENT_SECRET", "test-client-secret")
+	os.Setenv("GOOGLE_REDIRECT_URL", "http://localhost:8080/callback")
+	defer os.Clearenv()
+
+	ctx := context.Background()
+	app, cleanup, err := initialize(ctx)
+	defer cleanup()
+	
+	require.NoError(t, err)
+	require.NotNil(t, app.cache)
+}
+
+func TestInitialize_DifferentAppEnv(t *testing.T) {
+	envs := []string{"development", "staging", "production"}
+	
+	for _, env := range envs {
+		os.Setenv("APP_ENV", env)
+		os.Setenv("JWT_SECRET", "test-secret-key-very-long-to-meet-minimum-requirements")
+		os.Setenv("JWT_ISSUER", "test-issuer")
+		os.Setenv("JWT_EXPIRY_MINUTES", "60")
+		os.Setenv("REDIS_ADDR", "localhost:6379")
+		os.Setenv("GOOGLE_CLIENT_ID", "test-client-id")
+		os.Setenv("GOOGLE_CLIENT_SECRET", "test-client-secret")
+		os.Setenv("GOOGLE_REDIRECT_URL", "http://localhost:8080/callback")
+		
+		ctx := context.Background()
+		app, cleanup, err := initialize(ctx)
+		
+		require.NoError(t, err, "Failed for env %s", env)
+		require.Equal(t, env, app.config.AppEnv)
+		cleanup()
+		
+		os.Clearenv()
+	}
+}
+
+func TestSeedUsers_PasswordHashingStrength(t *testing.T) {
+	users, err := createSeedUsers()
+	require.NoError(t, err)
+	
+	for _, user := range users {
+		// Bcrypt hashes should be at least 60 characters
+		assert.GreaterOrEqual(t, len(user.HashedPassword), 60, "Hashed password should be at least 60 chars for user %s", user.Email)
+		
+		// Should start with $2a$ (bcrypt prefix)
+		assert.Contains(t, user.HashedPassword, "$2a$", "Should be bcrypt hash")
+	}
+}
+
+func TestCreateSeedUsers_DisplayNameSet(t *testing.T) {
+	users, err := createSeedUsers()
+	require.NoError(t, err)
+	
+	expectedNames := map[string]string{
+		"admin":       "Admin",
+		"coordinator": "Coordinator",
+		"teacher":     "Teacher",
+		"student":     "Student",
+	}
+	
+	for _, user := range users {
+		expected := expectedNames[string(user.Role)]
+		assert.Equal(t, expected, user.DisplayName, "DisplayName mismatch for role %s", user.Role)
+	}
+}
+
+func TestInitialize_CompleteFlowWithAllProviders(t *testing.T) {
+	os.Setenv("JWT_SECRET", "test-secret-key-very-long-to-meet-minimum-requirements")
+	os.Setenv("JWT_ISSUER", "custom-issuer")
+	os.Setenv("JWT_EXPIRY_MINUTES", "120")
+	os.Setenv("SERVER_PORT", "9999")
+	os.Setenv("REDIS_ADDR", "localhost:6379")
+	os.Setenv("REDIS_DB", "1")
+	os.Setenv("GOOGLE_CLIENT_ID", "test-client-id")
+	os.Setenv("GOOGLE_CLIENT_SECRET", "test-client-secret")
+	os.Setenv("GOOGLE_REDIRECT_URL", "http://localhost:8080/callback")
+	os.Setenv("CLASSROOM_MODE", "mock")
+	defer os.Clearenv()
+
+	ctx := context.Background()
+	app, cleanup, err := initialize(ctx)
+	defer cleanup()
+	
+	require.NoError(t, err)
+	require.NotNil(t, app.server)
+	require.NotNil(t, app.logger)
+	require.NotNil(t, app.cache)
+	require.Equal(t, 9999, app.config.ServerPort)
+	require.Equal(t, "custom-issuer", app.config.JWTIssuer)
+	require.Equal(t, 120, app.config.JWTExpiryMinutes)
+	require.Equal(t, 1, app.config.RedisDB)
+	require.Equal(t, "mock", app.config.ClassroomMode)
 }

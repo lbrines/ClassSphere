@@ -131,3 +131,30 @@ func TestLoadConfig_Defaults(t *testing.T) {
 	require.Equal(t, 60, cfg.JWTExpiryMinutes)
 	require.Equal(t, 0, cfg.RedisDB)
 }
+
+func TestNormalizeIntegrationMode_GoogleVariants(t *testing.T) {
+	tests := []string{"google", "Google", "GOOGLE", " google ", "\tgoogle\n"}
+	
+	for _, input := range tests {
+		result := shared.NormalizeIntegrationMode(input)
+		require.Equal(t, shared.IntegrationModeGoogle, result, "Failed for input: %q", input)
+	}
+}
+
+func TestNormalizeIntegrationMode_MockVariants(t *testing.T) {
+	tests := []string{"mock", "Mock", "MOCK", " mock ", "\tmock\n"}
+	
+	for _, input := range tests {
+		result := shared.NormalizeIntegrationMode(input)
+		require.Equal(t, shared.IntegrationModeMock, result, "Failed for input: %q", input)
+	}
+}
+
+func TestNormalizeIntegrationMode_InvalidDefaultsToMock(t *testing.T) {
+	tests := []string{"", " ", "invalid", "xyz", "123", "google-mode", "mock-mode"}
+	
+	for _, input := range tests {
+		result := shared.NormalizeIntegrationMode(input)
+		require.Equal(t, shared.IntegrationModeMock, result, "Failed for input: %q", input)
+	}
+}
