@@ -297,8 +297,8 @@ describe('DashboardViewComponent', () => {
     });
 
     it('should handle Infinity values', () => {
-      expect(component.formatValue(Infinity)).toBe('Infinity');
-      expect(component.formatDelta(Infinity)).toBe('+Infinity');
+      expect(component.formatValue(Infinity)).toBe('∞');
+      expect(component.formatDelta(Infinity)).toBe('+∞');
     });
   });
 });
