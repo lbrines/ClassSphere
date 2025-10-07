@@ -3,6 +3,7 @@ import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth.guard';
 import { roleGuard } from './core/guards/role.guard';
 import { DashboardLayoutComponent } from './features/dashboard/dashboard-layout.component';
+import { DashboardComponent } from './features/dashboard/dashboard.component';
 import { AdminDashboardComponent } from './features/dashboard/pages/admin/admin-dashboard.component';
 import { CoordinatorDashboardComponent } from './features/dashboard/pages/coordinator/coordinator-dashboard.component';
 import { StudentDashboardComponent } from './features/dashboard/pages/student/student-dashboard.component';
@@ -36,6 +37,11 @@ export const routes: Routes = [
     canActivate: [authGuard],
     children: [
       {
+        path: '',
+        pathMatch: 'full',
+        component: DashboardComponent,
+      },
+      {
         path: 'admin',
         component: AdminDashboardComponent,
         canActivate: [roleGuard],
@@ -58,11 +64,6 @@ export const routes: Routes = [
         component: StudentDashboardComponent,
         canActivate: [roleGuard],
         data: { roles: ['student', 'teacher', 'coordinator', 'admin'] },
-      },
-      {
-        path: '',
-        pathMatch: 'full',
-        redirectTo: 'teacher',
       },
     ],
   },
