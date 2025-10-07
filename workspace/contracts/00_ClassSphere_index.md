@@ -53,56 +53,56 @@ files:
 - **Code Language**: English (Mandatory)
 - **UI Language**: English (Default with i18n support from Phase 1)
 
-## Estado Actual del Proyecto
+## Current Project Status
 
-### ✅ Fase 1 Completada - Lecciones Aprendidas
+### ✅ Phase 1 Completed - Lessons Learned
 
-**Métricas de Éxito Fase 1**:
-- **Errores Críticos Resueltos**: 14 errores bloqueadores identificados y solucionados
-- **Tiempo de Resolución**: 155 minutos total de resolución de errores
-- **Cobertura Final**: 94.4% sin OAuth (objetivo 80%+ superado)
-- **Sistema Funcional**: Backend + Frontend + Integración + Demo Users + TailwindCSS
-- **Patrones de Prevención**: Documentados y validados en producción
+**Phase 1 Success Metrics**:
+- **Critical Errors Resolved**: 14 blocking errors identified and resolved
+- **Resolution Time**: 155 minutes total error resolution time
+- **Final Coverage**: 94.4% without OAuth (target 80%+ exceeded)
+- **Functional System**: Backend + Frontend + Integration + Demo Users + TailwindCSS
+- **Prevention Patterns**: Documented and validated in production
 
-**Errores Críticos Superados**:
-- 🔴 **Dashboard Endpoints 404** - BLOQUEADOR PRINCIPAL (15 min resolución)
-- 🟠 **TypeScript Compilation** - BLOQUEABA FRONTEND (10 min resolución)
-- 🟠 **OAuth Tests Hanging** - BLOQUEABA COBERTURA (20 min resolución)
-- 🟡 **Angular CLI Not Found** - BLOQUEABA DESARROLLO (5 min resolución)
-- 🟡 **TailwindCSS v4 PostCSS** - BLOQUEABA BUILD (20 min resolución)
+**Critical Errors Overcome**:
+- 🔴 **Dashboard Endpoints 404** - MAIN BLOCKER (15 min resolution)
+- 🟠 **TypeScript Compilation** - BLOCKED FRONTEND (10 min resolution)
+- 🟠 **OAuth Tests Hanging** - BLOCKED COVERAGE (20 min resolution)
+- 🟡 **Angular CLI Not Found** - BLOCKED DEVELOPMENT (5 min resolution)
+- 🟡 **TailwindCSS v4 PostCSS** - BLOCKED BUILD (20 min resolution)
 
-**Patrones de Prevención Validados**:
+**Validated Prevention Patterns**:
 - **Server Restart**: `pkill -f classsphere-backend` → `PORT=8081 ./classsphere-backend`
-- **TypeScript**: Optional chaining completo `?.prop?.subprop`, nullish coalescing `?? 0`
-- **Angular CLI**: `npx ng` en lugar de `ng`, verificar package.json
-- **OAuth Tests**: `-timeout=10s`, URLs que fallen rápido, excluir tests problemáticos
-- **TailwindCSS**: v3.4.0 para Angular, evitar CDN en producción
+- **TypeScript**: Complete optional chaining `?.prop?.subprop`, nullish coalescing `?? 0`
+- **Angular CLI**: `npx ng` instead of `ng`, verify package.json
+- **OAuth Tests**: `-timeout=10s`, URLs that fail fast, exclude problematic tests
+- **TailwindCSS**: v3.4.0 for Angular, avoid CDN in production
 
-### 🔄 Migración de Stack Tecnológico (Fase 1 Completada - Fases 2-5 En Planificación)
+### 🔄 Technology Stack Migration (Phase 1 Completed - Phases 2-5 In Planning)
 
-**Nuevo Stack Backend**:
+**New Backend Stack**:
 - 🎯 **Go** + Echo framework v4
-- 🔐 **Autenticación JWT** + OAuth 2.0 Google
-- 👥 **Sistema de Roles** (admin > coordinator > teacher > student)
-- 💾 **Redis** (caché)
+- 🔐 **JWT Authentication** + OAuth 2.0 Google
+- 👥 **Role System** (admin > coordinator > teacher > student)
+- 💾 **Redis** (cache)
 - 🧪 **testify/mock** + resty (testing)
-- 🔧 **CI/CD Pipeline** con GitHub Actions
+- 🔧 **CI/CD Pipeline** with GitHub Actions
 
-**Nuevo Stack Frontend**:
-- 🚀 **Angular 19** con esbuild oficial
+**New Frontend Stack**:
+- 🚀 **Angular 19** with official esbuild
 - 🎨 **TailwindCSS 3.x**
 - 🧹 **Biome** (linter/formatter)
-- 🧪 **Jasmine + Karma** (testing estándar Angular)
+- 🧪 **Jasmine + Karma** (Angular standard testing)
 - 🎭 **Playwright** (E2E testing)
 
-**DevOps Mantenido**:
+**DevOps Maintained**:
 - 🔧 **GitHub Actions** (CI/CD)
 - 🐳 **Docker** multi-stage
 - 🔒 **Trivy** (security scanning)
-- 💾 **Redis** (caché compartido)
-- 🛠️ **Dev Containers** (Docker Compose multi-service, ver `workspace/extra/DEV_CONTAINERS_BEST_PRACTICES.md`)
+- 💾 **Redis** (shared cache)
+- 🛠️ **Dev Containers** (Docker Compose multi-service, see `workspace/extra/DEV_CONTAINERS_BEST_PRACTICES.md`)
 
-**Endpoints API Planificados**:
+**Planned API Endpoints**:
 - `GET /` - Welcome endpoint
 - `GET /health` - Health check
 - `GET /info` - System information
@@ -128,14 +128,19 @@ files:
   - 📚 Complete Final Documentation Created After All Phases
 
 **Implementation Specifications**:
-- 🔧 **OAuth Integration**: Angular services → Go handlers
-- 🎭 **Role-Based Dashboard**: Angular components per role
+- 🔧 **OAuth Integration**: Angular services → Go handlers with PKCE + State validation
+- 🎭 **Role-Based Dashboard**: Angular components per role (admin, coordinator, teacher, student)
 - ✅ **Test Coverage**: Backend ≥80%, Frontend ≥80%, Critical modules ≥95% (ACTUAL: 94.4% without OAuth)
 - 🧪 **Testing**: Jasmine + Karma (Angular), testify (Go), Playwright (E2E)
 - 🛡️ **Error Prevention**: Production-validated patterns to prevent blocking errors
 - 🔄 **Server Management**: Automated restart and verification commands
 - 🌍 **i18n Support**: Built-in from Phase 1 (English default, extensible to other languages)
 - 📝 **Phase Documentation**: Minimum documentation at end of each phase, complete docs after all phases
+- 🔗 **Dependency Management**: Critical dependencies with automatic fallback mechanisms
+  - Google Classroom API → Mock Mode fallback
+  - Redis → In-memory cache fallback
+  - WebSocket → HTTP polling fallback (30s intervals)
+- 🏥 **Health Monitoring**: /health/dependencies endpoint for real-time dependency status
 
 **Architecture Documentation**:
 - 📖 **docs/architecture/testing.md**: Testing strategy with Jasmine + Karma + Playwright (English)
@@ -147,58 +152,64 @@ files:
 - 📝 **Phase Status Docs**: Minimum documentation created at end of each phase (English)
 - 📚 **Final Complete Docs**: Comprehensive documentation after all phases complete (English)
 
-## Tabla de Contenidos
+## Table of Contents
 
-### [1. Información del Proyecto y Estado Actual](01_ClassSphere_info_status.md)
-- Información detallada del proyecto
-- Estado actual del desarrollo
-- Progreso de las fases
-- Próximos pasos
+### [1. Project Information and Current Status](01_ClassSphere_info_status.md)
+- Detailed project information
+- Current development status
+- Phase progress
+- Next steps
 
-### [2. Glosario Técnico Unificado](02_ClassSphere_glosario_tecnico.md)
-- Conceptos fundamentales
-- Terminología estándar unificada
-- Estados con prefijos semánticos
-- Arquitectura semántica simplificada
+### [2. Unified Technical Glossary](02_ClassSphere_glosario_tecnico.md)
+- Fundamental concepts
+- Unified standard terminology
+- States with semantic prefixes
+- Simplified semantic architecture
 
-### [3. Análisis Críticos del Sistema](03_ClassSphere_analisis_critico.md)
-- Análisis de trazabilidad de requisitos
-- Análisis de coherencia semántica
-- Análisis de dependencias transversales
-- Matriz de impacto de dependencias
+### [3. System Critical Analysis](03_ClassSphere_analisis_critico.md)
+- **Requirements traceability analysis**: Stage-by-stage mapping for consistency
+- **Semantic coherence analysis**: Unified terminology across all layers
+- **Cross-cutting dependencies analysis**: Infrastructure, security, performance, and testing dependencies
+  - Infrastructure: Google Classroom API (critical), Redis (medium)
+  - Security: JWT Secret (critical), OAuth 2.0 (high), CORS (critical)
+  - Performance: WebSocket (medium), Caching strategy (medium)
+  - Testing: testify/mock (high), Playwright (high)
+- **Dependency impact matrix**: Risk assessment with mitigation strategies
+- **Resolution protocol**: Automatic detection, classification, and fallback activation
 
-### [4. Objetivos del Sistema Unificado](04_ClassSphere_objetivos.md)
-- Backend - Sistema completo
-- Frontend - Aplicación completa
-- Características integradas
-- Requisitos funcionales y no funcionales
+### [4. Unified System Objectives](04_ClassSphere_objetivos.md)
+- Backend - Complete system
+- Frontend - Complete application
+- Integrated features
+- Functional and non-functional requirements
 
-### [5. Arquitectura del Sistema Unificado](05_ClassSphere_arquitectura.md)
-- Stack tecnológico consolidado
-- Instalación nueva Google Classroom con mocks
-- Arquitectura resiliente con prevención de errores
-- Estructura de directorios completa (desarrollo parte desde raíz /)
-- **Entorno de desarrollo con Dev Containers** (Docker Compose, paridad dev-prod)
+### [5. Unified System Architecture](05_ClassSphere_arquitectura.md)
+- **Consolidated technology stack**: Go + Echo, Angular 19, Redis, testify, Playwright
+- **New Google Classroom installation with mocks**: Dual mode (mock/real) for development flexibility
+- **Resilient architecture with error prevention**: Automatic fallbacks for critical dependencies
+- **Complete directory structure**: Hexagonal architecture (ports & adapters) from root /
+- **Development environment with Dev Containers**: Docker Compose, dev-prod parity, <15 min setup
+- **Cross-cutting concerns**: Authentication, authorization, caching, monitoring integrated at architecture level
 
-**Estructura de Directorios desde Raíz**:
+**Directory Structure from Root**:
 ```
 /backend
-  /cmd/api/                    # main: wire de rutas, middlewares
+  /cmd/api/                    # main: routes wiring, middlewares
   /internal/
-    /domain/                   # Entidades, VOs, reglas (puro Go)
-    /app/                      # Casos de uso (servicios de aplicación)
+    /domain/                   # Entities, VOs, rules (pure Go)
+    /app/                      # Use cases (application services)
     /ports/                    # Interfaces (repo, oauth, mail, llm, cache)
-    /adapters/                 # Implementaciones de puertos
-      /http/                   # Handlers Echo (controladores finos)
-      /repo/                   # DB (SQL/NoSQL) + migraciones
+    /adapters/                 # Port implementations
+      /http/                   # Echo handlers (thin controllers)
+      /repo/                   # DB (SQL/NoSQL) + migrations
       /oauth/                  # Google OAuth 2.0 (server-side)
       /auth/                   # JWT (emit/verify, refresh)
-      /llm/                    # Client a proveedor LLM (si aplica)
+      /llm/                    # LLM provider client (if applicable)
     /shared/                   # Config (12-factor), logger, errors
   /tests/
     /unit/                     # testify: domain/app
-    /integration/              # testify: repo/http con container DB
-    /e2e/                      # black-box API contra binario
+    /integration/              # testify: repo/http with DB container
+    /e2e/                      # black-box API against binary
   go.mod go.sum
   Makefile
 
@@ -206,9 +217,9 @@ files:
   /src/
     /app/
       (auth)/login/            # feature folder
-      (auth)/callback/         # recepción OAuth (si aplica PKCE público)
+      (auth)/callback/         # OAuth reception (if public PKCE applies)
       dashboard/
-      shared/                  # módulos compartidos (pipes, guards)
+      shared/                  # shared modules (pipes, guards)
     /assets/
     /environments/
   /tests/
@@ -222,146 +233,148 @@ files:
 
 /infra/                        # Docker, Compose, K8s/Helm, CI helpers
 /scripts/                      # Seeds, dev tools, make-like
-/docs/                         # Runbooks, diagramas, decisiones
+/docs/                         # Runbooks, diagrams, decisions
 ```
 
-**Notas Importantes**:
-- El directorio `/workspace` se **ignora totalmente** en el desarrollo
-- Los puertos usan siempre los **defaults**: Backend 8080, Frontend 4200
-- Arquitectura hexagonal (ports & adapters) en backend
-- Feature folders en frontend Angular
-- **Dev Containers con Docker Compose** para entorno consistente (setup automático < 15 min)
+**Important Notes**:
+- The `/workspace` directory is **completely ignored** in development
+- Ports always use **defaults**: Backend 8080, Frontend 4200
+- Hexagonal architecture (ports & adapters) in backend
+- Feature folders in Angular frontend
+- **Dev Containers with Docker Compose** for consistent environment (automatic setup < 15 min)
 
-### [6. Funcionalidades Consolidadas](06_ClassSphere_funcionalidades.md)
-- Autenticación y autorización completa
-- Google Classroom integration completa
-- Dashboards avanzados por rol
-- Visualizaciones avanzadas
-- Sistema de búsqueda avanzada
-- Notificaciones en tiempo real
-- Métricas y analytics avanzados
-- Accesibilidad WCAG 2.2 AA
-- Testing completo
+### [6. Consolidated Functionalities](06_ClassSphere_funcionalidades.md)
+- Complete authentication and authorization
+- Complete Google Classroom integration
+- Advanced dashboards per role
+- Advanced visualizations
+- Advanced search system
+- Real-time notifications
+- Advanced metrics and analytics
+- WCAG 2.2 AA accessibility
+- Complete testing
 - CI/CD Pipeline
-- **Mapeo Frontend-Backend explícito**
-- **Implementación obligatoria por tecnología**
+- **Explicit Frontend-Backend mapping**
+- **Mandatory implementation by technology**
 
-### [7. API Endpoints Consolidados](07_ClassSphere_api_endpoints.md)
-- Autenticación
+### [7. Consolidated API Endpoints](07_ClassSphere_api_endpoints.md)
+- Authentication
 - OAuth
 - Health Checks
 - Google Classroom
 - Dashboards
-- Métricas
-- Búsqueda
-- Notificaciones
-- Google Sync Avanzado
-- Sincronización y Backup
+- Metrics
+- Search
+- Notifications
+- Advanced Google Sync
+- Synchronization and Backup
 - Webhooks
-- Diagnóstico
+- Diagnostics
 
-### [8. Modelos de Datos Consolidados](08_ClassSphere_modelos_datos.md)
-- Usuario
-- Curso completo
-- Métrica avanzada
-- Notificación
-- Estado de sincronización
+### [8. Consolidated Data Models](08_ClassSphere_modelos_datos.md)
+- User
+- Complete course
+- Advanced metric
+- Notification
+- Synchronization status
 
-### [9. Estrategia de Testing Unificada](09_ClassSphere_testing.md)
-- Estrategia de Testing Frontend (Angular 19 + Jasmine + Karma)
-- Stack de Testing definido (Jasmine + Karma + Playwright)
-- Metodología TDD consolidada
-- Cobertura de testing requerida
-- Backend tests con testify (Go)
-- Frontend tests con Jasmine (Angular)
-- E2E tests con Playwright
-- Templates TDD estándar
-- Scripts TDD automatizados
-- Fixtures y mocks consolidados
-- **Criterios de aceptación medibles**
-- **Comandos de verificación automática**
+### [9. Unified Testing Strategy](09_ClassSphere_testing.md)
+- Frontend Testing Strategy (Angular 19 + Jasmine + Karma)
+- Defined Testing Stack (Jasmine + Karma + Playwright)
+- Consolidated TDD methodology
+- Required testing coverage
+- Backend tests with testify (Go)
+- Frontend tests with Jasmine (Angular)
+- E2E tests with Playwright
+- Standard TDD templates
+- Automated TDD scripts
+- Consolidated fixtures and mocks
+- **Measurable acceptance criteria**
+- **Automatic verification commands**
 
-### [10. Plan de Implementación Unificado](10_ClassSphere_plan_implementacion.md)
-- Metodología TDD consolidada
-- Cobertura de testing requerida
-- Implementación por fases
-- Criterios de aceptación por fase
-- Metodología de desarrollo
-- Scripts de desarrollo
-- Comandos de testing
-- Verificación de deployment
-- Templates estándar
-- Checklist de desarrollo
-- Métricas de cobertura
-- Scripts automatizados
+### [10. Unified Implementation Plan](10_ClassSphere_plan_implementacion.md)
+- Consolidated TDD methodology
+- Required testing coverage
+- Phase-based implementation
+- Acceptance criteria per phase
+- Development methodology
+- Development scripts
+- Testing commands
+- Deployment verification
+- Standard templates
+- Development checklist
+- Coverage metrics
+- Automated scripts
 
-### [11. Configuración de Deployment Unificada](11_ClassSphere_deployment.md)
-- Variables de entorno consolidadas
-- Deployment resiliente con prevención de errores
-- Docker configuration completa
-- CI/CD pipeline unificado
-- Verificación de deployment con prevención de errores
+### [11. Unified Deployment Configuration](11_ClassSphere_deployment.md)
+- **Consolidated environment variables**: JWT_SECRET, GOOGLE_CLIENT_ID, REDIS_ADDR (all critical dependencies)
+- **Resilient deployment with error prevention**: Automatic fallback mechanisms for all critical services
+- **Complete Docker configuration**: Multi-stage builds, security scanning with Trivy
+- **Unified CI/CD pipeline**: GitHub Actions with dependency validation and health checks
+- **Deployment verification with error prevention**: Health endpoints for all dependencies
+- **Dependency monitoring**: Real-time health checks for Google API, Redis, WebSocket connections
 
-### [12. Criterios de Aceptación Unificados](12_ClassSphere_criterios_aceptacion.md)
-- Backend completo
-- Frontend completo
-- Integración Google completa
-- Dashboards y visualización
-- Búsqueda y notificaciones
-- Testing y calidad
-- Accesibilidad WCAG 2.2 AA
-- CI/CD y deployment
-- Seguridad y operaciones
+### [12. Unified Acceptance Criteria](12_ClassSphere_criterios_aceptacion.md)
+- **Complete backend**: Go + Echo + JWT + OAuth with ≥80% coverage
+- **Complete frontend**: Angular 19 + TailwindCSS + RxJS with ≥80% coverage
+- **Complete Google integration**: Dual mode (mock/real), rate limiting, conflict resolution
+- **Dashboards and visualization**: Role-based dashboards, ApexCharts, D3.js, real-time updates
+- **Search and notifications**: Advanced search with filters, WebSocket notifications with polling fallback
+- **Testing and quality**: testify (backend), Jasmine + Karma (frontend), Playwright (E2E)
+- **WCAG 2.2 AA accessibility**: Keyboard navigation, screen reader, color contrast compliance
+- **CI/CD and deployment**: GitHub Actions, Docker multi-stage, Trivy security scanning
+- **Security and operations**: JWT + OAuth, RBAC, CORS, rate limiting, dependency health monitoring
+- **Dependency verification**: All critical dependencies with fallback strategies tested
 
-### [13. Validación de Coherencia Semántica](13_ClassSphere_validacion_coherencia.md)
-- Métricas de coherencia implementadas
-- Mejoras implementadas
-- Validación cross-document
-- Protocolo de validación continua
-- Beneficios de la coherencia semántica
-- Conclusión de validación
+### [13. Semantic Coherence Validation](13_ClassSphere_validacion_coherencia.md)
+- Implemented coherence metrics
+- Implemented improvements
+- Cross-document validation
+- Continuous validation protocol
+- Benefits of semantic coherence
+- Validation conclusion
 
-### [14. Conclusión](14_ClassSphere_conclusion.md)
-- Resumen ejecutivo
-- Beneficios del enfoque unificado
-- Tecnologías validadas
-- Métricas de éxito
-- Próximos pasos
+### [14. Conclusion](14_ClassSphere_conclusion.md)
+- Executive summary
+- Benefits of unified approach
+- Validated technologies
+- Success metrics
+- Next steps
 
-### [15. Errores Críticos y Prevención](15_ClassSphere_error_prevention.md)
-- Patrones de error críticos identificados en Fase 1
-- Soluciones validadas en producción
-- Comandos de verificación automática
-- Checklist de prevención de errores
-- Métricas de resolución de errores (155 minutos, 14 errores bloqueadores)
-- Patrones aplicables a futuras fases
+### [15. Critical Errors and Prevention](15_ClassSphere_error_prevention.md)
+- Critical error patterns identified in Phase 1
+- Production-validated solutions
+- Automatic verification commands
+- Error prevention checklist
+- Error resolution metrics (155 minutes, 14 blocking errors)
+- Patterns applicable to future phases
 
-### [16. Comandos de Verificación Críticos](16_ClassSphere_verification_commands.md)
-- Comandos de testing validados en producción
-- Scripts de verificación automática
-- Checklist de deployment
-- Comandos de resolución de errores
-- Verificación de cobertura de código
-- Comandos de server management
+### [16. Critical Verification Commands](16_ClassSphere_verification_commands.md)
+- Production-validated testing commands
+- Automatic verification scripts
+- Deployment checklist
+- Error resolution commands
+- Code coverage verification
+- Server management commands
 
-## Guía de Navegación
+## Navigation Guide
 
-Esta documentación está diseñada para ser consultada de manera modular. Puede seguir estos enfoques:
+This documentation is designed to be consulted in a modular way. You can follow these approaches:
 
-1. **Lectura secuencial**: Siga los documentos en orden numérico para una comprensión completa.
-2. **Consulta específica**: Acceda directamente al documento que contiene la información que necesita.
-3. **Referencias cruzadas**: Utilice los enlaces entre documentos para navegar entre conceptos relacionados.
+1. **Sequential reading**: Follow the documents in numerical order for complete understanding.
+2. **Specific query**: Access directly the document containing the information you need.
+3. **Cross-references**: Use the links between documents to navigate between related concepts.
 
-Cada documento incluye enlaces de navegación en la parte superior e inferior para facilitar el movimiento entre secciones relacionadas.
+Each document includes navigation links at the top and bottom to facilitate movement between related sections.
 
-## Optimización de Contexto
+## Context Optimization
 
-Esta estructura de documentación ha sido diseñada específicamente para optimizar el tamaño del contexto cuando se consulta. Cada archivo está enfocado en un tema específico, lo que permite:
+This documentation structure has been specifically designed to optimize context size when consulted. Each file is focused on a specific topic, which allows:
 
-1. **Consultas más eficientes**: Cargar solo la información relevante para cada consulta.
-2. **Menor pérdida de contexto**: Evitar el problema "lost-in-the-middle" al dividir la información en chunks manejables.
-3. **Referencias precisas**: Facilitar la referencia a secciones específicas sin necesidad de cargar todo el documento.
-4. **Actualizaciones modulares**: Permitir actualizar secciones específicas sin afectar al documento completo.
+1. **More efficient queries**: Load only the relevant information for each query.
+2. **Less context loss**: Avoid the "lost-in-the-middle" problem by dividing information into manageable chunks.
+3. **Precise references**: Facilitate reference to specific sections without needing to load the entire document.
+4. **Modular updates**: Allow updating specific sections without affecting the complete document.
 
 ## Key Changes in v4.0 (2025-10-07)
 
