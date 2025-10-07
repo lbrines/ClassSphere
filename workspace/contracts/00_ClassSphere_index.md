@@ -100,6 +100,7 @@ files:
 - 🐳 **Docker** multi-stage
 - 🔒 **Trivy** (security scanning)
 - 💾 **Redis** (caché compartido)
+- 🛠️ **Dev Containers** (Docker Compose multi-service, ver `workspace/extra/DEV_CONTAINERS_BEST_PRACTICES.md`)
 
 **Endpoints API Planificados**:
 - `GET /` - Welcome endpoint
@@ -177,6 +178,7 @@ files:
 - Instalación nueva Google Classroom con mocks
 - Arquitectura resiliente con prevención de errores
 - Estructura de directorios completa (desarrollo parte desde raíz /)
+- **Entorno de desarrollo con Dev Containers** (Docker Compose, paridad dev-prod)
 
 **Estructura de Directorios desde Raíz**:
 ```
@@ -228,6 +230,7 @@ files:
 - Los puertos usan siempre los **defaults**: Backend 8080, Frontend 4200
 - Arquitectura hexagonal (ports & adapters) en backend
 - Feature folders en frontend Angular
+- **Dev Containers con Docker Compose** para entorno consistente (setup automático < 15 min)
 
 ### [6. Funcionalidades Consolidadas](06_ClassSphere_funcionalidades.md)
 - Autenticación y autorización completa
