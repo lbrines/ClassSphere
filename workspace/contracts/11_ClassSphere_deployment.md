@@ -19,27 +19,27 @@ related_files:
 ```env
 # Ambiente
 ENVIRONMENT=production
-PORT=8080
+SERVER_PORT=8080  # Go + Echo default port
 
 # Database & Cache
-REDIS_URL=redis://redis:6379/0
+REDIS_ADDR=localhost:6379
 REDIS_PASSWORD=
 REDIS_DB=0
 
 # JWT & OAuth
 JWT_SECRET=production-secret-change-this
-JWT_EXPIRES_IN=24h
+JWT_ISSUER=classsphere
+JWT_EXPIRY_MINUTES=1440  # 24 hours
 GOOGLE_CLIENT_ID=your-google-client-id
 GOOGLE_CLIENT_SECRET=your-google-client-secret
-GOOGLE_REDIRECT_URL=https://your-domain.com/auth/google/callback
+GOOGLE_REDIRECT_URL=https://your-domain.com/auth/callback
+GOOGLE_CREDENTIALS_FILE=/path/to/credentials.json
 
 # Google Classroom API
-GOOGLE_API_KEY=your-google-api-key
-GOOGLE_API_SCOPES=https://www.googleapis.com/auth/classroom.courses,https://www.googleapis.com/auth/classroom.rosters
-DEFAULT_MODE=MOCK
+CLASSROOM_MODE=mock  # mock | google
 
 # CORS
-CORS_ORIGINS=https://your-domain.com
+CORS_ORIGINS=https://your-domain.com,http://localhost:4200
 CORS_ALLOW_CREDENTIALS=true
 
 # Rate Limiting
@@ -58,12 +58,13 @@ I18N_FALLBACK_LANGUAGE=en
 
 ### Frontend Angular (environment.prod.ts)
 ```typescript
+// src/environments/environment.prod.ts
 export const environment = {
   production: true,
-  apiUrl: 'https://api.your-domain.com',
+  apiUrl: 'https://api.your-domain.com/api/v1',  // Backend Go API
   wsUrl: 'wss://api.your-domain.com/ws',
   googleClientId: 'your-google-client-id',
-  defaultMode: 'MOCK',
+  defaultMode: 'mock',  // mock | google
   features: {
     accessibility: true,
     highContrast: true,
@@ -72,10 +73,12 @@ export const environment = {
   performance: {
     searchDebounceMs: 300,
     cacheTimeout: 300000
+  },
+  ports: {
+    backend: 8080,   // Go + Echo default
+    frontend: 4200   // Angular default
   }
 };
-```
-NEXT_PUBLIC_NOTIFICATION_POLL_INTERVAL=30000
 ```
 
 ## Deployment Resiliente con Prevención de Errores
@@ -405,25 +408,25 @@ echo "🚀 Deployment: Iniciando ClassSphere..."
 # Función de limpieza
 cleanup() {
     echo "🧹 Deployment: Limpieza de procesos..."
-    pkill -f uvicorn || true
-    pkill -f "port 8000" || true
+    pkill -f classsphere-backend || true
+    pkill -f "port 8080" || true
     exit 0
 }
 
 # Configurar trap para limpieza
 trap cleanup SIGINT SIGTERM
 
-# Verificar puerto 8000
-echo "🔍 Deployment: Verificando puerto 8000..."
-if lsof -Pi :8000 -sTCP:LISTEN -t >/dev/null 2>&1; then
+# Verificar puerto 8080
+echo "🔍 Deployment: Verificando puerto 8080..."
+if lsof -Pi :8080 -sTCP:LISTEN -t >/dev/null 2>&1; then
     echo "⚠️  Deployment: Puerto ocupado. Limpieza automática..."
-    pkill -f "port 8000" || true
+    pkill -f "port 8080" || true
     sleep 3
 fi
 
 # Iniciar servidor
-echo "🚀 Deployment: Iniciando servidor en puerto 8000..."
-python3 -m uvicorn src.app.main:app --host 127.0.0.1 --port 8000 &
+echo "🚀 Deployment: Iniciando servidor en puerto 8080..."
+./classsphere-backend &
 SERVER_PID=$!
 
 # Esperar inicio
@@ -433,7 +436,7 @@ sleep 5
 # Verificar health check
 echo "🔍 Deployment: Verificando health check..."
 for i in {1..5}; do
-    if curl -f http://127.0.0.1:8000/health >/dev/null 2>&1; then
+    if curl -f http://127.0.0.1:8080/health >/dev/null 2>&1; then
         echo "✅ Deployment: Servidor funcionando correctamente"
         break
     else
@@ -449,7 +452,7 @@ pgrep redis-server && echo "✅ Deployment: Redis disponible" || echo "⚠️  D
 
 echo "🎉 Deployment: ClassSphere iniciado correctamente"
 echo "📊 Deployment: PID del servidor: $SERVER_PID"
-echo "🌐 Deployment: Servidor disponible en http://127.0.0.1:8000"
+echo "🌐 Deployment: Servidor disponible en http://127.0.0.1:8080"
 
 # Mantener script corriendo
 wait $SERVER_PID
@@ -459,65 +462,89 @@ wait $SERVER_PID
 
 ### Backend Dockerfile
 ```dockerfile
-# Multi-stage build para optimizar tamaño
-FROM python:3.11.6-slim AS builder
+# Multi-stage build para optimizar tamaño (Go + Echo)
+FROM golang:1.24-alpine AS builder
 
 WORKDIR /app
-COPY requirements.txt .
-RUN pip install --no-cache-dir --user -r requirements.txt
 
-FROM python:3.11.6-slim AS production
+# Copy go mod files
+COPY go.mod go.sum ./
+RUN go mod download
 
-# Usuario no-root para seguridad
-RUN useradd -m -u 1000 appuser
-
-WORKDIR /app
-COPY --from=builder /root/.local /home/appuser/.local
+# Copy source code
 COPY . .
 
-# Cambiar ownership y cambiar a usuario no-root
-RUN chown -R appuser:appuser /app
+# Build the application
+RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o classsphere-backend ./cmd/api
+
+# Production stage
+FROM alpine:latest AS production
+
+# Install ca-certificates for HTTPS
+RUN apk --no-cache add ca-certificates curl
+
+# Usuario no-root para seguridad
+RUN adduser -D -u 1000 appuser
+
+WORKDIR /app
+
+# Copy binary from builder
+COPY --from=builder --chown=appuser:appuser /app/classsphere-backend .
+
 USER appuser
 
 # Healthcheck
 HEALTHCHECK --interval=30s --timeout=10s --retries=3 \
-    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"
+    CMD curl -f http://localhost:8080/health || exit 1
 
-EXPOSE 8000
-CMD ["python", "-m", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+EXPOSE 8080
+CMD ["./classsphere-backend"]
 ```
 
 ### Frontend Dockerfile
 ```dockerfile
-# Multi-stage build
-FROM node:18.17.1-alpine AS builder
+# Multi-stage build (Angular 19)
+FROM node:20-alpine AS builder
 
 WORKDIR /app
+
+# Copy package files
 COPY package*.json ./
-COPY pnpm-lock.yaml ./
 
-# Instalar pnpm y dependencias
-RUN npm install -g pnpm@8
-RUN pnpm install --frozen-lockfile
+# Install dependencies
+RUN npm ci --legacy-peer-deps
 
+# Copy source code
 COPY . .
-RUN pnpm run build
 
-FROM node:18.17.1-alpine AS production
+# Build Angular app for production
+RUN npm run build -- --configuration production
 
-# Usuario no-root
-RUN adduser -D -s /bin/sh -u 1000 appuser
+# Production stage with nginx
+FROM nginx:alpine AS production
 
-WORKDIR /app
-COPY --from=builder --chown=appuser:appuser /app/.next ./.next
-COPY --from=builder --chown=appuser:appuser /app/public ./public
-COPY --from=builder --chown=appuser:appuser /app/package.json ./package.json
-COPY --from=builder --chown=appuser:appuser /app/node_modules ./node_modules
+# Copy custom nginx config
+COPY nginx.conf /etc/nginx/nginx.conf
+
+# Copy built Angular app
+COPY --from=builder /app/dist/frontend/browser /usr/share/nginx/html
+
+# Create non-root user
+RUN adduser -D -u 1000 appuser && \
+    chown -R appuser:appuser /usr/share/nginx/html && \
+    chown -R appuser:appuser /var/cache/nginx && \
+    chown -R appuser:appuser /var/log/nginx && \
+    touch /var/run/nginx.pid && \
+    chown -R appuser:appuser /var/run/nginx.pid
 
 USER appuser
 
-EXPOSE 3000
-CMD ["npm", "start"]
+# Healthcheck
+HEALTHCHECK --interval=30s --timeout=10s --retries=3 \
+    CMD wget --quiet --tries=1 --spider http://localhost:4200/ || exit 1
+
+EXPOSE 4200
+CMD ["nginx", "-g", "daemon off;"]
 ```
 
 ### docker-compose.yml
@@ -526,22 +553,39 @@ version: '3.8'
 
 services:
   backend:
-    build: ./backend
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: classsphere-backend
     ports:
-      - "8000:8000"
+      - "8080:8080"  # Go + Echo default port
     environment:
-      - GOOGLE_API_KEY=your_api_key_here
-      - GOOGLE_CLIENT_ID=your_client_id_here
-      - GOOGLE_CLIENT_SECRET=your_client_secret_here
-      - REDIS_URL=redis://redis:6379/0
+      - APP_ENV=production
+      - SERVER_PORT=8080
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_ISSUER=classsphere
+      - JWT_EXPIRY_MINUTES=1440
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+      - GOOGLE_REDIRECT_URL=${GOOGLE_REDIRECT_URL}
+      - GOOGLE_CREDENTIALS_FILE=/app/credentials.json
+      - CLASSROOM_MODE=mock
+      - REDIS_ADDR=redis:6379
+      - REDIS_PASSWORD=
+      - REDIS_DB=0
+    volumes:
+      - ./credentials.json:/app/credentials.json:ro
     depends_on:
       redis:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
       interval: 30s
       timeout: 10s
       retries: 3
+      start_period: 40s
+    networks:
+      - classsphere-network
     deploy:
       resources:
         limits:
@@ -552,22 +596,31 @@ services:
           memory: 1G
 
   frontend:
-    build: ./frontend
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: classsphere-frontend
     ports:
-      - "3000:3000"
+      - "4200:4200"  # Angular default port
     environment:
-      - NEXT_PUBLIC_API_URL=http://backend:8000/api/v1
+      - API_URL=http://backend:8080/api/v1
     depends_on:
       backend:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:4200/"]
       interval: 30s
       timeout: 10s
       retries: 3
+      start_period: 40s
+    networks:
+      - classsphere-network
 
   redis:
     image: redis:7.2.3-alpine
+    container_name: classsphere-redis
+    ports:
+      - "6379:6379"
     volumes:
       - redis_data:/data
     healthcheck:
@@ -575,13 +628,17 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
+    networks:
+      - classsphere-network
+    command: redis-server --appendonly yes
+
+networks:
+  classsphere-network:
+    driver: bridge
 
 volumes:
   redis_data:
-
-secrets:
-  db_password:
-    external: true
+    driver: local
 ```
 
 ## CI/CD Pipeline Unificado
@@ -714,9 +771,9 @@ set -e
 
 echo "🔍 Deployment: Verificando servicios..."
 
-# Verificar servidor en puerto 8000
-echo "🔍 Deployment: Verificando servidor en puerto 8000..."
-if curl -f http://127.0.0.1:8000/health >/dev/null 2>&1; then
+# Verificar servidor en puerto 8080
+echo "🔍 Deployment: Verificando servidor en puerto 8080..."
+if curl -f http://127.0.0.1:8080/health >/dev/null 2>&1; then
     echo "✅ Deployment: Servidor funcionando correctamente"
 else
     echo "❌ Deployment: Servidor no responde"
@@ -730,53 +787,53 @@ pgrep redis-server && echo "✅ Deployment: Redis disponible" || echo "⚠️  D
 
 # Verificar endpoints críticos
 echo "🔍 Deployment: Verificando endpoints críticos..."
-curl -f http://127.0.0.1:8000/api/v1/health >/dev/null 2>&1 && echo "✅ Deployment: Health endpoint OK" || echo "❌ Deployment: Health endpoint falló"
-curl -f http://127.0.0.1:8000/api/v1/auth/profile >/dev/null 2>&1 && echo "✅ Deployment: Auth endpoint OK" || echo "⚠️  Deployment: Auth endpoint requiere autenticación"
+curl -f http://127.0.0.1:8080/health >/dev/null 2>&1 && echo "✅ Deployment: Health endpoint OK" || echo "❌ Deployment: Health endpoint falló"
+curl -f http://127.0.0.1:8080/api/v1/users/me >/dev/null 2>&1 && echo "✅ Deployment: Auth endpoint OK" || echo "⚠️  Deployment: Auth endpoint requiere autenticación"
 
 echo "🎉 Deployment: Verificación completada exitosamente"
 ```
 
-### 2. Verificación de Puerto 8000
+### 2. Verificación de Puerto 8080
 
-**Metodología**: Puerto 8000 como estándar de verificación obligatorio
+**Metodología**: Puerto 8080 (Go + Echo) como estándar de verificación obligatorio
 
 **Verificación de Puerto con Scripts:**
 ```bash
-# ✅ DEPLOYMENT ESTÁNDAR - Verificación de puerto 8000
+# ✅ DEPLOYMENT ESTÁNDAR - Verificación de puerto 8080
 #!/bin/bash
-# Script de verificación de puerto 8000
+# Script de verificación de puerto 8080
 set -e
 
-echo "🔍 Deployment: Verificando puerto 8000..."
+echo "🔍 Deployment: Verificando puerto 8080..."
 
 # Verificar si el puerto está en uso
-if lsof -Pi :8000 -sTCP:LISTEN -t >/dev/null 2>&1; then
-    echo "✅ Deployment: Puerto 8000 en uso"
+if lsof -Pi :8080 -sTCP:LISTEN -t >/dev/null 2>&1; then
+    echo "✅ Deployment: Puerto 8080 en uso"
     
     # Verificar que sea nuestro proceso
-    PID=$(lsof -ti :8000)
+    PID=$(lsof -ti :8080)
     PROCESS=$(ps -p $PID -o comm= 2>/dev/null || echo "unknown")
     
-    if [[ "$PROCESS" == *"uvicorn"* ]]; then
-        echo "✅ Deployment: Puerto 8000 usado por uvicorn (PID: $PID)"
+    if [[ "$PROCESS" == *"classsphere"* ]]; then
+        echo "✅ Deployment: Puerto 8080 usado por classsphere-backend (PID: $PID)"
     else
-        echo "⚠️  Deployment: Puerto 8000 usado por otro proceso: $PROCESS (PID: $PID)"
+        echo "⚠️  Deployment: Puerto 8080 usado por otro proceso: $PROCESS (PID: $PID)"
     fi
 else
-    echo "❌ Deployment: Puerto 8000 no está en uso"
+    echo "❌ Deployment: Puerto 8080 no está en uso"
     exit 1
 fi
 
 # Verificar conectividad
 echo "🔍 Deployment: Verificando conectividad..."
-if curl -f http://127.0.0.1:8000/health >/dev/null 2>&1; then
+if curl -f http://127.0.0.1:8080/health >/dev/null 2>&1; then
     echo "✅ Deployment: Conectividad OK"
 else
     echo "❌ Deployment: Sin conectividad"
     exit 1
 fi
 
-echo "🎉 Deployment: Puerto 8000 verificado correctamente"
+echo "🎉 Deployment: Puerto 8080 verificado correctamente"
 ```
 
 ## Referencias a Otros Documentos

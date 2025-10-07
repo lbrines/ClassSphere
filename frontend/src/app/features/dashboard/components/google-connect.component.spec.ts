@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { of, throwError, BehaviorSubject } from 'rxjs';
+import { BehaviorSubject, Subject, of, throwError } from 'rxjs';
 
 import { ClassroomService } from '../../../core/services/classroom.service';
 import { AuthService } from '../../../core/services/auth.service';
@@ -10,17 +10,14 @@ describe('GoogleConnectComponent', () => {
   let fixture: ComponentFixture<GoogleConnectComponent>;
   let authService: jasmine.SpyObj<AuthService>;
   let classroomService: jasmine.SpyObj<ClassroomService>;
-
-  const modeSubject = new BehaviorSubject<'mock' | 'google'>('mock');
-
-  class ClassroomServiceStub {
-    readonly mode$ = modeSubject.asObservable();
-  }
+  let modeSubject: BehaviorSubject<'mock' | 'google'>;
+  let openSpy: jasmine.Spy<(url?: string, target?: string) => Window | null>;
 
   beforeEach(async () => {
+    modeSubject = new BehaviorSubject<'mock' | 'google'>('mock');
     authService = jasmine.createSpyObj<AuthService>('AuthService', ['startOAuth']);
     classroomService = jasmine.createSpyObj<ClassroomService>('ClassroomService', [], {
-      mode$: modeSubject.asObservable()
+      mode$: modeSubject.asObservable(),
     });
 
     authService.startOAuth.and.returnValue(of({ state: 'state', url: 'https://accounts.google.com' }));
@@ -33,6 +30,7 @@ describe('GoogleConnectComponent', () => {
       ],
     }).compileComponents();
 
+    openSpy = spyOn(window, 'open').and.returnValue(null);
     fixture = TestBed.createComponent(GoogleConnectComponent);
     fixture.detectChanges();
   });
@@ -44,7 +42,7 @@ describe('GoogleConnectComponent', () => {
   it('should display mock mode message when mode is mock', () => {
     const compiled = fixture.nativeElement as HTMLElement;
     const mockElement = compiled.querySelector('h3');
-    expect(mockElement?.textContent).toContain('Mock data active');
+    expect(mockElement?.textContent?.trim()).toBe('Mock data active');
   });
 
   it('should display google mode message when mode is google', () => {
@@ -57,7 +55,7 @@ describe('GoogleConnectComponent', () => {
   });
 
   it('should initiate OAuth flow on connect', () => {
-    const openSpy = spyOn(window, 'open');
+    openSpy.calls.reset();
     const button = fixture.debugElement.query(By.css('button'));
     button.triggerEventHandler('click', new Event('click'));
     expect(authService.startOAuth).toHaveBeenCalled();
@@ -68,7 +66,7 @@ describe('GoogleConnectComponent', () => {
     const component = fixture.componentInstance;
     component.connecting = true;
 
-    const openSpy = spyOn(window, 'open');
+    openSpy.calls.reset();
     const button = fixture.debugElement.query(By.css('button'));
     button.triggerEventHandler('click', new Event('click'));
 
@@ -112,20 +110,22 @@ describe('GoogleConnectComponent', () => {
   });
 
   it('should handle multiple rapid clicks gracefully', () => {
+    const oauthSubject = new Subject<{ state: string; url: string }>();
+    authService.startOAuth.and.returnValue(oauthSubject.asObservable());
+
     const button = fixture.debugElement.query(By.css('button'));
-
-    // First click
     button.triggerEventHandler('click', new Event('click'));
+    button.triggerEventHandler('click', new Event('click'));
+
     expect(authService.startOAuth).toHaveBeenCalledTimes(1);
 
-    // Second rapid click should be ignored due to connecting flag
-    button.triggerEventHandler('click', new Event('click'));
-    expect(authService.startOAuth).toHaveBeenCalledTimes(1);
+    oauthSubject.next({ state: 'state', url: 'https://accounts.google.com' });
+    oauthSubject.complete();
   });
 
   it('should handle OAuth with different URLs', () => {
     authService.startOAuth.and.returnValue(of({ state: 'state123', url: 'https://custom-oauth.example.com' }));
-    const openSpy = spyOn(window, 'open');
+    openSpy.calls.reset();
 
     const button = fixture.debugElement.query(By.css('button'));
     button.triggerEventHandler('click', new Event('click'));

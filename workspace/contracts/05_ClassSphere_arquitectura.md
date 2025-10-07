@@ -374,9 +374,9 @@ export class AuthService {
 
 ## Arquitectura de Servicios con Prevención de Errores
 
-### 1. Servicios Resilientes con Puerto 8000
+### 1. Servicios Resilientes con Puerto 8080
 
-**Metodología**: Todos los servicios usan puerto 8000 como estándar arquitectónico
+**Metodología**: Todos los servicios usan puerto 8080 (Go + Echo) como estándar arquitectónico
 
 **Arquitectura de Servicios Backend (Go + Echo):**
 ```go

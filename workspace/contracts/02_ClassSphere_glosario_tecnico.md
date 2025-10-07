@@ -43,10 +43,10 @@ class BaseAPIException(Exception):
 **Definición**: Metodología integral para prevenir errores comunes en desarrollo, incluyendo AsyncMock, CORS, warnings de deprecación y limpieza automática.
 
 **Componentes**:
-- AsyncMock para métodos async
-- Tests simplificados de CORS
+- testify/mock para métodos mock en Go
+- Tests simplificados de CORS con Echo
 - Migración automática de APIs deprecadas
-- Puerto 8000 como estándar arquitectónico
+- Puerto 8080 (Go + Echo) como estándar arquitectónico
 - Limpieza automática de procesos
 
 ### **Work Plan Development Rules (LLM 2024-2025)**
@@ -163,19 +163,27 @@ Notificaciones:
 
 ## Arquitectura Semántica Simplificada
 
-### **Puerto 8000 - Estándar Arquitectónico**
-**Definición**: Puerto fijo obligatorio para el backend como estándar arquitectónico.
+### **Puerto 8080 - Estándar Arquitectónico**
+**Definición**: Puerto fijo obligatorio para el backend Go + Echo como estándar arquitectónico.
 
 **Implementación**:
-```python
-# Servidor siempre en puerto 8000
-if __name__ == "__main__":
-    uvicorn.run(
-        "src.app.main:app",
-        host="127.0.0.1",
-        port=8000,  # Puerto fijo arquitectónico
-        reload=True
-    )
+```go
+// Servidor siempre en puerto 8080 (Go + Echo standard)
+package main
+
+import (
+    "github.com/labstack/echo/v4"
+)
+
+func main() {
+    e := echo.New()
+    
+    // Routes
+    e.GET("/health", healthHandler)
+    
+    // Start server on port 8080 (architectural standard)
+    e.Logger.Fatal(e.Start(":8080"))
+}
 ```
 
 ### **Pydantic v2 - Migración Automática**
