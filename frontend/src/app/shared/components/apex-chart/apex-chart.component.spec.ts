@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { SimpleChange } from '@angular/core';
+import { ApexOptions } from 'apexcharts';
 
 import { ChartData } from '../../../core/models/classroom.model';
 import { ApexChartComponent } from './apex-chart.component';
@@ -7,15 +8,6 @@ import { ApexChartComponent } from './apex-chart.component';
 describe('ApexChartComponent', () => {
   let fixture: ComponentFixture<ApexChartComponent>;
   let component: ApexChartComponent;
-
-  beforeEach(async () => {
-    await TestBed.configureTestingModule({
-      imports: [ApexChartComponent],
-    }).compileComponents();
-
-    fixture = TestBed.createComponent(ApexChartComponent);
-    component = fixture.componentInstance;
-  });
 
   const sampleChart: ChartData = {
     id: 'sample',
@@ -33,33 +25,52 @@ describe('ApexChartComponent', () => {
     categories: ['Week 1', 'Week 2'],
   };
 
-  it('creates a chart instance on render', async () => {
-    const mockInstance = {
-      render: jasmine.createSpy('render').and.returnValue(Promise.resolve()),
-      updateOptions: jasmine.createSpy('updateOptions').and.returnValue(Promise.resolve()),
-      destroy: jasmine.createSpy('destroy'),
-    };
+  const createMockInstance = () => ({
+    render: jasmine.createSpy('render').and.returnValue(Promise.resolve()),
+    updateOptions: jasmine.createSpy('updateOptions').and.returnValue(Promise.resolve()),
+    destroy: jasmine.createSpy('destroy'),
+  });
 
-    const createSpy = spyOn(component as unknown as { createChart: typeof component['createChart'] }, 'createChart').and.returnValue(mockInstance as never);
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [ApexChartComponent],
+    }).compileComponents();
 
-    component.chart = sampleChart;
+    fixture = TestBed.createComponent(ApexChartComponent);
+    component = fixture.componentInstance;
+  });
+
+  function renderWith(chart: ChartData) {
+    const mockInstance = createMockInstance();
+    let capturedOptions: ApexOptions | undefined;
+
+    const createSpy = spyOn(component as unknown as { createChart: typeof component['createChart'] }, 'createChart').and.callFake(
+      (_element: HTMLElement, options: ApexOptions) => {
+        capturedOptions = options;
+        return mockInstance as never;
+      },
+    );
+
+    component.chart = chart;
     fixture.detectChanges();
+
+    return { mockInstance, createSpy, capturedOptions };
+  }
+
+  it('creates a chart instance with standard options on render', () => {
+    const { mockInstance, createSpy, capturedOptions } = renderWith(sampleChart);
 
     expect(createSpy).toHaveBeenCalled();
     expect(mockInstance.render).toHaveBeenCalled();
+    expect(capturedOptions?.xaxis).toEqual(
+      jasmine.objectContaining({
+        categories: ['Week 1', 'Week 2'],
+      }),
+    );
   });
 
-  it('updates chart options when input changes', async () => {
-    const mockInstance = {
-      render: jasmine.createSpy('render').and.returnValue(Promise.resolve()),
-      updateOptions: jasmine.createSpy('updateOptions').and.returnValue(Promise.resolve()),
-      destroy: jasmine.createSpy('destroy'),
-    };
-
-    spyOn(component as unknown as { createChart: typeof component['createChart'] }, 'createChart').and.returnValue(mockInstance as never);
-
-    component.chart = sampleChart;
-    fixture.detectChanges();
+  it('updates chart options when input changes', () => {
+    const { mockInstance } = renderWith(sampleChart);
 
     const updatedChart: ChartData = {
       ...sampleChart,
@@ -79,98 +90,102 @@ describe('ApexChartComponent', () => {
       chart: new SimpleChange(sampleChart, updatedChart, false),
     });
 
-    expect(mockInstance.updateOptions).toHaveBeenCalled();
+    expect(mockInstance.updateOptions).toHaveBeenCalledWith(jasmine.any(Object), true, true);
   });
 
-  it('handles chart without categories', () => {
+  it('skips render when chart input is missing', () => {
+    const createSpy = spyOn(component as unknown as { createChart: typeof component['createChart'] }, 'createChart');
+    fixture.detectChanges();
+
+    expect(createSpy).not.toHaveBeenCalled();
+  });
+
+  it('skips update when no chart instance exists yet', () => {
+    const buildOptionsSpy = spyOn(component as any, 'buildOptions').and.callThrough();
+
+    component.chart = sampleChart;
+    component.ngOnChanges({
+      chart: new SimpleChange(sampleChart, sampleChart, false),
+    });
+
+    expect(buildOptionsSpy).not.toHaveBeenCalled();
+  });
+
+  it('builds donut chart options with aggregated labels and series', () => {
+    const donutChart: ChartData = {
+      ...sampleChart,
+      type: 'donut',
+      series: [
+        {
+          name: 'Status',
+          data: [
+            { x: 'Completed', y: 30 },
+            { x: 'Pending', y: 70 },
+          ],
+        },
+      ],
+      categories: undefined,
+    };
+
+    const { capturedOptions } = renderWith(donutChart);
+
+    expect(capturedOptions?.chart?.type).toBe('donut');
+    expect(capturedOptions?.labels).toEqual(['Completed', 'Pending']);
+    expect(capturedOptions?.series).toEqual([30, 70]);
+  });
+
+  it('builds fallback x-axis config when categories are missing', () => {
     const chartWithoutCategories: ChartData = {
       ...sampleChart,
       categories: undefined,
     };
 
-    component.chart = chartWithoutCategories;
-    expect(component.chart.categories).toBeUndefined();
+    const { capturedOptions } = renderWith(chartWithoutCategories);
+
+    expect(capturedOptions?.xaxis).toEqual(
+      jasmine.objectContaining({
+        labels: jasmine.objectContaining({
+          style: jasmine.objectContaining({ colors: '#cbd5f5' }),
+        }),
+      }),
+    );
+    expect((capturedOptions?.xaxis as { categories?: unknown }).categories).toBeUndefined();
   });
 
-  it('handles chart with multiple series', () => {
-    const multiSeriesChart: ChartData = {
-      ...sampleChart,
-      series: [
-        {
-          name: 'Series 1',
-          data: [{ x: 'A', y: 10 }, { x: 'B', y: 20 }],
-        },
-        {
-          name: 'Series 2',
-          data: [{ x: 'A', y: 15 }, { x: 'B', y: 25 }],
-        },
-      ],
-    };
-
-    component.chart = multiSeriesChart;
-    expect(component.chart.series).toHaveSize(2);
-  });
-
-  it('handles different chart types', () => {
-    const lineChart: ChartData = {
-      ...sampleChart,
-      type: 'line',
-    };
-
-    component.chart = lineChart;
-    expect(component.chart.type).toBe('line');
-
+  it('uses gradient fill and smooth stroke for area charts', () => {
     const areaChart: ChartData = {
       ...sampleChart,
       type: 'area',
     };
 
-    component.chart = areaChart;
-    expect(component.chart.type).toBe('area');
+    const { capturedOptions } = renderWith(areaChart);
+
+    expect(capturedOptions?.stroke).toEqual(jasmine.objectContaining({ curve: 'smooth' }));
+    expect(capturedOptions?.fill).toEqual(jasmine.objectContaining({ type: 'gradient' }));
   });
 
-  it('handles empty series gracefully', () => {
-    const emptySeriesChart: ChartData = {
-      ...sampleChart,
-      series: [],
-    };
-
-    component.chart = emptySeriesChart;
-    expect(component.chart.series).toEqual([]);
-  });
-
-  it('destroys chart on component destroy', () => {
-    const mockInstance = {
-      render: jasmine.createSpy('render').and.returnValue(Promise.resolve()),
-      updateOptions: jasmine.createSpy('updateOptions').and.returnValue(Promise.resolve()),
-      destroy: jasmine.createSpy('destroy'),
-    };
-
-    spyOn(component as unknown as { createChart: typeof component['createChart'] }, 'createChart').and.returnValue(mockInstance as never);
-
-    component.chart = sampleChart;
-    fixture.detectChanges();
+  it('destroys the chart instance on component destroy', () => {
+    const { mockInstance } = renderWith(sampleChart);
 
     component.ngOnDestroy();
 
     expect(mockInstance.destroy).toHaveBeenCalled();
   });
 
-  it('handles chart creation errors gracefully', async () => {
+  it('propagates chart creation errors', () => {
     spyOn(component as unknown as { createChart: typeof component['createChart'] }, 'createChart').and.throwError('Chart creation failed');
 
     component.chart = sampleChart;
 
-    // Should throw error when chart creation fails
-    expect(() => {
-      fixture.detectChanges();
-    }).toThrowError('Chart creation failed');
+    expect(() => fixture.detectChanges()).toThrowError('Chart creation failed');
   });
 
-  it('handles chart update errors gracefully', () => {
+  it('propagates chart update errors', () => {
     const mockInstance = {
       render: jasmine.createSpy('render').and.returnValue(Promise.resolve()),
-      updateOptions: jasmine.createSpy('updateOptions').and.throwError('Update failed'),
+      updateOptions: jasmine.createSpy('updateOptions').and.callFake(() => {
+        throw new Error('Update failed');
+      }),
       destroy: jasmine.createSpy('destroy'),
     };
 
@@ -186,11 +201,10 @@ describe('ApexChartComponent', () => {
 
     component.chart = updatedChart;
 
-    // Should handle error when update fails
-    expect(() => {
+    expect(() =>
       component.ngOnChanges({
         chart: new SimpleChange(sampleChart, updatedChart, false),
-      });
-    }).toThrow();
+      }),
+    ).toThrowError('Update failed');
   });
 });
