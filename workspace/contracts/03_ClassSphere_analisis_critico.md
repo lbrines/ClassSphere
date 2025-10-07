@@ -1,7 +1,9 @@
 ---
-title: "ClassSphere - Análisis Críticos del Sistema"
-version: "2.6"
+title: "ClassSphere - System Critical Analysis"
+version: "4.0"
 type: "documentation"
+language: "English (Mandatory)"
+date: "2025-10-07"
 related_files:
   - "00_ClassSphere_index.md"
   - "02_ClassSphere_glosario_tecnico.md"

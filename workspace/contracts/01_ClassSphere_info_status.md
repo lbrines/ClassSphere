@@ -1,7 +1,9 @@
 ---
-title: "ClassSphere - Información del Proyecto y Estado Actual"
-version: "3.0"
+title: "ClassSphere - Project Information and Current Status"
+version: "4.0"
 type: "documentation"
+language: "English (Mandatory)"
+date: "2025-10-07"
 related_files:
   - "00_ClassSphere_index.md"
   - "02_ClassSphere_glosario_tecnico.md"

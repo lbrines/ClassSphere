@@ -1,7 +1,9 @@
 ---
-title: "ClassSphere - Modelos de Datos Consolidados"
-version: "2.6"
+title: "ClassSphere - Consolidated Data Models"
+version: "4.0"
 type: "documentation"
+language: "English (Mandatory)"
+date: "2025-10-07"
 related_files:
   - "00_ClassSphere_index.md"
   - "07_ClassSphere_api_endpoints.md"

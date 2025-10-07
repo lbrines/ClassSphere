@@ -1,7 +1,9 @@
 ---
-title: "ClassSphere - Estrategia de Testing Unificada"
-version: "3.0"
+title: "ClassSphere - Unified Testing Strategy"
+version: "4.0"
 type: "documentation"
+language: "English (Mandatory)"
+date: "2025-10-07"
 related_files:
   - "00_ClassSphere_index.md"
   - "08_ClassSphere_modelos_datos.md"

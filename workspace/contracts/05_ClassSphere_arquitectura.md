@@ -1,7 +1,8 @@
 ---
-title: "ClassSphere - Arquitectura del Sistema Unificado"
-version: "3.0"
+title: "ClassSphere - Unified System Architecture"
+version: "4.0"
 type: "documentation"
+language: "English (Mandatory)"
 related_files:
   - "00_ClassSphere_index.md"
   - "04_ClassSphere_objetivos.md"
@@ -324,11 +325,14 @@ export class AuthService {
 │   │   │   ├── search.types.ts               # Stage 3
 │   │   │   ├── notification.types.ts         # Stage 3
 │   │   │   └── chart.types.ts                # Stage 3
-│   │   ├── i18n/
-│   │   │   ├── config.ts
-│   │   │   ├── locales/
-│   │   │   │   └── en.json
-│   │   │   └── types.ts
+│   │   ├── i18n/                             # Stage 1
+│   │   │   ├── config.ts                     # i18n configuration
+│   │   │   ├── locales/                      # Translation files
+│   │   │   │   ├── en.json                   # English (default, mandatory)
+│   │   │   │   ├── es.json                   # Spanish (optional, future)
+│   │   │   │   └── fr.json                   # French (optional, future)
+│   │   │   ├── types.ts                      # i18n TypeScript types
+│   │   │   └── README.md                     # i18n implementation guide (English)
 │   │   ├── providers/
 │   │   │   └── QueryProvider.tsx
 │   │   └── styles/

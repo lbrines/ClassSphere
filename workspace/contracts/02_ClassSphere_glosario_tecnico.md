@@ -1,7 +1,9 @@
 ---
-title: "ClassSphere - Glosario Técnico Unificado"
-version: "2.6"
+title: "ClassSphere - Unified Technical Glossary"
+version: "4.0"
 type: "documentation"
+language: "English (Mandatory)"
+date: "2025-10-07"
 related_files:
   - "00_ClassSphere_index.md"
   - "01_ClassSphere_info_status.md"
@@ -97,22 +99,32 @@ Template Obligatorio:
 
 ## Terminología Estándar Unificada
 
-### **Estándar por Capa**
+### **Standard by Layer**
 ```
-API Layer (Backend): Inglés obligatorio
+API Layer (Backend): English MANDATORY
 ├── User, Course, Assignment, Grade, Notification
 ├── UserRole, CourseStatus, AssignmentType
 └── API endpoints, response schemas, error codes
 
-UI Layer (Frontend): Inglés estandarizado
+UI Layer (Frontend): English MANDATORY
 ├── User, Course, Assignment, Grade, Notification
 ├── UserRole, CourseStatus, AssignmentType
 └── Components, hooks, services
+└── UI Text: English (Default with i18n support from Phase 1)
 
-Documentación: Español con términos técnicos en inglés
-├── User: Entidad que representa a una persona en el sistema
-├── UserRole: Enum que define los tipos de usuario (Admin, Teacher, Student)
-└── Referencias cruzadas a implementaciones técnicas
+Documentation: English MANDATORY
+├── All technical documentation in English
+├── All code comments in English
+├── All commit messages in English
+├── All README files in English
+└── User-facing content: English default with i18n extensibility
+
+Code: English MANDATORY
+├── Variable names in English
+├── Function names in English
+├── Class names in English
+├── File names in English
+└── All identifiers in English
 ```
 
 ### **Estados con Prefijos Semánticos**

@@ -1,7 +1,9 @@
 ---
-title: "ClassSphere - Funcionalidades Consolidadas"
-version: "2.6"
+title: "ClassSphere - Consolidated Functionalities"
+version: "4.0"
 type: "documentation"
+language: "English (Mandatory)"
+date: "2025-10-07"
 related_files:
   - "00_ClassSphere_index.md"
   - "05_ClassSphere_arquitectura.md"

@@ -1,7 +1,8 @@
 ---
-title: "ClassSphere - Plan de Implementación Unificado"
-version: "3.0"
+title: "ClassSphere - Unified Implementation Plan"
+version: "4.0"
 type: "documentation"
+language: "English (Mandatory)"
 related_files:
   - "00_ClassSphere_index.md"
   - "09_ClassSphere_testing.md"
@@ -49,91 +50,155 @@ Todo el sistema sigue **Test-Driven Development** estricto con **Prevención de 
 
 ## Orden de Implementación (15-20 semanas)
 
-### Fase 1: Capacitación (2-3 semanas)
+### Phase 1: Training (2-3 weeks)
 
-**Semana 1-2: Go + Echo**
-- Fundamentos de Go
+**Week 1-2: Go + Echo**
+- Go fundamentals
 - Echo framework
-- testify para testing
-- Proof of Concept API REST
+- testify for testing
+- Proof of Concept REST API
+- **i18n Setup**: English default translations, i18n structure
 
-**Semana 2-3: Angular 19**
-- Fundamentos de Angular
-- esbuild y Vite
+**Week 2-3: Angular 19**
+- Angular fundamentals
+- esbuild and Vite
 - Jasmine + Karma
-- Proof of Concept componentes
+- Proof of Concept components
+- **i18n Integration**: Angular i18n module, translation pipes
 
-### Fase 2: Backend Go (4-6 semanas)
+**Phase 1 Documentation Deliverable**:
+- 📝 Minimum Status Document (English):
+  - Technologies implemented
+  - i18n configuration status
+  - Code coverage metrics
+  - Known issues and resolutions
+  - Next phase prerequisites
 
-**Semanas 1-2: Autenticación**
-- JWT con Echo middleware
+### Phase 2: Go Backend (4-6 weeks)
+
+**Weeks 1-2: Authentication**
+- JWT with Echo middleware
 - OAuth 2.0 Google
-- Tests con testify
-- Redis para sesiones
+- Tests with testify
+- Redis for sessions
+- **i18n**: Error messages in English
 
-**Semanas 3-4: Sistema de Roles**
-- Middleware de autorización
+**Weeks 3-4: Role System**
+- Authorization middleware
 - Rate limiting
 - CORS configuration
-- Tests de integración
+- Integration tests
+- **i18n**: Role names and descriptions in English
 
-**Semanas 5-6: Google Classroom API**
-- Integración con Google API
-- Modo dual (Mock/Real)
-- Endpoints dashboard por rol
-- Tests con mocks
+**Weeks 5-6: Google Classroom API**
+- Google API integration
+- Dual mode (Mock/Real)
+- Dashboard endpoints per role
+- Tests with mocks
+- **i18n**: API response messages in English
 
-### Fase 3: Frontend Angular (3-5 semanas)
+**Phase 2 Documentation Deliverable**:
+- 📝 Minimum Status Document (English):
+  - Backend endpoints implemented
+  - Authentication flow status
+  - Google Classroom integration status
+  - Test coverage metrics
+  - Performance benchmarks
+  - Known issues and resolutions
 
-**Semanas 1-2: Componentes Base**
+### Phase 3: Angular Frontend (3-5 weeks)
+
+**Weeks 1-2: Base Components**
 - LoginForm component
 - AuthGuard service
 - Routing configuration
-- Tests con Jasmine
+- Tests with Jasmine
+- **i18n**: UI text in English, translation keys setup
 
-**Semanas 3-4: Dashboards por Rol**
+**Weeks 3-4: Role-Based Dashboards**
 - AdminDashboard component
 - CoordinatorDashboard component
 - TeacherDashboard component
 - StudentDashboard component
-- Tests de componentes
+- Component tests
+- **i18n**: Dashboard labels in English, extensible translations
 
-**Semana 5: Integración Backend**
-- Angular services para API
+**Week 5: Backend Integration**
+- Angular services for API
 - RxJS observables
 - Error handling
-- Tests de integración
+- Integration tests
+- **i18n**: Error messages in English with i18n support
 
-### Fase 4: Testing Completo (3-4 semanas)
+**Phase 3 Documentation Deliverable**:
+- 📝 Minimum Status Document (English):
+  - Frontend components implemented
+  - i18n integration status
+  - UI/UX accessibility status
+  - Test coverage metrics
+  - Browser compatibility
+  - Known issues and resolutions
 
-**Semanas 1-2: Tests Unitarios**
+### Phase 4: Complete Testing (3-4 weeks)
+
+**Weeks 1-2: Unit Tests**
 - Backend: testify coverage ≥80%
 - Frontend: Jasmine coverage ≥80%
-- Refactoring basado en tests
+- Test-based refactoring
+- **i18n**: Test translation coverage
 
-**Semanas 3-4: Tests E2E**
+**Weeks 3-4: E2E Tests**
 - Playwright setup
-- Flujos críticos (login, OAuth, dashboards)
-- Tests cross-browser
+- Critical flows (login, OAuth, dashboards)
+- Cross-browser tests
 - Performance testing
+- **i18n**: Multi-language E2E tests (English primary)
 
-### Fase 5: Deployment (2-3 semanas)
+**Phase 4 Documentation Deliverable**:
+- 📝 Minimum Status Document (English):
+  - Test coverage summary
+  - E2E test results
+  - Performance benchmarks
+  - Accessibility audit results
+  - Security scan results
+  - Known issues and resolutions
 
-**Semanas 1-2: Configuración**
-- Dockerfile para Go
-- Dockerfile para Angular
+### Phase 5: Deployment (2-3 weeks)
+
+**Weeks 1-2: Configuration**
+- Dockerfile for Go
+- Dockerfile for Angular
 - Docker Compose
 - GitHub Actions workflows
+- **i18n**: Production translation assets
 
-**Semana 3: Producción**
-- Deployment a producción
+**Week 3: Production**
+- Production deployment
 - Monitoring setup
-- Security scanning con Trivy
-- Documentación final
-- Tests de integración completa
-- Validación modo dual
+- Security scanning with Trivy
+- Complete integration tests
+- Dual mode validation
 - Performance tuning
-- Documentación Google
+- **i18n**: Language switching validation
+
+**Phase 5 Documentation Deliverable**:
+- 📝 Minimum Status Document (English):
+  - Deployment configuration
+  - CI/CD pipeline status
+  - Production environment status
+  - Monitoring and alerting setup
+  - Security posture
+  - Known issues and resolutions
+
+**📚 FINAL COMPLETE DOCUMENTATION** (Created after all phases):
+- 📖 Complete System Architecture (English)
+- 📖 Complete API Documentation (English)
+- 📖 Complete User Guide (English with i18n support)
+- 📖 Complete Developer Guide (English)
+- 📖 Complete Operations Runbook (English)
+- 📖 Complete i18n Implementation Guide (English)
+- 📖 Lessons Learned and Best Practices (English)
+- 📖 Future Roadmap and Enhancements (English)
 
 ### Fase 3: Visualización Avanzada (8-10 días)
 
@@ -191,8 +256,8 @@ Todo el sistema sigue **Test-Driven Development** estricto con **Prevención de 
 
 ### Fase 1 - Fundaciones (En Progreso - 5/12 días completados)
 
-- [x] Backend: FastAPI + JWT + OAuth funcionando ✅
-- [ ] Frontend: Next.js + Auth + Layout responsivo (Pendiente - Día 7)
+- [x] Backend: Go 1.21+ + Echo + JWT + OAuth functioning ✅
+- [ ] Frontend: Angular 19 + Auth + Responsive layout (Pending - Day 7)
 - [x] Testing: ≥80% cobertura + CI básico ✅
 - [ ] Integration: Frontend-Backend comunicación (Pendiente - Día 10)
 - [x] Error Prevention: AsyncMock + CORS tests + Server health + Test Error Resolution Protocols ✅
@@ -200,25 +265,25 @@ Todo el sistema sigue **Test-Driven Development** estricto con **Prevención de 
 **Patterns de Prevención Aplicados:**
 - [x] Pattern 1: ConfigDict imports validados ✅
 - [x] Pattern 4: AsyncMock en tests backend ✅
-- [ ] Pattern 2: Next.js config limpio (Pendiente - Día 6)
+- [ ] Pattern 2: Angular config clean (Pending - Day 6)
 - [ ] Pattern 3: Zod schemas validados (Pendiente - Día 4)
 - [ ] Pattern 5: Frontend mocks comprehensivos (Pendiente - Día 7)
 - [ ] Pattern 6: E2E tests completos (Pendiente - Día 10)
 
 #### Checklist de Implementación Obligatoria:
 - [ ] **OAuth Integration**: useAuth.getGoogleAuthUrl() → /api/auth/oauth/google → OAuthButton funcional
-- [ ] **React Query Usage**: useQuery(checkAuth) + useMutation(login/logout) implementado en useAuth
+- [ ] **RxJS Usage**: Observables for auth state + HTTP calls implemented in AuthService
 - [ ] **Role-Based Dashboard**: Componentes específicos AdminDashboard, CoordinatorDashboard, TeacherDashboard, StudentDashboard
 - [ ] **Frontend-Backend Mapping**: Documentación explícita de cada endpoint → hook → componente
 - [ ] **Test Coverage**: Backend ≥80%, Frontend ≥80%, Critical modules ≥95%
 - [ ] **Verification Commands**: Comandos automáticos para validar cada funcionalidad
 
-**Detalles de Implementación Completada**:
-- ✅ **Backend Completo**: FastAPI 0.104.1 + Pydantic v2 + JWT + OAuth 2.0 Google
-- ✅ **Autenticación Robusta**: JWT tokens + refresh rotation + password hashing con bcrypt
-- ✅ **OAuth 2.0 Google**: PKCE + State validation + integración completa
-- ✅ **Sistema de Roles**: admin > coordinator > teacher > student con middleware
-- ✅ **Infraestructura**: Redis caché + puerto 8000 fijo + health checks
+**Implementation Details Completed**:
+- ✅ **Backend Complete**: Go 1.21+ + Echo v4 + JWT + OAuth 2.0 Google
+- ✅ **Robust Authentication**: JWT tokens + refresh rotation + password hashing with bcrypt
+- ✅ **OAuth 2.0 Google**: PKCE + State validation + complete integration
+- ✅ **Role System**: admin > coordinator > teacher > student with middleware
+- ✅ **Infrastructure**: Redis cache + port 8080 fixed + health checks
 - ✅ **Testing**: 78 tests unitarios + cobertura 100% + AsyncMock + timeouts
 - ✅ **CI/CD**: GitHub Actions + linting + type checking + security scanning
 - ✅ **Error Prevention**: AsyncMock + CORS + warnings deprecación + limpieza automática
@@ -293,11 +358,11 @@ Todo el sistema sigue **Test-Driven Development** estricto con **Prevención de 
 - Context managers: Tests completos
 - Error paths: Tests para todos los `try/except`
 
-### Puerto 8000 Obligatorio
-- Servidor siempre en puerto 8000
-- Scripts de limpieza automática
-- Verificación de puerto en CI/CD
-- Documentación de puerto fijo
+### Port 8080 Mandatory (Go Standard)
+- Server always on port 8080
+- Automatic cleanup scripts
+- Port verification in CI/CD
+- Fixed port documentation
 
 ### Lifespan Resiliente
 - Servicios externos opcionales
@@ -324,7 +389,7 @@ Todo el sistema sigue **Test-Driven Development** estricto con **Prevención de 
     "last_updated": "2025-01-XX XX:XX:XX",
     "tests_passed": 233,
     "coverage_percentage": 100,
-    "health_endpoint": "http://localhost:8000/health",
+    "health_endpoint": "http://localhost:8080/health",
     "server_running": true,
     "quality_gates": {
       "day_1": "completed",
@@ -346,7 +411,7 @@ Todo el sistema sigue **Test-Driven Development** estricto con **Prevención de 
     "tmux_sessions": {
       "active_sessions": ["tdd-dev", "classsphere-frontend"],
       "context_monitoring": true,
-      "health_checks": ["backend:8000", "frontend:3000"]
+      "health_checks": ["backend:8080", "frontend:4200"]
     }
   }
   ```
@@ -387,16 +452,16 @@ echo "🧹 Limpieza de procesos anteriores..."
 pkill -f uvicorn || true
 sleep 2
 
-echo "🔍 Verificación de puerto 8000..."
-if lsof -Pi :8000 -sTCP:LISTEN -t >/dev/null 2>&1; then
-    echo "⚠️  Puerto ocupado. Limpieza automática..."
-    log_error_solution "PORT_OCCUPIED" "kill_process_and_retry" "resolved" "development" "Puerto 8000 ocupado, aplicando limpieza automática"
-    pkill -f "port 8000" || true
+echo "🔍 Port 8080 verification..."
+if lsof -Pi :8080 -sTCP:LISTEN -t >/dev/null 2>&1; then
+    echo "⚠️  Port busy. Automatic cleanup..."
+    log_error_solution "PORT_OCCUPIED" "kill_process_and_retry" "resolved" "development" "Port 8080 busy, applying automatic cleanup"
+    pkill -f "port 8080" || true
     sleep 3
 fi
 
-echo "🚀 Iniciando servidor en puerto 8000..."
-python3 -m uvicorn src.app.main:app --host 127.0.0.1 --port 8000
+echo "🚀 Starting server on port 8080..."
+./classsphere-backend
 ```
 
 ### Script de Verificación
@@ -424,10 +489,10 @@ EOF
 )
 
 echo "🔍 Verificando servidor..."
-if curl -f http://127.0.0.1:8000/health; then
-    echo "✅ Servidor verificado correctamente"
+if curl -f http://127.0.0.1:8080/health; then
+    echo "✅ Server verified correctly"
 else
-    log_error_solution "SERVER_HEALTH_CHECK_FAILED" "restart_server" "failed" "verification" "Health check falló en puerto 8000"
+    log_error_solution "SERVER_HEALTH_CHECK_FAILED" "restart_server" "failed" "verification" "Health check failed on port 8080"
     exit 1
 fi
 
@@ -520,23 +585,26 @@ npm run test:integration
 npm run test:e2e
 ```
 
-### Configuración en package.json
+### Configuration in package.json (Angular)
 ```json
 {
-  "//": "Testing stack definido: Vitest + Playwright. No agregar Jest.",
+  "//": "Testing stack defined: Jasmine + Karma + Playwright. Angular standard.",
   "scripts": {
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "test:integration": "vitest run --config vitest.integration.config.ts",
+    "test": "ng test",
+    "test:watch": "ng test --watch",
+    "test:coverage": "ng test --code-coverage",
     "test:e2e": "playwright test"
   },
   "devDependencies": {
-    "vitest": "^2.1.3",
-    "@testing-library/react": "^16.1.0",
-    "@testing-library/jest-dom": "^6.6.3",
+    "@angular/cli": "^19.0.0",
+    "jasmine-core": "~5.1.0",
+    "karma": "~6.4.0",
+    "karma-jasmine": "~5.1.0",
+    "karma-chrome-launcher": "~3.2.0",
+    "karma-coverage": "~2.2.0",
     "@playwright/test": "^1.48.2"
   },
-  "// jest": "🚫 Evitar agregar Jest; ver docs/architecture/testing.md"
+  "//": "Angular standard testing: Jasmine + Karma for unit, Playwright for E2E"
 }
 
 ### Testing con Terminal Externo
@@ -576,13 +644,13 @@ echo "✅ Tests ejecutándose en sesión tmux. Conectar con: tmux attach-session
 
 ## Verificación de Deployment
 
-### Verificación de Puerto 8000
+### Port 8080 Verification
 ```bash
-# Verificar puerto
-lsof -Pi :8000
+# Verify port
+lsof -Pi :8080
 
-# Verificar conectividad
-curl -f http://127.0.0.1:8000/health
+# Verify connectivity
+curl -f http://127.0.0.1:8080/health
 ```
 
 ### Verificación de Infraestructura
@@ -616,35 +684,47 @@ class Settings(BaseSettings):
     )
 ```
 
-### Template de FastAPI con Lifespan
-```python
-from contextlib import asynccontextmanager
-from fastapi import FastAPI
+### Template de Echo con Graceful Shutdown
+```go
+package main
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    # Startup logic
-    try:
-        # Initialize services
-        pass
-    except Exception as e:
-        print(f"Warning: Startup error: {e}")
+import (
+    "context"
+    "os"
+    "os/signal"
+    "time"
     
-    yield
-    
-    # Shutdown logic
-    try:
-        # Cleanup services
-        pass
-    except Exception as e:
-        print(f"Warning: Shutdown error: {e}")
+    "github.com/labstack/echo/v4"
+    "github.com/labstack/echo/v4/middleware"
+)
 
-def create_app() -> FastAPI:
-    return FastAPI(
-        title="App Name",
-        version="1.0.0",
-        lifespan=lifespan
-    )
+func main() {
+    e := echo.New()
+    
+    // Middleware
+    e.Use(middleware.Logger())
+    e.Use(middleware.Recover())
+    
+    // Routes
+    e.GET("/health", healthHandler)
+    
+    // Start server
+    go func() {
+        if err := e.Start(":8080"); err != nil {
+            e.Logger.Info("shutting down the server")
+        }
+    }()
+    
+    // Graceful shutdown
+    quit := make(chan os.Signal, 1)
+    signal.Notify(quit, os.Interrupt)
+    <-quit
+    ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+    defer cancel()
+    if err := e.Shutdown(ctx); err != nil {
+        e.Logger.Fatal(err)
+    }
+}
 ```
 
 ### Template de Test Async
