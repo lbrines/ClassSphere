@@ -3,11 +3,10 @@ id: "03"
 title: "Unified Analysis - Plan or Contracts"
 category: "Análisis"
 priority: "VARIABLE"
-version: "2.1"
-stack: "Go 1.24.7 + Angular 19"
+version: "2.0"
+stack: "Go 1.21+ + Angular 19"
 target: "/workspace/plan/ OR /workspace/contracts/"
 date: "2025-10-07"
-last_updated: "2025-10-07"
 ---
 
 # PROMPT: Análisis Unificado de Plan y Especificaciones ClassSphere
@@ -35,7 +34,7 @@ Realizar análisis completo de 8 métricas (trazabilidad, coherencia, dependenci
 **Comandos de verificación:**
 ```bash
 # Verificar stack Go + Angular
-grep -r "Go 1.24\|Angular 19\|Echo v4\|testify" workspace/plan/
+grep -r "Go 1.21\|Angular 19\|Echo v4\|testify" workspace/plan/
 
 # Verificar autenticación
 grep -r "JWT\|OAuth 2.0\|Google" workspace/plan/
@@ -55,30 +54,25 @@ done
 **Scope**: `/workspace/plan/` - Prioridad: ALTA - Criterio: ≥85% coherencia
 
 **Términos a validar:**
-- **Stack**: Go 1.24.7, Angular 19, Echo v4, testify, Jasmine, Karma, Playwright
-- **Puertos**: 8080 (backend), 4200 (frontend), 6379 (redis)
+- **Stack**: Go 1.21+, Angular 19, Echo v4, testify, Jasmine, Karma, Playwright
+- **Puertos**: 8080 (backend), 4200 (frontend)
 - **Cobertura**: ≥80% global, ≥90% módulos críticos
 - **Metodología**: TDD-RunFix+, Cero confianza, WCAG 2.2 AA
-- **Dev Environment**: Dev Containers con Docker Compose
 
 **Comandos:**
 ```bash
 # Verificar coherencia de stack
-grep -r "Go 1.24" workspace/plan/ | wc -l
+grep -r "Go 1.21" workspace/plan/ | wc -l
 grep -r "Angular 19" workspace/plan/ | wc -l
 grep -r "Echo v4" workspace/plan/ | wc -l
 
 # Verificar puertos
 grep -r "8080" workspace/plan/ | wc -l  # Backend
 grep -r "4200" workspace/plan/ | wc -l  # Frontend
-grep -r "6379" workspace/plan/ | wc -l  # Redis
 
 # Verificar que NO mencione tecnologías obsoletas
 grep -r "FastAPI\|Next.js\|React\|Jest\|Vitest" workspace/plan/
-# No debe retornar nada (verificar contexto si aparece)
-
-# Verificar Dev Containers
-grep -r "Dev Container\|docker-compose" workspace/plan/ | wc -l
+# No debe retornar nada
 
 # Verificar metodología
 grep -r "TDD-RunFix+" workspace/plan/ | wc -l
@@ -254,23 +248,12 @@ grep -r "Go 1.21\|Angular 19\|Echo v4" workspace/contracts/
 **Comandos:**
 ```bash
 # Verificar coherencia de stack
-grep -r "Go 1.24" workspace/contracts/ | wc -l
+grep -r "Go 1.21" workspace/contracts/ | wc -l
 grep -r "Angular 19" workspace/contracts/ | wc -l
-grep -r "Echo v4" workspace/contracts/ | wc -l
 
-# CRÍTICO: Verificar tecnologías obsoletas (requiere limpieza)
+# Verificar que NO mencione tecnologías obsoletas
 grep -r "FastAPI\|Next.js\|React" workspace/contracts/
-# Verificar contexto: 
-# - Si es histórico/análisis: marcar como "Stack Anterior"
-# - Si es requisito activo: ACTUALIZAR URGENTEMENTE
-
-# Identificar documentos que requieren limpieza
-for doc in 02 03 04 05 06 09; do
-  file="workspace/contracts/${doc}_ClassSphere_*.md"
-  if grep -q "FastAPI\|Next.js\|React" $file 2>/dev/null; then
-    echo "⚠️ $file requiere limpieza"
-  fi
-done
+# No debe retornar nada
 ```
 
 ### Métrica 3: Dependencias de Especificaciones
@@ -332,10 +315,6 @@ grep -r "riesgo\|risk\|problema" workspace/contracts/
 
 # Buscar mitigaciones
 grep -r "mitigación\|mitigation\|solución" workspace/contracts/
-
-# Verificar riesgo de inconsistencia de stack
-grep -c "Go 1.21\|Go 1.24" workspace/contracts/*.md
-# Debe mostrar solo "Go 1.24" después de limpieza
 ```
 
 ### Métrica 8: Calidad de Especificaciones
@@ -346,17 +325,6 @@ grep -c "Go 1.21\|Go 1.24" workspace/contracts/*.md
 - Completitud 100%
 - Coherencia ≥85%
 - Trazabilidad 100%
-- Ausencia de tecnologías obsoletas: 100%
-
-**Comandos adicionales:**
-```bash
-# Calidad: Verificar actualización a stack actual
-OBSOLETE_COUNT=$(grep -rc "FastAPI\|Next.js" workspace/contracts/ | awk -F: '{sum+=$2} END {print sum}')
-echo "Menciones obsoletas: $OBSOLETE_COUNT (objetivo: 0)"
-
-# Coherencia de Dev Containers
-grep -c "Dev Container" workspace/contracts/00_ClassSphere_index.md workspace/contracts/05_ClassSphere_arquitectura.md
-```
 
 ---
 
@@ -401,14 +369,12 @@ Análisis completo de 8 métricas para [workspace/plan/ o workspace/contracts/].
 - **Objetivo**: ≥85%
 - **Estado**: ✅ PASS / ⚠️ NEEDS IMPROVEMENT
 - **Stack verificado**:
-  - Go 1.24.7: [X] menciones
+  - Go 1.21+: [X] menciones
   - Angular 19: [X] menciones
   - Echo v4: [X] menciones
   - testify: [X] menciones
-  - Jasmine/Karma: [X] menciones
-  - Dev Containers: [X] menciones
-  - Puertos 8080/4200/6379: Verificados
-  - NO tecnologías obsoletas: ✅ / ⚠️ NEEDS CLEANUP
+  - Puertos 8080/4200: Verificados
+  - NO tecnologías obsoletas: ✅
 
 ### Métrica 3: Dependencias
 - **Valor**: X% documentadas
@@ -460,28 +426,19 @@ Análisis completo de 8 métricas para [workspace/plan/ o workspace/contracts/].
 1. [Inconsistencia 1]: Descripción
 2. [Inconsistencia 2]: Descripción
 
-**Tecnologías Obsoletas (si encontradas):**
-- Documentos afectados: [Lista]
-- Menciones totales: [X]
-- Severidad: CRITICAL/HIGH/MEDIUM
-- Acción requerida: Limpieza inmediata o marcar como histórico
-
 ## ✅ Recomendaciones
 
 ### Inmediatas (CRITICAL)
 1. [Acción requerida inmediatamente]
 2. [Otra acción crítica]
-3. **Si hay tecnologías obsoletas**: Limpiar documentos críticos (03, 04, 09)
 
 ### A corto plazo (HIGH)
-4. [Acción importante]
-5. [Otra acción importante]
-6. **Estandarizar versiones**: Go 1.24.7 en todos los documentos
+3. [Acción importante]
+4. [Otra acción importante]
 
 ### A largo plazo (MEDIUM/LOW)
-7. [Mejora continua]
-8. [Optimización]
-9. **Validación automatizada**: Script para detectar tecnologías obsoletas
+5. [Mejora continua]
+6. [Optimización]
 
 ## 📈 Estado General
 
@@ -537,65 +494,9 @@ echo "Sincronización: $(echo "scale=2; $PLAN_COUNT * 100 / $CONTRACTS_COUNT" | 
 **Diferencia**: [X] minutos/horas
 
 **Estado**: ✅ SYNCHRONIZED / ⚠️ NEEDS_SYNC
-
-**Verificación de Stack Consistency**:
-```bash
-# Comparar versiones entre plan y contracts
-PLAN_GO=$(grep -c "Go 1.24" workspace/plan/*.md | awk -F: '{sum+=$2} END {print sum}')
-CONTRACTS_GO=$(grep -c "Go 1.24" workspace/contracts/*.md | awk -F: '{sum+=$2} END {print sum}')
-echo "Plan Go 1.24: $PLAN_GO, Contracts Go 1.24: $CONTRACTS_GO"
-
-# Verificar ausencia de tecnologías obsoletas en ambos
-echo "=== Plan obsoletas ==="
-grep -r "FastAPI\|Next.js" workspace/plan/ | wc -l
-echo "=== Contracts obsoletas ==="
-grep -r "FastAPI\|Next.js" workspace/contracts/ | wc -l
-```
 ```
 
 ---
 
-## 📋 CHECKLIST DE LIMPIEZA POST-ANÁLISIS
-
-Si el análisis detecta tecnologías obsoletas:
-
-**Documentos a revisar en orden de prioridad:**
-1. ⚠️ **09_ClassSphere_testing.md** (CRITICAL)
-   - Remover: Next.js patterns, React Testing Library
-   - Actualizar: Angular 19 + Jasmine/Karma examples
-   
-2. ⚠️ **04_ClassSphere_objetivos.md** (HIGH)
-   - Remover: FastAPI objetivos
-   - Actualizar: Go 1.24.7 + Echo v4 requisitos
-   
-3. ⚠️ **03_ClassSphere_analisis_critico.md** (HIGH)
-   - Actualizar: Trazabilidad con stack actual
-   - Remover: Referencias a FastAPI/Next.js en análisis
-   
-4. ⚠️ **02_ClassSphere_glosario_tecnico.md** (MEDIUM)
-   - Opción 1: Marcar ejemplos FastAPI como "Stack Anterior"
-   - Opción 2: Reemplazar con ejemplos Go + Echo
-   
-5. ⚠️ **06_ClassSphere_funcionalidades.md** (MEDIUM)
-   - Actualizar: React Query → RxJS equivalents
-   
-6. ⚠️ **05_ClassSphere_arquitectura.md** (LOW)
-   - Verificar: Comentarios con Next.js (metadata)
-
-**Comando de validación post-limpieza:**
-```bash
-# Verificar que no queden menciones (excepto históricas marcadas)
-grep -n "FastAPI\|Next.js\|React" workspace/contracts/*.md
-# Revisar cada match y validar contexto
-```
-
----
-
-*Última actualización: 2025-10-07 v2.1*
-*Changelog*: 
-- Actualizado de Go 1.21 a Go 1.24.7
-- Añadido puerto Redis (6379)
-- Añadida verificación Dev Containers
-- Añadida sección de limpieza de tecnologías obsoletas
-- Añadida validación de coherencia de stack entre plan y contracts
+*Última actualización: 2025-10-07*
 
