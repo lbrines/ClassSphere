@@ -53,4 +53,4 @@ logs
 
 # Coverage reports
 coverage/
-.nyc_output
+.nyc_outputworkspace/tools/

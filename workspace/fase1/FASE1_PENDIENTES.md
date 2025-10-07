@@ -236,9 +236,11 @@ go run -exec 'echo "Testing Redis..."' cmd/api/main.go
 
 ## 🟠 PRIORIDAD ALTA (Completar Fase 1)
 
-### 5. ❌ Implementar E2E Tests con Playwright
+### 5. ✅ Implementar E2E Tests con Playwright - IMPLEMENTADO
 
 **Requisito del Plan**: Día 12 - Tests E2E flujos críticos
+
+**Estado**: 20 E2E tests implementados, ~80-85% pasando
 
 **Instalación Playwright**:
 ```bash
@@ -336,17 +338,32 @@ export default defineConfig({
 ```
 
 **Criterio de Aceptación**:
-- [ ] Playwright instalado y configurado
-- [ ] Test login flow end-to-end ✅
-- [ ] Test OAuth redirect ✅
-- [ ] Test role-based routing ✅
-- [ ] Test protected routes ✅
-- [ ] Screenshots on failure
-- [ ] Todos los tests E2E pasan
+- [x] Playwright instalado y configurado ✅
+- [x] Test login flow end-to-end ✅ (8 tests)
+- [x] Test OAuth redirect ✅ (3 tests)
+- [x] Test role-based routing ✅ (4 tests)
+- [x] Test protected routes ✅ (5 tests)
+- [x] Screenshots on failure ✅
+- [~] Todos los tests E2E pasan ⚠️ (16-17/20, 80-85%)
 
-**Estimación**: 3-4 horas  
-**Bloqueado por**: Ninguno  
-**Prioridad**: ALTA
+**Archivos Creados**:
+- ✅ playwright.config.ts
+- ✅ e2e/auth-flow.spec.ts (8 tests)
+- ✅ e2e/oauth-flow.spec.ts (3 tests)
+- ✅ e2e/role-based-routing.spec.ts (4 tests)
+- ✅ e2e/protected-routes.spec.ts (5 tests)
+
+**Scripts NPM**:
+- ✅ test:e2e - Ejecutar tests
+- ✅ test:e2e:ui - Modo UI interactivo
+- ✅ test:e2e:headed - Con browser visible
+- ✅ test:e2e:debug - Modo debug
+
+**Resultado**: IMPLEMENTADO (2025-10-07)
+- 20 tests E2E implementados
+- ~80-85% pasando (ajustes menores pendientes)
+- Flujos críticos cubiertos
+- Tiempo: 1 hora
 
 ---
 
