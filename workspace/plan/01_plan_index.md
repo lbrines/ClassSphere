@@ -15,7 +15,7 @@ max_tokens: 2000
 **ClassSphere** is a complete educational management system built with modern Go + Angular stack, integrating Google Classroom with comprehensive dashboard analytics, role-based access, and real-time features.
 
 ### Blocking Dependencies (Must Complete First)
-1. **Go 1.21+ Backend** with Echo v4 framework
+1. **Go 1.24.7 Backend** with Echo v4 framework
 2. **Angular 19 Frontend** with esbuild official bundler
 3. **Google Classroom API** integration with mock system
 4. **Redis** for caching and session management
@@ -31,7 +31,7 @@ max_tokens: 2000
 ### Technology Stack (Mandatory)
 ```yaml
 Backend:
-  - Go 1.21+ (compiled language)
+  - Go 1.24.7 (compiled language)
   - Echo v4 (web framework)
   - Go structs (validation with tags)
   - testify + mock (testing)
@@ -62,7 +62,7 @@ DevOps:
 **File**: `02_plan_fase1_fundaciones.md`
 
 **Backend (Days 1-6)**:
-- Go 1.21+ setup with Echo v4
+- Go 1.24.7 setup with Echo v4
 - JWT Authentication + OAuth 2.0 Google
 - Role system (admin > coordinator > teacher > student)
 - Redis cache integration
@@ -266,7 +266,7 @@ LOW: max 800 tokens (admin, accessibility)
 ### Next Steps
 
 1. **Read Phase 1 Plan**: `cat workspace/plan/02_plan_fase1_fundaciones.md`
-2. **Setup Development Environment**: Install Go 1.21+, Node.js, Redis
+2. **Setup Development Environment**: Install Go 1.24.7, Node.js, Redis
 3. **Initialize Project Structure**: Backend and frontend directories
 4. **Start Day 1**: Backend setup with TDD
 5. **Daily Validation**: Run tests, check coverage, verify functionality
