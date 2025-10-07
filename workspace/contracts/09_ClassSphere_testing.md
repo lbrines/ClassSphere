@@ -237,17 +237,17 @@ vi.mock('@/lib/logger', () => ({
 ### Fase 1 - Fundaciones TDD (5/12 días completados)
 
 **Verificaciones Automáticas**:
-- [x] Tests async usan `AsyncMock` correctamente ✅
+- [x] Tests async usan testify/mock correctamente ✅
 - [x] Tests de CORS verifican headers básicos ✅
-- [x] Servidor inicia en puerto 8000 (nunca alternativo) ✅
+- [x] Servidor inicia en puerto 8080 (nunca alternativo) ✅
 - [x] Health check responde correctamente ✅
-- [x] Cobertura 100% en toda la Fase 1 sin warnings críticos ✅
-- [x] Lifespan resiliente funciona sin servicios externos ✅
+- [x] Cobertura ≥80% en toda la Fase 1 sin warnings críticos ✅
+- [x] Servidor resiliente funciona sin servicios externos ✅
 
 **Progreso Detallado**:
-- ✅ **Día 1**: Configuración del Entorno TDD - Python 3.11.4, FastAPI, estructura de directorios
-- ✅ **Día 2**: Configuración de Testing TDD - pytest, AsyncMock, timeouts, cobertura
-- ✅ **Día 3**: Configuración de Infraestructura TDD - Redis, puerto 8000, CI/CD
+- ✅ **Día 1**: Configuración del Entorno TDD - Go 1.24, Echo v4, estructura de directorios
+- ✅ **Día 2**: Configuración de Testing TDD - testify, httptest, timeouts, cobertura
+- ✅ **Día 3**: Configuración de Infraestructura TDD - Redis, puerto 8080, CI/CD
 - ✅ **Día 4**: JWT Authentication TDD - tokens, middleware, refresh rotation
 - ✅ **Día 5**: OAuth 2.0 TDD - Google OAuth, PKCE, integración usuarios
 - ⏳ **Día 6**: Sistema de Roles TDD - roles, middleware seguridad, rate limiting (En progreso)
@@ -678,15 +678,33 @@ async def test_async_method():
 
 ### Template TDD para Tests CORS
 
-```python
-# Template estándar para tests CORS
-def test_cors_headers():
-    """Test CORS con headers básicos"""
-    client = TestClient(app)
-    response = client.get("/health", headers={"Origin": "http://localhost:3000"})
-    assert response.status_code == 200
-    assert "access-control-allow-origin" in response.headers
-    assert "access-control-allow-credentials" in response.headers
+```go
+// Template estándar para tests CORS (Go + Echo)
+package handlers_test
+
+import (
+    "net/http"
+    "net/http/httptest"
+    "testing"
+    
+    "github.com/labstack/echo/v4"
+    "github.com/stretchr/testify/assert"
+)
+
+func TestCORSHeaders(t *testing.T) {
+    // Setup
+    e := echo.New()
+    req := httptest.NewRequest(http.MethodGet, "/health", nil)
+    req.Header.Set("Origin", "http://localhost:4200") // Angular default port
+    rec := httptest.NewRecorder()
+    c := e.NewContext(req, rec)
+    
+    // Test
+    if assert.NoError(t, healthHandler(c)) {
+        assert.Equal(t, http.StatusOK, rec.Code)
+        assert.Contains(t, rec.Header().Get("Access-Control-Allow-Origin"), "*")
+    }
+}
 ```
 
 ### Template TDD para Configuración Pydantic v2
@@ -900,15 +918,16 @@ find frontend/src -name "*.test.tsx" -exec grep -l "vi.mock" {} \; | \
 
 ### OAuth Integration:
 ```bash
-# Backend verification
-curl -X GET http://localhost:8000/api/v1/oauth/google
+# Backend verification (Go + Echo)
+curl -X GET http://localhost:8080/api/v1/auth/oauth/google
 
-# Frontend testing
-npm run test:oauth
-npm run test:e2e:oauth
+# Frontend testing (Angular + Playwright)
+cd frontend && npm run test:e2e -- oauth-flow.spec.ts
 
 # Manual verification
-# Click OAuthButton, verify Google redirect works
+# 1. Start backend: cd backend && go run ./cmd/api
+# 2. Start frontend: cd frontend && npm start
+# 3. Navigate to http://localhost:4200 and click Google OAuth button
 ```
 
 ### React Query Usage:

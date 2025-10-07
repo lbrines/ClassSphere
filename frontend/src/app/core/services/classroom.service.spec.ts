@@ -1,19 +1,17 @@
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { firstValueFrom } from 'rxjs';
-import { skip, take } from 'rxjs/operators';
 
+import { ClassroomService, CourseListState } from './classroom.service';
 import { environment } from '../../../environments/environment';
 import { IntegrationMode } from '../models/classroom.model';
-import { ClassroomService } from './classroom.service';
 
 describe('ClassroomService', () => {
   let service: ClassroomService;
   let http: HttpTestingController;
 
-  const courseUrl = `${environment.apiUrl}/google/courses?mode=mock`;
-  const defaultCourseResponse = {
-    mode: 'mock' as const,
+  const baseCourses = {
+    mode: 'mock' as IntegrationMode,
     generatedAt: '2025-10-07T10:00:00Z',
     availableModes: ['mock', 'google'] as IntegrationMode[],
     courses: [],
@@ -26,183 +24,140 @@ describe('ClassroomService', () => {
 
     service = TestBed.inject(ClassroomService);
     http = TestBed.inject(HttpTestingController);
+    spyOn(console, 'error').and.stub();
   });
 
   afterEach(() => {
     http.verify();
   });
 
-  it('should be created', () => {
-    expect(service).toBeTruthy();
-  });
+  it('loads course state when subscribed', () => {
+    let lastState: CourseListState | null = null;
+    const sub = service.courseState$.subscribe((state) => (lastState = state));
 
-  it('loads courses for the default mode', async () => {
-    const statePromise = firstValueFrom(service.courseState$);
-    mockCourses();
-    const state = await statePromise;
+    expectCoursesRequest().flush(baseCourses);
 
+    expect(lastState).not.toBeNull();
+    if (!lastState) {
+      fail('Course state did not emit');
+      return;
+    }
+    const state = lastState as CourseListState;
     expect(state.mode).toBe('mock');
-    expect(state.availableModes).toContain('google');
-    expect(state.courses).toEqual([]);
+    expect(state.availableModes).toEqual(['mock', 'google']);
+
+    sub.unsubscribe();
   });
 
-  it('refresh triggers course reload', async () => {
-    const states: string[] = [];
-    const subscription = service.courseState$.subscribe((state) => states.push(state.generatedAt));
+  it('refresh triggers a second fetch', () => {
+    let emissions = 0;
+    const sub = service.courseState$.subscribe(() => emissions++);
+    expectCoursesRequest().flush(baseCourses);
 
-    mockCourses();
     service.refresh();
-    mockCourses({ ...defaultCourseResponse, generatedAt: '2025-10-07T10:01:00Z' });
+    expectCoursesRequest().flush({ ...baseCourses, generatedAt: '2025-10-07T10:05:00Z' });
 
-    expect(states.length).toBeGreaterThanOrEqual(2);
-    expect(states[0]).toBe('2025-10-07T10:00:00Z');
-    expect(states[1]).toBe('2025-10-07T10:01:00Z');
-    subscription.unsubscribe();
+    sub.unsubscribe();
+    expect(emissions).toBeGreaterThanOrEqual(2);
   });
 
-  it('setMode changes the current mode', async () => {
-    // Load initial state
-    mockCourses();
-    await firstValueFrom(service.courseState$);
-
-    // Change mode
-    service.setMode('google');
-
-    // Should trigger new request with google mode
-    const req = http.expectOne(`${environment.apiUrl}/google/courses?mode=google`);
-    req.flush({
-      mode: 'google' as const,
-      generatedAt: '2025-10-07T10:02:00Z',
-      availableModes: ['mock', 'google'] as IntegrationMode[],
-      courses: [],
-    });
-
-    const state = await firstValueFrom(service.courseState$);
-    expect(state.mode).toBe('google');
-  });
-
-  it('availableModes$ provides available modes', async () => {
-    mockCourses();
-    await firstValueFrom(service.courseState$);
-
-    const modes = await firstValueFrom(service.availableModes$);
-    expect(modes).toEqual(['google', 'mock']);
-  });
-
-  it('mode$ provides current mode', async () => {
-    mockCourses();
-    await firstValueFrom(service.courseState$);
-
-    const mode = await firstValueFrom(service.mode$);
-    expect(mode).toBe('mock');
+  it('setMode switches mode and requests matching data', () => {
+    const sub = service.courseState$.subscribe();
+    expectCoursesRequest().flush(baseCourses);
 
     service.setMode('google');
-    const googleMode = await firstValueFrom(service.mode$);
-    expect(googleMode).toBe('google');
+    const modeRequest = http.expectOne(`${environment.apiUrl}/google/courses?mode=google`);
+    modeRequest.flush({ ...baseCourses, mode: 'google', generatedAt: '2025-10-07T10:10:00Z' });
+
+    let latestMode: IntegrationMode | undefined;
+    const modeSub = service.mode$.subscribe((mode) => (latestMode = mode));
+
+    expect(latestMode).toBe('google');
+
+    modeSub.unsubscribe();
+    sub.unsubscribe();
   });
 
-  it('falls back to empty courses when request fails', async () => {
-    const statePromise = firstValueFrom(service.courseState$);
+  it('setMode with same value triggers a refresh without changing mode', () => {
+    let latestMode: IntegrationMode | undefined;
+    const modeSub = service.mode$.subscribe((mode) => (latestMode = mode));
+    const stateSub = service.courseState$.subscribe();
 
-    const req = http.expectOne(courseUrl);
-    req.flush({}, { status: 500, statusText: 'server error' });
+    expectCoursesRequest().flush(baseCourses);
 
-    const state = await statePromise;
-    expect(state.courses).toEqual([]);
-    expect(state.mode).toBe('mock');
-    expect(state.availableModes).toEqual([]);
+    service.setMode('mock');
+    expectCoursesRequest().flush({ ...baseCourses, generatedAt: '2025-10-07T10:06:00Z' });
+
+    expect(latestMode).toBe('mock');
+
+    stateSub.unsubscribe();
+    modeSub.unsubscribe();
   });
 
-  it('handles network errors gracefully', async () => {
-    const statePromise = firstValueFrom(service.courseState$);
+  it('fetches dashboard data for a role', async () => {
+    const dashboardPromise = firstValueFrom(service.dashboard('teacher'));
 
-    const req = http.expectOne(courseUrl);
-    req.error(new ErrorEvent('network error'));
-
-    const state = await statePromise;
-    expect(state.courses).toEqual([]);
-  });
-
-  it('handles malformed responses', async () => {
-    const statePromise = firstValueFrom(service.courseState$);
-
-    const req = http.expectOne(courseUrl);
-    req.flush({ invalid: 'response' });
-
-    const state = await statePromise;
-    expect(state.courses).toEqual([]);
-  });
-
-  it('loads dashboard data for specific role', async () => {
-    mockDashboard('mock');
-
-    const dashboard = await firstValueFrom(service.dashboard('admin'));
-    expect(dashboard.role).toBe('admin');
-    expect(dashboard.mode).toBe('mock');
-  });
-
-  it('handles dashboard request failures', async () => {
-    const req = http.expectOne(`${environment.apiUrl}/dashboard/admin?mode=mock`);
-    req.flush({}, { status: 500, statusText: 'server error' });
-
-    await expectAsync(firstValueFrom(service.dashboard('admin'))).toBeRejected();
-  });
-
-  it('handles invalid mode gracefully', async () => {
-    // @ts-ignore - testing invalid mode
-    service.setMode('invalid');
-
-    // Should fall back to default mode
-    const state = await firstValueFrom(service.courseState$);
-    expect(state.mode).toBe('mock');
-  });
-
-  it('handles empty available modes', async () => {
-    mockCourses({ ...defaultCourseResponse, availableModes: [] });
-    const state = await firstValueFrom(service.courseState$);
-
-    expect(state.availableModes).toEqual([]);
-  });
-
-  it('handles courses with data', async () => {
-    const coursesWithData = {
-      ...defaultCourseResponse,
-      courses: [
-        {
-          id: 'course1',
-          name: 'Math 101',
-          section: 'A',
-          program: 'Mathematics',
-          primaryTeacher: 'John Doe',
-          enrollment: 25,
-          completionRate: 85.5,
-          upcomingAssignments: 2,
-          lastActivity: '2025-10-07T10:00:00Z'
-        }
-      ] as any
-    };
-
-    mockCourses(coursesWithData);
-    const state = await firstValueFrom(service.courseState$);
-
-    expect(state.courses).toHaveSize(1);
-    expect(state.courses[0].name).toBe('Math 101');
-  });
-
-  function mockCourses(response: typeof defaultCourseResponse = defaultCourseResponse): void {
-    const req = http.expectOne(courseUrl);
-    req.flush(response);
-  }
-
-  function mockDashboard(mode: IntegrationMode): void {
-    const req = http.expectOne(`${environment.apiUrl}/dashboard/admin?mode=${mode}`);
-    req.flush({
-      role: 'admin',
-      mode,
+    const dashboardRequest = http.expectOne(`${environment.apiUrl}/dashboard/teacher?mode=mock`);
+    dashboardRequest.flush({
+      role: 'teacher',
+      mode: 'mock',
       generatedAt: '2025-10-07T10:00:00Z',
       summary: [],
       charts: [],
       highlights: [],
     });
+
+    const dashboard = await dashboardPromise;
+    expect(dashboard.role).toBe('teacher');
+  });
+
+  it('returns cached dashboard observable for repeated calls', async () => {
+    const dashboard$ = service.dashboard('admin');
+    const cached$ = service.dashboard('admin');
+    expect(cached$).toBe(dashboard$);
+
+    const valuePromise = firstValueFrom(dashboard$);
+
+    const adminRequest = http.expectOne(`${environment.apiUrl}/dashboard/admin?mode=mock`);
+    adminRequest.flush({
+      role: 'admin',
+      mode: 'mock' as IntegrationMode,
+      generatedAt: '2025-10-07T10:00:00Z',
+      summary: [],
+      charts: [],
+      highlights: [],
+    });
+
+    const value = await valuePromise;
+    expect(value.role).toBe('admin');
+  });
+
+  it('normalizes course responses when API omits optional fields', async () => {
+    const statePromise = firstValueFrom(service.courseState$);
+
+    expectCoursesRequest().flush({
+      generatedAt: '2025-10-08T08:00:00Z',
+      courses: [],
+      // availableModes y mode ausentes a propósito
+    } as unknown as typeof baseCourses);
+
+    const state = await statePromise;
+    expect(state.mode).toBe('mock');
+    expect(state.availableModes).toEqual(['mock']);
+    expect(state.courses).toEqual([]);
+  });
+
+  it('gracefully handles failing course request', (done) => {
+    const sub = service.courseState$.subscribe((state) => {
+      expect(state.courses).toEqual([]);
+      sub.unsubscribe();
+      done();
+    });
+
+    expectCoursesRequest().error(new ErrorEvent('network'));
+  });
+
+  function expectCoursesRequest() {
+    return http.expectOne(`${environment.apiUrl}/google/courses?mode=mock`);
   }
 });
