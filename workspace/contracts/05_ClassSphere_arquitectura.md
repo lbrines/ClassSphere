@@ -145,7 +145,7 @@ export class AuthService {
 │   │   ├── overview.md           # Visión general de la arquitectura
 │   │   ├── backend.md           # Arquitectura del backend
 │   │   ├── frontend.md          # Arquitectura del frontend
-│   │   ├── testing.md           # Estrategia de testing (Next.js 15 + React 19)
+│   │   ├── testing.md           # Estrategia de testing (Angular 19 + Jasmine/Karma)
 │   │   ├── security.md          # Arquitectura de seguridad
 │   │   ├── deployment.md        # Estrategia de deployment
 │   │   └── monitoring.md        # Estrategia de monitoreo
@@ -419,7 +419,7 @@ docs/architecture/
 ├── overview.md           # Visión general de la arquitectura
 ├── backend.md           # Arquitectura del backend
 ├── frontend.md          # Arquitectura del frontend
-├── testing.md           # Estrategia de testing (Next.js 15 + React 19)
+├── testing.md           # Estrategia de testing (Angular 19 + Jasmine/Karma)
 ├── security.md          # Arquitectura de seguridad
 ├── deployment.md        # Estrategia de deployment
 └── monitoring.md        # Estrategia de monitoreo
