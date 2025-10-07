@@ -1,7 +1,8 @@
 ---
-title: "ClassSphere - Configuración de Deployment Unificada"
-version: "3.0"
+title: "ClassSphere - Unified Deployment Configuration"
+version: "4.0"
 type: "documentation"
+language: "English (Mandatory)"
 related_files:
   - "00_ClassSphere_index.md"
   - "10_ClassSphere_plan_implementacion.md"
@@ -48,6 +49,11 @@ RATE_LIMIT_DURATION=1m
 # Logging
 LOG_LEVEL=info
 LOG_FORMAT=json
+
+# i18n Configuration
+DEFAULT_LANGUAGE=en
+SUPPORTED_LANGUAGES=en,es,fr
+I18N_FALLBACK_LANGUAGE=en
 ```
 
 ### Frontend Angular (environment.prod.ts)
@@ -78,194 +84,229 @@ NEXT_PUBLIC_NOTIFICATION_POLL_INTERVAL=30000
 
 **Metodología**: Servidor resiliente es parte integral del deployment
 
-**Deployment con Servidor Resiliente:**
-```python
-# ✅ DEPLOYMENT ESTÁNDAR - Servidor resiliente
-from contextlib import asynccontextmanager
-from fastapi import FastAPI
-import uvicorn
+**Deployment with Resilient Server:**
+```go
+// ✅ STANDARD DEPLOYMENT - Resilient server
+package main
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    # Startup - servicios externos opcionales (instalación nueva)
-    try:
-        # Google Classroom API (verificación)
-        await verify_google_api_access()
-    except Exception as e:
-        print(f"Warning: Google Classroom API no disponible: {e}")
-    
-    try:
-        # Redis (opcional)
-        await init_redis()
-    except Exception as e:
-        print(f"Warning: Redis no disponible: {e}")
-    
-    yield
-    
-    # Shutdown - limpieza automática
-    try:
-        await cleanup_services()
-    except Exception as e:
-        print(f"Warning: Error en cleanup: {e}")
+import (
+    "context"
+    "log"
+    "net/http"
+    "os"
+    "os/signal"
+    "time"
 
-def create_app() -> FastAPI:
-    return FastAPI(
-        title="ClassSphere",
-        version="1.0.0",
-        lifespan=lifespan
-    )
+    "github.com/labstack/echo/v4"
+    "github.com/labstack/echo/v4/middleware"
+)
 
-# Servidor siempre en puerto 8000
-if __name__ == "__main__":
-    uvicorn.run(
-        "src.app.main:app",
-        host="127.0.0.1",
-        port=8000,  # Puerto fijo de deployment
-        reload=True
-    )
+func main() {
+    e := echo.New()
+
+    // Middleware
+    e.Use(middleware.Logger())
+    e.Use(middleware.Recover())
+    e.Use(middleware.CORS())
+
+    // Startup - optional external services (new installation)
+    if err := verifyGoogleAPIAccess(); err != nil {
+        log.Printf("Warning: Google Classroom API unavailable: %v", err)
+    }
+    
+    if err := initRedis(); err != nil {
+        log.Printf("Warning: Redis unavailable: %v", err)
+    }
+
+    // Routes
+    e.GET("/health", healthHandler)
+    e.POST("/auth/login", loginHandler)
+
+    // Start server
+    go func() {
+        if err := e.Start(":8080"); err != nil && err != http.ErrServerClosed {
+            e.Logger.Fatal("shutting down the server")
+        }
+    }()
+
+    // Graceful shutdown
+    quit := make(chan os.Signal, 1)
+    signal.Notify(quit, os.Interrupt)
+    <-quit
+    
+    ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+    defer cancel()
+    
+    // Cleanup
+    if err := cleanupServices(); err != nil {
+        log.Printf("Warning: Cleanup error: %v", err)
+    }
+    
+    if err := e.Shutdown(ctx); err != nil {
+        e.Logger.Fatal(err)
+    }
+}
 ```
 
-**Deployment con Health Check Resiliente:**
-```python
-# ✅ DEPLOYMENT ESTÁNDAR - Health check resiliente
-from fastapi import FastAPI, HTTPException
-from typing import Dict, Any
+**Deployment with Resilient Health Check:**
+```go
+// ✅ STANDARD DEPLOYMENT - Resilient health check
+package handlers
 
-app = FastAPI()
+import (
+    "net/http"
+    "time"
 
-@app.get("/health")
-async def health_check():
-    """Health check resiliente - funciona sin servicios externos"""
-    try:
-        # Verificar servicios externos (opcional) - instalación nueva
-        external_services = await check_external_services()
-        
-        return {
-            "status": "healthy",
-            "timestamp": "2025-01-03T10:00:00Z",
-            "services": external_services
-        }
-    except Exception as e:
-        # Health check siempre responde, incluso con errores
-        return {
-            "status": "degraded",
-            "timestamp": "2025-01-03T10:00:00Z",
-            "error": str(e)
-        }
+    "github.com/labstack/echo/v4"
+)
 
-async def check_external_services() -> Dict[str, Any]:
-    """Verificar servicios externos de forma resiliente (instalación nueva)"""
-    services = {}
+type HealthResponse struct {
+    Status    string            `json:"status"`
+    Timestamp string            `json:"timestamp"`
+    Services  map[string]string `json:"services,omitempty"`
+    Error     string            `json:"error,omitempty"`
+}
+
+func HealthHandler(c echo.Context) error {
+    // Health check always responds, even with errors
+    services, err := checkExternalServices()
     
-    # Google Classroom API (opcional) - instalación nueva
-    try:
-        # Verificar Google Classroom API
-        services["google_classroom_api"] = "available"
-    except Exception:
+    if err != nil {
+        return c.JSON(http.StatusOK, HealthResponse{
+            Status:    "degraded",
+            Timestamp: time.Now().Format(time.RFC3339),
+            Error:     err.Error(),
+        })
+    }
+    
+    return c.JSON(http.StatusOK, HealthResponse{
+        Status:    "healthy",
+        Timestamp: time.Now().Format(time.RFC3339),
+        Services:  services,
+    })
+}
+
+func checkExternalServices() (map[string]string, error) {
+    // Verify external services resiliently (new installation)
+    services := make(map[string]string)
+    
+    // Google Classroom API (optional) - new installation
+    if err := verifyGoogleClassroomAPI(); err != nil {
         services["google_classroom_api"] = "unavailable"
+    } else {
+        services["google_classroom_api"] = "available"
+    }
     
-    # Redis (opcional)
-    try:
-        # Verificar Redis
-        services["redis"] = "available"
-    except Exception:
+    // Redis (optional)
+    if err := verifyRedis(); err != nil {
         services["redis"] = "unavailable"
+    } else {
+        services["redis"] = "available"
+    }
     
-    return services
+    return services, nil
+}
 ```
 
-### 2. Puerto 8000 Ocupado como Deployment Estándar
+### 2. Port 8080 Busy as Standard Deployment
 
-**Metodología**: Puerto 8000 como estándar de deployment obligatorio
+**Methodology**: Port 8080 as mandatory deployment standard
 
-**Deployment con Puerto Fijo:**
+**Deployment with Fixed Port:**
 ```bash
-# ✅ DEPLOYMENT ESTÁNDAR - Puerto 8000 obligatorio
+# ✅ STANDARD DEPLOYMENT - Port 8080 mandatory
 #!/bin/bash
 # Script de deployment estándar
 set -e
 
-echo "🧹 Deployment: Limpieza de procesos anteriores..."
-pkill -f uvicorn || true
+echo "🧹 Deployment: Cleaning previous processes..."
+pkill -f classsphere-backend || true
 sleep 2
 
-echo "🔍 Deployment: Verificación de puerto 8000..."
-if lsof -Pi :8000 -sTCP:LISTEN -t >/dev/null 2>&1; then
-    echo "⚠️  Deployment: Puerto ocupado. Limpieza automática..."
-    pkill -f "port 8000" || true
+echo "🔍 Deployment: Port 8080 verification..."
+if lsof -Pi :8080 -sTCP:LISTEN -t >/dev/null 2>&1; then
+    echo "⚠️  Deployment: Port busy. Automatic cleanup..."
+    pkill -f "port 8080" || true
     sleep 3
 fi
 
-echo "🚀 Deployment: Iniciando servidor en puerto 8000..."
-python3 -m uvicorn src.app.main:app --host 127.0.0.1 --port 8000 &
+echo "🚀 Deployment: Starting server on port 8080..."
+./classsphere-backend &
 SERVER_PID=$!
 
-echo "⏳ Deployment: Esperando inicio del servidor..."
+echo "⏳ Deployment: Waiting for server to start..."
 sleep 5
 
-echo "🔍 Deployment: Verificación de health check..."
-curl -f http://127.0.0.1:8000/health || {
-    echo "❌ Deployment: Health check falló"
+echo "🔍 Deployment: Health check verification..."
+curl -f http://127.0.0.1:8080/health || {
+    echo "❌ Deployment: Health check failed"
     kill $SERVER_PID 2>/dev/null || true
     exit 1
 }
 
-echo "✅ Deployment: Servidor funcionando correctamente en puerto 8000"
-echo "📊 Deployment: PID del servidor: $SERVER_PID"
+echo "✅ Deployment: Server running correctly on port 8080"
+echo "📊 Deployment: Server PID: $SERVER_PID"
 ```
 
-**Deployment con Verificación de Puerto:**
-```python
-# ✅ DEPLOYMENT ESTÁNDAR - Verificación de puerto
-import socket
-import subprocess
-import time
-from typing import Optional
+**Deployment with Port Verification:**
+```go
+// ✅ STANDARD DEPLOYMENT - Port verification
+package deployment
 
-class PortManager:
-    """Gestor de puerto 8000 para deployment"""
-    
-    @staticmethod
-    def is_port_available(port: int = 8000) -> bool:
-        """Verificar si el puerto está disponible"""
-        try:
-            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-                s.bind(('127.0.0.1', port))
-                return True
-        except OSError:
-            return False
-    
-    @staticmethod
-    def kill_process_on_port(port: int = 8000) -> bool:
-        """Matar proceso en puerto específico"""
-        try:
-            result = subprocess.run(
-                ['lsof', '-ti', f':{port}'],
-                capture_output=True,
-                text=True
-            )
-            
-            if result.stdout.strip():
-                pids = result.stdout.strip().split('\n')
-                for pid in pids:
-                    subprocess.run(['kill', '-9', pid])
-                return True
-            return False
-        except Exception as e:
-            print(f"Warning: Error matando proceso en puerto {port}: {e}")
-            return False
-    
-    @staticmethod
-    def ensure_port_available(port: int = 8000) -> bool:
-        """Asegurar que el puerto esté disponible"""
-        if PortManager.is_port_available(port):
-            return True
-        
-        print(f"Puerto {port} ocupado, intentando liberar...")
-        PortManager.kill_process_on_port(port)
-        time.sleep(2)
-        
-        return PortManager.is_port_available(port)
+import (
+    "fmt"
+    "net"
+    "os/exec"
+    "strconv"
+    "strings"
+    "time"
+)
+
+// PortManager manages port 8080 for deployment
+type PortManager struct{}
+
+// IsPortAvailable checks if the port is available
+func (pm *PortManager) IsPortAvailable(port int) bool {
+    address := fmt.Sprintf("127.0.0.1:%d", port)
+    listener, err := net.Listen("tcp", address)
+    if err != nil {
+        return false
+    }
+    listener.Close()
+    return true
+}
+
+// KillProcessOnPort kills process on specific port
+func (pm *PortManager) KillProcessOnPort(port int) bool {
+    cmd := exec.Command("lsof", "-ti", fmt.Sprintf(":%d", port))
+    output, err := cmd.Output()
+    if err != nil {
+        return false
+    }
+
+    pids := strings.Split(strings.TrimSpace(string(output)), "\n")
+    for _, pid := range pids {
+        if pid != "" {
+            killCmd := exec.Command("kill", "-9", pid)
+            if err := killCmd.Run(); err != nil {
+                fmt.Printf("Warning: Error killing process on port %d: %v\n", port, err)
+            }
+        }
+    }
+    return true
+}
+
+// EnsurePortAvailable ensures the port is available
+func (pm *PortManager) EnsurePortAvailable(port int) bool {
+    if pm.IsPortAvailable(port) {
+        return true
+    }
+
+    fmt.Printf("Port %d busy, attempting to free...\n", port)
+    pm.KillProcessOnPort(port)
+    time.Sleep(2 * time.Second)
+
+    return pm.IsPortAvailable(port)
 ```
 
 ### 3. Errores de Infraestructura como Deployment Estándar

@@ -1,7 +1,9 @@
 ---
-title: "ClassSphere - Objetivos del Sistema Unificado"
-version: "2.6"
+title: "ClassSphere - Unified System Objectives"
+version: "4.0"
 type: "documentation"
+language: "English (Mandatory)"
+date: "2025-10-07"
 related_files:
   - "00_ClassSphere_index.md"
   - "03_ClassSphere_analisis_critico.md"
@@ -42,10 +44,16 @@ related_files:
 ## Frontend - Aplicación Completa
 
 ### Fundaciones (Stage 1)
-- **Next.js**: Implementar framework Next.js 13.5.6 con TypeScript
-- **React Query**: Integración con React Query v4 para gestión de estado
-- **Tailwind CSS**: Sistema de estilos con Tailwind CSS
-- **i18n**: Internacionalización completa
+- **Angular 19**: Implement Angular 19 framework with TypeScript
+- **RxJS**: Integration with RxJS for reactive state management
+- **TailwindCSS 3.x**: Styling system with TailwindCSS
+- **i18n**: Internationalization support from Phase 1 (English default, extensible to other languages)
+- **Language Requirements**:
+  - All code in English (mandatory)
+  - All documentation in English (mandatory)
+  - UI text in English default with i18n support
+  - Translation keys in English
+  - i18n configuration for future language additions
 
 ### Google UI (Stage 2)
 - **Selector de Modo**: Interfaz para alternar entre modo Google y Mock

@@ -1,7 +1,9 @@
 ---
-title: "ClassSphere - API Endpoints Consolidados"
-version: "2.6"
+title: "ClassSphere - Consolidated API Endpoints"
+version: "4.0"
 type: "documentation"
+language: "English (Mandatory)"
+date: "2025-10-07"
 related_files:
   - "00_ClassSphere_index.md"
   - "06_ClassSphere_funcionalidades.md"

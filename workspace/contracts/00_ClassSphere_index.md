@@ -1,53 +1,57 @@
 ---
-title: "ClassSphere - Documentación Completa"
-version: "3.1"
+title: "ClassSphere - Complete Documentation"
+version: "4.0"
 type: "index"
-date: "2025-10-06"
-author: "Sistema de Contratos LLM"
+date: "2025-10-07"
+author: "LLM Contracts System"
+language: "English (Mandatory for all project documentation)"
 files:
   - name: "01_ClassSphere_info_status.md"
-    title: "Información del Proyecto y Estado Actual"
+    title: "Project Information and Current Status"
   - name: "02_ClassSphere_glosario_tecnico.md"
-    title: "Glosario Técnico Unificado"
+    title: "Unified Technical Glossary"
   - name: "03_ClassSphere_analisis_critico.md"
-    title: "Análisis Críticos del Sistema"
+    title: "System Critical Analysis"
   - name: "04_ClassSphere_objetivos.md"
-    title: "Objetivos del Sistema Unificado"
+    title: "Unified System Objectives"
   - name: "05_ClassSphere_arquitectura.md"
-    title: "Arquitectura del Sistema Unificado"
+    title: "Unified System Architecture"
   - name: "06_ClassSphere_funcionalidades.md"
-    title: "Funcionalidades Consolidadas"
+    title: "Consolidated Functionalities"
   - name: "07_ClassSphere_api_endpoints.md"
-    title: "API Endpoints Consolidados"
+    title: "Consolidated API Endpoints"
   - name: "08_ClassSphere_modelos_datos.md"
-    title: "Modelos de Datos Consolidados"
+    title: "Consolidated Data Models"
   - name: "09_ClassSphere_testing.md"
-    title: "Estrategia de Testing Unificada"
+    title: "Unified Testing Strategy"
   - name: "10_ClassSphere_plan_implementacion.md"
-    title: "Plan de Implementación Unificado"
+    title: "Unified Implementation Plan"
   - name: "11_ClassSphere_deployment.md"
-    title: "Configuración de Deployment Unificada"
+    title: "Unified Deployment Configuration"
   - name: "12_ClassSphere_criterios_aceptacion.md"
-    title: "Criterios de Aceptación Unificados"
+    title: "Unified Acceptance Criteria"
   - name: "13_ClassSphere_validacion_coherencia.md"
-    title: "Validación de Coherencia Semántica"
+    title: "Semantic Coherence Validation"
   - name: "14_ClassSphere_conclusion.md"
-    title: "Conclusión"
+    title: "Conclusion"
   - name: "15_ClassSphere_error_prevention.md"
-    title: "Errores Críticos y Prevención"
+    title: "Critical Errors and Prevention"
   - name: "16_ClassSphere_verification_commands.md"
-    title: "Comandos de Verificación Críticos"
+    title: "Critical Verification Commands"
 ---
 
-# ClassSphere - Documentación Completa
+# ClassSphere - Complete Documentation
 
-## Información del Proyecto
+## Project Information
 
-- **Proyecto**: ClassSphere - Sistema Completo
-- **Fase**: Implementación Unificada - Todas las Funcionalidades
-- **Autor**: Sistema de Contratos LLM
-- **Fecha**: 2025-10-06 (Migración a nuevo stack tecnológico - Fase 1 Completada)
-- **Propósito**: Implementar sistema completo de ClassSphere con stack moderno Go + Angular
+- **Project**: ClassSphere - Complete System
+- **Phase**: Unified Implementation - All Features
+- **Author**: LLM Contracts System
+- **Date**: 2025-10-07 (Migration to new tech stack - Phase 1 Completed)
+- **Purpose**: Implement complete ClassSphere system with modern Go + Angular stack
+- **Documentation Language**: English (Mandatory)
+- **Code Language**: English (Mandatory)
+- **UI Language**: English (Default with i18n support from Phase 1)
 
 ## Estado Actual del Proyecto
 
@@ -109,27 +113,38 @@ files:
 - `POST /auth/logout` - Logout
 - `GET /auth/verify` - Token verification
 
-**Plan de Migración Actualizado**:
-- ✅ **Fase 1**: Capacitación Go + Angular (COMPLETADA - 155 min resolución errores)
-- ⏳ **Fase 2**: Backend Go + Echo (4-6 semanas) - Con patrones de prevención validados
-- ⏳ **Fase 3**: Frontend Angular + esbuild (3-5 semanas) - Con patrones TypeScript validados
-- ⏳ **Fase 4**: Testing completo (3-4 semanas) - Con patrones OAuth tests validados
-- ⏳ **Fase 5**: Integración y deployment (2-3 semanas) - Con patrones server restart validados
+**Updated Migration Plan**:
+- ✅ **Phase 1**: Go + Angular Training (COMPLETED - 155 min error resolution)
+  - ✅ Minimum Status Documentation Created
+- ⏳ **Phase 2**: Go + Echo Backend (4-6 weeks) - With validated prevention patterns
+  - 📝 Minimum Status Documentation Required at Phase End
+- ⏳ **Phase 3**: Angular + esbuild Frontend (3-5 weeks) - With validated TypeScript patterns
+  - 📝 Minimum Status Documentation Required at Phase End
+- ⏳ **Phase 4**: Complete Testing (3-4 weeks) - With validated OAuth test patterns
+  - 📝 Minimum Status Documentation Required at Phase End
+- ⏳ **Phase 5**: Integration and Deployment (2-3 weeks) - With validated server restart patterns
+  - 📝 Minimum Status Documentation Required at Phase End
+  - 📚 Complete Final Documentation Created After All Phases
 
-**Especificaciones de Implementación**:
+**Implementation Specifications**:
 - 🔧 **OAuth Integration**: Angular services → Go handlers
-- 🎭 **Role-Based Dashboard**: Componentes Angular por rol
-- ✅ **Test Coverage**: Backend ≥80%, Frontend ≥80%, Critical modules ≥95% (ACTUAL: 94.4% sin OAuth)
+- 🎭 **Role-Based Dashboard**: Angular components per role
+- ✅ **Test Coverage**: Backend ≥80%, Frontend ≥80%, Critical modules ≥95% (ACTUAL: 94.4% without OAuth)
 - 🧪 **Testing**: Jasmine + Karma (Angular), testify (Go), Playwright (E2E)
-- 🛡️ **Error Prevention**: Patrones validados en producción para evitar errores bloqueadores
-- 🔄 **Server Management**: Comandos de restart y verificación automatizados
+- 🛡️ **Error Prevention**: Production-validated patterns to prevent blocking errors
+- 🔄 **Server Management**: Automated restart and verification commands
+- 🌍 **i18n Support**: Built-in from Phase 1 (English default, extensible to other languages)
+- 📝 **Phase Documentation**: Minimum documentation at end of each phase, complete docs after all phases
 
-**Documentación de Arquitectura**:
-- 📖 **docs/architecture/testing.md**: Estrategia de testing con Jasmine + Karma + Playwright
-- 🛠 **go.mod**: Gestión de dependencias Go
-- 📝 **CI/CD**: Workflows para Go + Angular
-- 🛡️ **Error Prevention Guide**: Patrones críticos y soluciones validadas en producción
-- 🔧 **Verification Commands**: Comandos de testing y verificación automatizados
+**Architecture Documentation**:
+- 📖 **docs/architecture/testing.md**: Testing strategy with Jasmine + Karma + Playwright (English)
+- 🛠 **go.mod**: Go dependency management (English)
+- 📝 **CI/CD**: Workflows for Go + Angular (English)
+- 🛡️ **Error Prevention Guide**: Critical patterns and production-validated solutions (English)
+- 🔧 **Verification Commands**: Automated testing and verification commands (English)
+- 🌍 **i18n Configuration**: Internationalization setup from Phase 1 (English default)
+- 📝 **Phase Status Docs**: Minimum documentation created at end of each phase (English)
+- 📚 **Final Complete Docs**: Comprehensive documentation after all phases complete (English)
 
 ## Tabla de Contenidos
 
@@ -345,6 +360,31 @@ Esta estructura de documentación ha sido diseñada específicamente para optimi
 3. **Referencias precisas**: Facilitar la referencia a secciones específicas sin necesidad de cargar todo el documento.
 4. **Actualizaciones modulares**: Permitir actualizar secciones específicas sin afectar al documento completo.
 
+## Key Changes in v4.0 (2025-10-07)
+
+### 🌍 Language Requirements (MANDATORY)
+1. **All Documentation**: English mandatory
+2. **All Code**: English mandatory (variables, functions, classes, files)
+3. **All Comments**: English mandatory
+4. **All Commits**: English mandatory
+5. **UI Text**: English default with i18n support from Phase 1
+
+### 🔤 i18n Support
+- **Phase 1 Setup**: i18n configuration from beginning
+- **Default Language**: English (mandatory)
+- **Extensibility**: Support for additional languages (es, fr)
+- **Translation Structure**: English as base, extensible architecture
+
+### 📝 Phase Documentation
+- **Minimum Docs**: Created at end of each phase (1-5)
+- **Template**: Status, metrics, issues, prerequisites
+- **Language**: All documentation in English
+
+### 📚 Final Documentation
+- **Complete Package**: Created after all phases
+- **8 Comprehensive Guides**: Architecture, API, User, Developer, Ops, i18n, Lessons, Roadmap
+- **Language**: All documentation in English
+
 ---
 
-*Última actualización: 2025-10-06 - Fase 1 Completada con Lecciones Aprendidas*
+*Last updated: 2025-10-07 - Phase 1 Completed with Lessons Learned + v4.0 Systematic Changes Applied*
