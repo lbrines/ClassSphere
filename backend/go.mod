@@ -8,12 +8,12 @@ require (
 	github.com/alicebob/miniredis/v2 v2.35.0
 	github.com/go-resty/resty/v2 v2.16.5
 	github.com/golang-jwt/jwt/v5 v5.3.0
-	github.com/labstack/echo/v4 v4.12.0
+	github.com/labstack/echo/v4 v4.9.1
 	github.com/redis/go-redis/v9 v9.14.0
 	github.com/stretchr/testify v1.10.0
 	golang.org/x/crypto v0.42.0
-	golang.org/x/oauth2 v0.31.0
-	google.golang.org/api v0.251.0
+	golang.org/x/oauth2 v0.30.0
+	google.golang.org/api v0.239.0
 )
 
 require (
@@ -35,6 +35,7 @@ require (
 	github.com/mattn/go-colorable v0.1.14 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
+	github.com/stretchr/objx v0.5.2 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasttemplate v1.2.2 // indirect
 	github.com/yuin/gopher-lua v1.1.1 // indirect

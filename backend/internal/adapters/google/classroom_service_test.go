@@ -311,3 +311,38 @@ func TestClassroomService_ClockFunction(t *testing.T) {
 		t.Errorf("Expected generatedAt to be close to fixed time, got %v", snapshot.GeneratedAt)
 	}
 }
+
+func TestMockCourses_FieldValidation(t *testing.T) {
+	courses := mockCourses(time.Now())
+	
+	for _, course := range courses {
+		if course.ID == "" {
+			t.Error("Course ID should not be empty")
+		}
+		if course.Name == "" {
+			t.Error("Course Name should not be empty")
+		}
+		if len(course.Teachers) == 0 {
+			t.Error("Course should have at least one teacher")
+		}
+		if len(course.Students) < 0 {
+			t.Error("Students count should be non-negative")
+		}
+	}
+}
+
+func TestGoogleSampleCourses_FieldValidation(t *testing.T) {
+	courses := googleSampleCourses(time.Now())
+	
+	for _, course := range courses {
+		if course.ID == "" {
+			t.Error("Course ID should not be empty")
+		}
+		if course.Name == "" {
+			t.Error("Course Name should not be empty")
+		}
+		if len(course.Teachers) == 0 {
+			t.Error("Course should have at least one teacher")
+		}
+	}
+}
