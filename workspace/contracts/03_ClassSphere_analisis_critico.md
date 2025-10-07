@@ -22,12 +22,12 @@ Stage 1 (Fundaciones) → Stage 2 (Google Integration) → Stage 3 (Visualizaci�
 ```
 
 **Trazabilidad Backend:**
-- **R1.1**: FastAPI + JWT → **R2.1**: OAuth 2.0 Google → **R3.1**: WebSocket Notifications → **R4.1**: Bidirectional Sync
+- **R1.1**: Go + Echo + JWT → **R2.1**: OAuth 2.0 Google → **R3.1**: WebSocket Notifications → **R4.1**: Bidirectional Sync
 - **R1.2**: MockService → **R2.2**: Google Classroom API → **R3.2**: Advanced Insights → **R4.2**: Backup System
 - **R1.3**: Basic Models → **R2.3**: Google Models → **R3.3**: Analytics Models → **R4.3**: Complete Models
 
 **Trazabilidad Frontend:**
-- **R1.4**: Next.js Foundation → **R2.4**: Google UI Components → **R3.4**: Interactive Charts → **R4.4**: Admin Panel
+- **R1.4**: Angular 19 Foundation → **R2.4**: Google UI Components → **R3.4**: Interactive Charts → **R4.4**: Admin Panel
 - **R1.5**: Basic Auth → **R2.5**: Google Auth → **R3.5**: Real-time Updates → **R4.5**: WCAG 2.2 Compliance
 - **R1.6**: Tailwind CSS → **R2.6**: Role-based Dashboards → **R3.6**: Advanced Search → **R4.6**: PWA Features
 
@@ -144,14 +144,14 @@ Siguiendo el [Estándar por Capa](02_ClassSphere_glosario_tecnico.md#estándar-p
 - End-to-end user flows
 
 **Prevención Crítica de Incompatibilidades:**
-- **FastAPI/Starlette/HTTPX**: Versiones compatibles validadas
-  - `fastapi>=0.104.1,<0.116.0`
-  - `starlette>=0.27.0,<0.42.0`
-  - `httpx>=0.27.0,<0.28.0` (crítico: 0.28.1+ rompe TestClient)
-- **Backup automático**: requirements_backup.txt antes de cambios
-- **Rollback protocol**: `pip install -r requirements_backup.txt`
-- **Error detectado**: `TypeError: Client.__init__() got an unexpected keyword argument 'app'`
-- **Fuentes validadas**: GitHub Starlette #2770, FastAPI #11183, Starlette #2524
+- **Go Dependencies**: Versiones compatibles validadas en go.mod
+  - `github.com/labstack/echo/v4 v4.9.1`
+  - `golang.org/x/oauth2 v0.30.0`
+  - `google.golang.org/api v0.239.0`
+- **Dependency Management**: go.mod.backup antes de cambios mayores
+- **Rollback protocol**: `go mod tidy && go mod verify`
+- **Testing validation**: testify + httptest para mocks comprensivos
+- **Fuentes validadas**: Go Modules documentation, Echo v4 best practices
 
 ### Matriz de Impacto de Dependencias
 | Dependencia | Tipo | Impacto | Disponibilidad | Mitigación |
@@ -168,10 +168,10 @@ Siguiendo el [Estándar por Capa](02_ClassSphere_glosario_tecnico.md#estándar-p
 4. **Recuperación**: Reintento automático con backoff
 5. **Notificación**: Alertas a administradores
 
-**Protocolo Específico FastAPI/HTTPX** (Error resuelto: 2025-10-04):
+**Protocolo Específico Go Testing** (Best practices):
 ```bash
-# Detección automática del error TestClient
-if grep -q "TypeError.*Client.*init.*app" test_output.log; then
+# Verificación de tests con cobertura
+if ! go test ./... -coverprofile=coverage.out; then
   echo "🚨 HTTPX incompatible detectado"
   pip uninstall httpx -y
   pip install "httpx==0.27.2"

@@ -204,19 +204,47 @@ class Settings(BaseSettings):
     )
 ```
 
-### **FastAPI Lifespan - Context Manager Estándar**
-**Definición**: Context manager moderno para manejo de ciclo de vida de la aplicación.
+### **Application Lifecycle Management - Echo Server**
+**Definición**: Manejo de ciclo de vida de la aplicación con graceful shutdown.
 
-**Implementación**:
+**Implementación actual (Go + Echo)**:
+```go
+// Go + Echo v4
+func main() {
+    e := echo.New()
+    
+    // Startup logic
+    redisClient := setupRedis()
+    defer redisClient.Close()
+    
+    // Graceful shutdown
+    go func() {
+        if err := e.Start(":8080"); err != nil && err != http.ErrServerClosed {
+            e.Logger.Fatal("shutting down the server")
+        }
+    }()
+    
+    // Wait for interrupt signal
+    quit := make(chan os.Signal, 1)
+    signal.Notify(quit, os.Interrupt)
+    <-quit
+    
+    // Shutdown logic
+    ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+    defer cancel()
+    e.Shutdown(ctx)
+}
+```
+
+**Ejemplo anterior (FastAPI - Stack previo, solo referencia histórica)**:
 ```python
-from contextlib import asynccontextmanager
+# NOTA: Este era el stack anterior (Python + FastAPI)
+# Proyecto migrado a Go 1.24 + Echo v4
 from fastapi import FastAPI
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Startup logic
-    yield
-    # Shutdown logic
+    yield  # Shutdown logic
 ```
 
 ## Referencias a Otros Documentos

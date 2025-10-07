@@ -17,7 +17,7 @@ related_files:
 
 ```
 # Backend
-- Go 1.21+ (lenguaje compilado)
+- Go 1.24.7 (lenguaje compilado)
 - Echo v4 (framework web)
 - Go structs (validación con tags)
 - Google Classroom API (fuente de datos principal)

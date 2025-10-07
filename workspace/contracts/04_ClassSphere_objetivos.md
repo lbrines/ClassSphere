@@ -17,11 +17,11 @@ related_files:
 ## Backend - Sistema Completo
 
 ### Fundaciones (Stage 1)
-- **FastAPI**: Implementar framework FastAPI 0.104.1 con Pydantic v2
+- **Go + Echo**: Implementar framework Echo v4 con Go 1.24.7 para backend resiliente
 - **JWT**: Sistema de autenticación JWT completo con refresh tokens
 - **OAuth 2.0**: Integración con Google OAuth 2.0 con PKCE y State validation
 - **MockService**: Servicio de datos mock para desarrollo y testing
-- **Testing**: Cobertura 100% en módulos críticos con AsyncMock
+- **Testing**: Cobertura ≥80% global, ≥90% módulos críticos con testify + mock
 
 ### Google Integration (Stage 2)
 - **Google Classroom API**: Integración completa con la API de Google Classroom
