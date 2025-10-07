@@ -142,6 +142,7 @@ frontend/
 - ✅ Google Classroom API integrada con modo dual (Google/Mock)
 - ✅ Endpoints `/google/courses` y `/dashboard/*` funcionando
 - ✅ Degradación elegante a datos mock cuando no hay credenciales Google
+- ✅ El servicio de cálculo de métricas está integrado directamente en la lógica de `ClassroomService` al construir los dashboards.
 - ✅ Cobertura de tests: **88.9%** (objetivo: ≥80%)
 
 ### Frontend - Dashboards por Rol
@@ -151,7 +152,7 @@ frontend/
   - **Teacher**: Métricas de cursos del profesor
   - **Student**: Progreso personal del estudiante
 - ✅ Componente `ModeSelectorComponent` para cambio entre Google/Mock
-- ✅ Componente `DashboardViewComponent` con ApexCharts
+- ✅ Componente `DashboardViewComponent` con ApexCharts (incluye visualización de lista de cursos)
 - ✅ Servicio `ClassroomService` con estado reactivo
 - ✅ Cobertura de tests: **79.83%** (objetivo: ≥80%)
 

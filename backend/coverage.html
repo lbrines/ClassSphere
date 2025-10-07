@@ -55,29 +55,37 @@
 			<div id="nav">
 				<select id="files">
 				
-				<option value="file0">github.com/lbrines/classsphere/cmd/api/main.go (71.9%)</option>
+				<option value="file0">github.com/lbrines/classsphere/cmd/api/main.go (77.2%)</option>
 				
 				<option value="file1">github.com/lbrines/classsphere/internal/adapters/cache/redis_cache.go (100.0%)</option>
 				
-				<option value="file2">github.com/lbrines/classsphere/internal/adapters/http/handler.go (86.0%)</option>
+				<option value="file2">github.com/lbrines/classsphere/internal/adapters/google/classroom_service.go (0.0%)</option>
 				
-				<option value="file3">github.com/lbrines/classsphere/internal/adapters/http/middleware.go (77.3%)</option>
+				<option value="file3">github.com/lbrines/classsphere/internal/adapters/google/mock_data.go (0.0%)</option>
 				
-				<option value="file4">github.com/lbrines/classsphere/internal/adapters/oauth/google_oauth.go (81.6%)</option>
+				<option value="file4">github.com/lbrines/classsphere/internal/adapters/http/handler.go (90.1%)</option>
 				
-				<option value="file5">github.com/lbrines/classsphere/internal/adapters/repo/memory_repo.go (95.0%)</option>
+				<option value="file5">github.com/lbrines/classsphere/internal/adapters/http/middleware.go (100.0%)</option>
 				
-				<option value="file6">github.com/lbrines/classsphere/internal/app/auth_service.go (72.5%)</option>
+				<option value="file6">github.com/lbrines/classsphere/internal/adapters/oauth/google_oauth.go (92.1%)</option>
 				
-				<option value="file7">github.com/lbrines/classsphere/internal/app/user_service.go (100.0%)</option>
+				<option value="file7">github.com/lbrines/classsphere/internal/adapters/repo/memory_repo.go (95.0%)</option>
 				
-				<option value="file8">github.com/lbrines/classsphere/internal/domain/role.go (100.0%)</option>
+				<option value="file8">github.com/lbrines/classsphere/internal/app/auth_service.go (91.3%)</option>
 				
-				<option value="file9">github.com/lbrines/classsphere/internal/domain/user.go (100.0%)</option>
+				<option value="file9">github.com/lbrines/classsphere/internal/app/classroom_service.go (88.3%)</option>
 				
-				<option value="file10">github.com/lbrines/classsphere/internal/shared/config.go (75.8%)</option>
+				<option value="file10">github.com/lbrines/classsphere/internal/app/user_service.go (100.0%)</option>
 				
-				<option value="file11">github.com/lbrines/classsphere/internal/shared/logger.go (100.0%)</option>
+				<option value="file11">github.com/lbrines/classsphere/internal/domain/role.go (100.0%)</option>
+				
+				<option value="file12">github.com/lbrines/classsphere/internal/domain/user.go (100.0%)</option>
+				
+				<option value="file13">github.com/lbrines/classsphere/internal/shared/config.go (94.3%)</option>
+				
+				<option value="file14">github.com/lbrines/classsphere/internal/shared/integration.go (50.0%)</option>
+				
+				<option value="file15">github.com/lbrines/classsphere/internal/shared/logger.go (100.0%)</option>
 				
 				</select>
 			</div>
@@ -109,6 +117,7 @@ import (
         "golang.org/x/crypto/bcrypt"
 
         "github.com/lbrines/classsphere/internal/adapters/cache"
+        googleadapter "github.com/lbrines/classsphere/internal/adapters/google"
         httpadapter "github.com/lbrines/classsphere/internal/adapters/http"
         "github.com/lbrines/classsphere/internal/adapters/oauth"
         "github.com/lbrines/classsphere/internal/adapters/repo"
@@ -148,7 +157,7 @@ type application struct {
 
 func initialize(ctx context.Context) (application, func(), error) <span class="cov8" title="1">{
         cfg, err := shared.LoadConfig()
-        if err != nil </span><span class="cov0" title="0">{
+        if err != nil </span><span class="cov8" title="1">{
                 return application{}, nil, fmt.Errorf("load config: %w", err)
         }</span>
 
@@ -161,7 +170,7 @@ func initialize(ctx context.Context) (application, func(), error) <span class="c
         })
 
         cacheAdapter := cache.NewRedisCache(redisClient)
-        if err := cacheAdapter.Ping(ctx); err != nil </span><span class="cov0" title="0">{
+        if err := cacheAdapter.Ping(ctx); err != nil </span><span class="cov8" title="1">{
                 logger.Error("redis ping failed", slog.String("error", err.Error()))
         }</span>
 
@@ -177,7 +186,28 @@ func initialize(ctx context.Context) (application, func(), error) <span class="c
                 return application{}, nil, fmt.Errorf("user service: %w", err)
         }</span>
 
-        <span class="cov8" title="1">server := httpadapter.New(authService, userService)
+        <span class="cov8" title="1">classroomProviders := []ports.ClassroomProvider{}
+        mockProvider, err := googleadapter.NewClassroomService("", shared.IntegrationModeMock)
+        if err != nil </span><span class="cov0" title="0">{
+                return application{}, nil, fmt.Errorf("init mock classroom provider: %w", err)
+        }</span>
+        <span class="cov8" title="1">classroomProviders = append(classroomProviders, mockProvider)
+
+        if cfg.GoogleCredentials != "" </span><span class="cov0" title="0">{
+                googleProvider, err := googleadapter.NewClassroomService(cfg.GoogleCredentials, shared.IntegrationModeGoogle)
+                if err != nil </span><span class="cov0" title="0">{
+                        logger.Warn("google classroom provider unavailable", slog.String("error", err.Error()))
+                }</span> else<span class="cov0" title="0"> {
+                        classroomProviders = append(classroomProviders, googleProvider)
+                }</span>
+        }
+
+        <span class="cov8" title="1">classroomService, err := app.NewClassroomService(cfg.ClassroomMode, classroomProviders...)
+        if err != nil </span><span class="cov0" title="0">{
+                return application{}, nil, fmt.Errorf("classroom service: %w", err)
+        }</span>
+
+        <span class="cov8" title="1">server := httpadapter.New(authService, userService, classroomService)
 
         cleanup := func() </span><span class="cov8" title="1">{
                 _ = cacheAdapter.Close()
@@ -220,15 +250,34 @@ func startServer(ctx context.Context, e *echo.Echo, port int, logger *slog.Logge
 }
 
 func seedUsers(logger *slog.Logger) []domain.User <span class="cov8" title="1">{
-        adminHash, err := bcrypt.GenerateFromPassword([]byte("admin123"), bcrypt.DefaultCost)
+        users, err := createSeedUsers()
         if err != nil </span><span class="cov0" title="0">{
-                logger.Error("failed to hash admin password", slog.String("error", err.Error()))
+                logger.Error("failed to create seed users", slog.String("error", err.Error()))
                 os.Exit(1)
         }</span>
-        <span class="cov8" title="1">coordinatorHash, err := bcrypt.GenerateFromPassword([]byte("coord123"), bcrypt.DefaultCost)
-        if err != nil </span><span class="cov0" title="0">{
-                logger.Error("failed to hash coordinator password", slog.String("error", err.Error()))
-                os.Exit(1)
+        <span class="cov8" title="1">return users</span>
+}
+
+// hashPasswordFunc allows mocking in tests
+var hashPasswordFunc = bcrypt.GenerateFromPassword
+
+// createSeedUsers generates the initial users. Separated for testability.
+func createSeedUsers() ([]domain.User, error) <span class="cov8" title="1">{
+        adminHash, err := hashPasswordFunc([]byte("admin123"), bcrypt.DefaultCost)
+        if err != nil </span><span class="cov8" title="1">{
+                return nil, fmt.Errorf("hash admin password: %w", err)
+        }</span>
+        <span class="cov8" title="1">coordinatorHash, err := hashPasswordFunc([]byte("coord123"), bcrypt.DefaultCost)
+        if err != nil </span><span class="cov8" title="1">{
+                return nil, fmt.Errorf("hash coordinator password: %w", err)
+        }</span>
+        <span class="cov8" title="1">teacherHash, err := hashPasswordFunc([]byte("teach123"), bcrypt.DefaultCost)
+        if err != nil </span><span class="cov8" title="1">{
+                return nil, fmt.Errorf("hash teacher password: %w", err)
+        }</span>
+        <span class="cov8" title="1">studentHash, err := hashPasswordFunc([]byte("stud123"), bcrypt.DefaultCost)
+        if err != nil </span><span class="cov8" title="1">{
+                return nil, fmt.Errorf("hash student password: %w", err)
         }</span>
 
         <span class="cov8" title="1">return []domain.User{
@@ -250,7 +299,25 @@ func seedUsers(logger *slog.Logger) []domain.User <span class="cov8" title="1">{
                         CreatedAt:      time.Now(),
                         UpdatedAt:      time.Now(),
                 },
-        }</span>
+                {
+                        ID:             "teacher-1",
+                        Email:          "teacher@classsphere.edu",
+                        DisplayName:    "Teacher",
+                        HashedPassword: string(teacherHash),
+                        Role:           domain.RoleTeacher,
+                        CreatedAt:      time.Now(),
+                        UpdatedAt:      time.Now(),
+                },
+                {
+                        ID:             "student-1",
+                        Email:          "student@classsphere.edu",
+                        DisplayName:    "Student",
+                        HashedPassword: string(studentHash),
+                        Role:           domain.RoleStudent,
+                        CreatedAt:      time.Now(),
+                        UpdatedAt:      time.Now(),
+                },
+        }, nil</span>
 }
 </pre>
 		
@@ -299,9 +366,447 @@ func (c *RedisCache) Close() error <span class="cov8" title="1">{
 }</span>
 </pre>
 		
-		<pre class="file" id="file2" style="display: none">package http
+		<pre class="file" id="file2" style="display: none">package google
 
 import (
+        "context"
+        "fmt"
+        "strings"
+        "time"
+
+        "google.golang.org/api/classroom/v1"
+        "google.golang.org/api/option"
+
+        "github.com/lbrines/classsphere/internal/domain"
+        "github.com/lbrines/classsphere/internal/ports"
+        "github.com/lbrines/classsphere/internal/shared"
+)
+
+var _ ports.ClassroomProvider = (*ClassroomService)(nil)
+
+// ClassroomService integrates with Google Classroom or provides a rich mock
+// dataset depending on the active mode.
+type ClassroomService struct {
+        service     *classroom.Service
+        mode        string
+        credentials string
+        now         func() time.Time
+}
+
+// Option allows configuring the ClassroomService.
+type Option func(*ClassroomService)
+
+// WithClock overrides the time provider (used in tests).
+func WithClock(clock func() time.Time) Option <span class="cov0" title="0">{
+        return func(c *ClassroomService) </span><span class="cov0" title="0">{
+                if clock != nil </span><span class="cov0" title="0">{
+                        c.now = clock
+                }</span>
+        }
+}
+
+// WithGoogleService injects an already initialized classroom.Service.
+func WithGoogleService(svc *classroom.Service) Option <span class="cov0" title="0">{
+        return func(c *ClassroomService) </span><span class="cov0" title="0">{
+                c.service = svc
+        }</span>
+}
+
+// NewClassroomService creates a new provider. When mode is "google" it attempts
+// to instantiate the official Google Classroom client. For "mock" mode it uses
+// in-memory datasets.
+func NewClassroomService(credentialsPath, mode string, opts ...Option) (*ClassroomService, error) <span class="cov0" title="0">{
+        normalizedMode := shared.NormalizeIntegrationMode(mode)
+        provider := &amp;ClassroomService{
+                mode:        normalizedMode,
+                credentials: credentialsPath,
+                now:         time.Now,
+        }
+
+        for _, opt := range opts </span><span class="cov0" title="0">{
+                opt(provider)
+        }</span>
+
+        <span class="cov0" title="0">if provider.mode == shared.IntegrationModeGoogle &amp;&amp; provider.service == nil </span><span class="cov0" title="0">{
+                if credentialsPath == "" </span><span class="cov0" title="0">{
+                        return nil, fmt.Errorf("credentials path required for google mode")
+                }</span>
+                <span class="cov0" title="0">ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+                defer cancel()
+
+                srv, err := classroom.NewService(ctx, option.WithCredentialsFile(credentialsPath))
+                if err != nil </span><span class="cov0" title="0">{
+                        return nil, fmt.Errorf("create classroom service: %w", err)
+                }</span>
+                <span class="cov0" title="0">provider.service = srv</span>
+        }
+
+        <span class="cov0" title="0">return provider, nil</span>
+}
+
+// Mode returns the configured provider mode.
+func (c *ClassroomService) Mode() string <span class="cov0" title="0">{
+        return c.mode
+}</span>
+
+// Snapshot returns an aggregated snapshot of classroom data for dashboards. It
+// falls back to curated datasets when the Google API is unavailable to keep the
+// experience consistent in local development.
+func (c *ClassroomService) Snapshot(ctx context.Context) (domain.ClassroomSnapshot, error) <span class="cov0" title="0">{
+        now := c.now()
+        switch c.mode </span>{
+        case shared.IntegrationModeMock:<span class="cov0" title="0">
+                return domain.ClassroomSnapshot{
+                        Mode:        shared.IntegrationModeMock,
+                        GeneratedAt: now,
+                        Courses:     mockCourses(now),
+                }, nil</span>
+        case shared.IntegrationModeGoogle:<span class="cov0" title="0">
+                if c.service == nil </span><span class="cov0" title="0">{
+                        // When credentials are not available we return a simulated snapshot so
+                        // dashboards can still be exercised.
+                        return domain.ClassroomSnapshot{
+                                Mode:        shared.IntegrationModeGoogle,
+                                GeneratedAt: now,
+                                Courses:     googleSampleCourses(now),
+                        }, nil
+                }</span>
+                <span class="cov0" title="0">courses, err := c.fetchCourses(ctx)
+                if err != nil || len(courses) == 0 </span><span class="cov0" title="0">{
+                        // If the API call fails we degrade gracefully and use sample data.
+                        return domain.ClassroomSnapshot{
+                                Mode:        shared.IntegrationModeGoogle,
+                                GeneratedAt: now,
+                                Courses:     googleSampleCourses(now),
+                        }, nil
+                }</span>
+                <span class="cov0" title="0">return domain.ClassroomSnapshot{
+                        Mode:        shared.IntegrationModeGoogle,
+                        GeneratedAt: now,
+                        Courses:     courses,
+                }, nil</span>
+        default:<span class="cov0" title="0">
+                return domain.ClassroomSnapshot{}, fmt.Errorf("unsupported mode %q", c.mode)</span>
+        }
+}
+
+func (c *ClassroomService) fetchCourses(ctx context.Context) ([]domain.Course, error) <span class="cov0" title="0">{
+        if c.service == nil </span><span class="cov0" title="0">{
+                return nil, nil
+        }</span>
+        <span class="cov0" title="0">req := c.service.Courses.List()
+        req.Context(ctx)
+
+        resp, err := req.Do()
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, fmt.Errorf("list courses: %w", err)
+        }</span>
+
+        <span class="cov0" title="0">now := c.now()
+        courses := make([]domain.Course, 0, len(resp.Courses))
+        for _, item := range resp.Courses </span><span class="cov0" title="0">{
+                if item == nil </span><span class="cov0" title="0">{
+                        continue</span>
+                }
+                <span class="cov0" title="0">courses = append(courses, domain.Course{
+                        ID:               item.Id,
+                        Name:             item.Name,
+                        Section:          item.Section,
+                        Program:          strings.Title(strings.ToLower(item.Section)),
+                        Room:             item.Room,
+                        CoordinatorEmail: "",
+                        Teachers: []domain.CourseTeacher{
+                                {
+                                        ID:    item.OwnerId,
+                                        Name:  item.OwnerId,
+                                        Email: item.OwnerId,
+                                },
+                        },
+                        LastActivity: now,
+                })</span>
+        }
+        <span class="cov0" title="0">return courses, nil</span>
+}
+</pre>
+		
+		<pre class="file" id="file3" style="display: none">package google
+
+import (
+        "time"
+
+        "github.com/lbrines/classsphere/internal/domain"
+)
+
+func mockCourses(now time.Time) []domain.Course <span class="cov0" title="0">{
+        return []domain.Course{
+                {
+                        ID:               "course-stem-101",
+                        Name:             "STEM Foundations",
+                        Section:          "STEM-101",
+                        Program:          "STEM",
+                        Room:             "Lab 3",
+                        CoordinatorEmail: "coordinator@classsphere.edu",
+                        LastActivity:     now.Add(-12 * time.Hour),
+                        Schedule: domain.CourseSchedule{
+                                Days:      []string{"Monday", "Wednesday"},
+                                StartTime: "09:00",
+                                EndTime:   "10:30",
+                        },
+                        Teachers: []domain.CourseTeacher{
+                                {ID: "teacher-1", Name: "Carlos Vega", Email: "teacher@classsphere.edu"},
+                        },
+                        Students: []domain.CourseStudent{
+                                {
+                                        Person: domain.Person{ID: "student-1", Name: "Sara Kim", Email: "student@classsphere.edu"},
+                                        Progress: domain.StudentProgress{
+                                                CompletedAssignments: 7,
+                                                PendingAssignments:   2,
+                                                AverageScore:         92,
+                                                AttendanceRate:       0.96,
+                                                LateSubmissions:      1,
+                                                UpcomingAssignments:  1,
+                                                LastSubmission:       now.Add(-18 * time.Hour),
+                                        },
+                                },
+                                {
+                                        Person: domain.Person{ID: "student-2", Name: "Miguel Torres", Email: "miguel.torres@classsphere.edu"},
+                                        Progress: domain.StudentProgress{
+                                                CompletedAssignments: 6,
+                                                PendingAssignments:   3,
+                                                AverageScore:         84,
+                                                AttendanceRate:       0.91,
+                                                LateSubmissions:      2,
+                                                UpcomingAssignments:  2,
+                                                LastSubmission:       now.Add(-36 * time.Hour),
+                                        },
+                                },
+                                {
+                                        Person: domain.Person{ID: "student-3", Name: "Emma Li", Email: "emma.li@classsphere.edu"},
+                                        Progress: domain.StudentProgress{
+                                                CompletedAssignments: 8,
+                                                PendingAssignments:   1,
+                                                AverageScore:         95,
+                                                AttendanceRate:       0.98,
+                                                LateSubmissions:      0,
+                                                UpcomingAssignments:  1,
+                                                LastSubmission:       now.Add(-6 * time.Hour),
+                                        },
+                                },
+                        },
+                        Assignments: []domain.CourseAssignment{
+                                {
+                                        ID:        "assign-stem-1",
+                                        Title:     "Kinematics Lab",
+                                        DueDate:   now.Add(48 * time.Hour),
+                                        MaxPoints: 100,
+                                        Status:    domain.AssignmentStatusOpen,
+                                        Completed: 18,
+                                        Pending:   4,
+                                        Late:      1,
+                                },
+                                {
+                                        ID:        "assign-stem-2",
+                                        Title:     "Robotics Challenge",
+                                        DueDate:   now.Add(-24 * time.Hour),
+                                        MaxPoints: 100,
+                                        Status:    domain.AssignmentStatusClosed,
+                                        Completed: 22,
+                                        Pending:   0,
+                                        Late:      2,
+                                },
+                                {
+                                        ID:        "assign-stem-3",
+                                        Title:     "Energy Systems Quiz",
+                                        DueDate:   now.Add(96 * time.Hour),
+                                        MaxPoints: 50,
+                                        Status:    domain.AssignmentStatusPlanned,
+                                        Completed: 0,
+                                        Pending:   24,
+                                        Late:      0,
+                                },
+                        },
+                },
+                {
+                        ID:               "course-hum-201",
+                        Name:             "Global Literature",
+                        Section:          "HUM-201",
+                        Program:          "Humanities",
+                        Room:             "Room 5A",
+                        CoordinatorEmail: "coordinator@classsphere.edu",
+                        LastActivity:     now.Add(-6 * time.Hour),
+                        Schedule: domain.CourseSchedule{
+                                Days:      []string{"Tuesday", "Thursday"},
+                                StartTime: "11:00",
+                                EndTime:   "12:30",
+                        },
+                        Teachers: []domain.CourseTeacher{
+                                {ID: "teacher-2", Name: "Laura Nguyen", Email: "laura.nguyen@classsphere.edu"},
+                        },
+                        Students: []domain.CourseStudent{
+                                {
+                                        Person: domain.Person{ID: "student-4", Name: "Noah Patel", Email: "noah.patel@classsphere.edu"},
+                                        Progress: domain.StudentProgress{
+                                                CompletedAssignments: 9,
+                                                PendingAssignments:   1,
+                                                AverageScore:         88,
+                                                AttendanceRate:       0.94,
+                                                LateSubmissions:      1,
+                                                UpcomingAssignments:  1,
+                                                LastSubmission:       now.Add(-10 * time.Hour),
+                                        },
+                                },
+                                {
+                                        Person: domain.Person{ID: "student-5", Name: "Olivia Mendes", Email: "olivia.mendes@classsphere.edu"},
+                                        Progress: domain.StudentProgress{
+                                                CompletedAssignments: 10,
+                                                PendingAssignments:   0,
+                                                AverageScore:         97,
+                                                AttendanceRate:       0.99,
+                                                LateSubmissions:      0,
+                                                UpcomingAssignments:  1,
+                                                LastSubmission:       now.Add(-4 * time.Hour),
+                                        },
+                                },
+                                {
+                                        Person: domain.Person{ID: "student-6", Name: "Ethan Brooks", Email: "ethan.brooks@classsphere.edu"},
+                                        Progress: domain.StudentProgress{
+                                                CompletedAssignments: 7,
+                                                PendingAssignments:   3,
+                                                AverageScore:         80,
+                                                AttendanceRate:       0.89,
+                                                LateSubmissions:      3,
+                                                UpcomingAssignments:  2,
+                                                LastSubmission:       now.Add(-72 * time.Hour),
+                                        },
+                                },
+                        },
+                        Assignments: []domain.CourseAssignment{
+                                {
+                                        ID:        "assign-hum-1",
+                                        Title:     "Literary Analysis Essay",
+                                        DueDate:   now.Add(72 * time.Hour),
+                                        MaxPoints: 100,
+                                        Status:    domain.AssignmentStatusOpen,
+                                        Completed: 15,
+                                        Pending:   6,
+                                        Late:      0,
+                                },
+                                {
+                                        ID:        "assign-hum-2",
+                                        Title:     "Poetry Recital",
+                                        DueDate:   now.Add(-48 * time.Hour),
+                                        MaxPoints: 50,
+                                        Status:    domain.AssignmentStatusClosed,
+                                        Completed: 21,
+                                        Pending:   0,
+                                        Late:      1,
+                                },
+                        },
+                },
+                {
+                        ID:               "course-robot-301",
+                        Name:             "Robotics Capstone",
+                        Section:          "STEM-301",
+                        Program:          "STEM",
+                        Room:             "Innovation Hub",
+                        CoordinatorEmail: "coordinator@classsphere.edu",
+                        LastActivity:     now.Add(-2 * time.Hour),
+                        Schedule: domain.CourseSchedule{
+                                Days:      []string{"Friday"},
+                                StartTime: "14:00",
+                                EndTime:   "17:00",
+                        },
+                        Teachers: []domain.CourseTeacher{
+                                {ID: "teacher-1", Name: "Carlos Vega", Email: "teacher@classsphere.edu"},
+                                {ID: "teacher-3", Name: "Priya Desai", Email: "priya.desai@classsphere.edu"},
+                        },
+                        Students: []domain.CourseStudent{
+                                {
+                                        Person: domain.Person{ID: "student-1", Name: "Sara Kim", Email: "student@classsphere.edu"},
+                                        Progress: domain.StudentProgress{
+                                                CompletedAssignments: 4,
+                                                PendingAssignments:   1,
+                                                AverageScore:         91,
+                                                AttendanceRate:       0.97,
+                                                LateSubmissions:      0,
+                                                UpcomingAssignments:  1,
+                                                LastSubmission:       now.Add(-8 * time.Hour),
+                                        },
+                                },
+                                {
+                                        Person: domain.Person{ID: "student-7", Name: "David Romero", Email: "david.romero@classsphere.edu"},
+                                        Progress: domain.StudentProgress{
+                                                CompletedAssignments: 3,
+                                                PendingAssignments:   2,
+                                                AverageScore:         76,
+                                                AttendanceRate:       0.88,
+                                                LateSubmissions:      2,
+                                                UpcomingAssignments:  2,
+                                                LastSubmission:       now.Add(-96 * time.Hour),
+                                        },
+                                },
+                        },
+                        Assignments: []domain.CourseAssignment{
+                                {
+                                        ID:        "assign-rob-1",
+                                        Title:     "Prototype Demo",
+                                        DueDate:   now.Add(120 * time.Hour),
+                                        MaxPoints: 200,
+                                        Status:    domain.AssignmentStatusOpen,
+                                        Completed: 6,
+                                        Pending:   8,
+                                        Late:      0,
+                                },
+                                {
+                                        ID:        "assign-rob-2",
+                                        Title:     "Design Review",
+                                        DueDate:   now.Add(-72 * time.Hour),
+                                        MaxPoints: 100,
+                                        Status:    domain.AssignmentStatusClosed,
+                                        Completed: 10,
+                                        Pending:   0,
+                                        Late:      1,
+                                },
+                        },
+                },
+        }
+}</span>
+
+// googleSampleCourses mirrors real-world data distribution while remaining
+// deterministic for local environments without API credentials.
+func googleSampleCourses(now time.Time) []domain.Course <span class="cov0" title="0">{
+        data := mockCourses(now)
+
+        // Slightly adjust the dataset to reflect a different mode.
+        for i := range data </span><span class="cov0" title="0">{
+                course := &amp;data[i]
+                course.LastActivity = now.Add(-time.Duration((i+1)*2) * time.Hour)
+                for s := range course.Students </span><span class="cov0" title="0">{
+                        course.Students[s].Progress.AverageScore += 1.5
+                        if course.Students[s].Progress.AverageScore &gt; 100 </span><span class="cov0" title="0">{
+                                course.Students[s].Progress.AverageScore = 100
+                        }</span>
+                        <span class="cov0" title="0">if course.Students[s].Progress.PendingAssignments &gt; 0 </span><span class="cov0" title="0">{
+                                course.Students[s].Progress.PendingAssignments--
+                        }</span>
+                }
+                <span class="cov0" title="0">for a := range course.Assignments </span><span class="cov0" title="0">{
+                        if course.Assignments[a].Status == domain.AssignmentStatusOpen </span><span class="cov0" title="0">{
+                                course.Assignments[a].Completed += 2
+                                if course.Assignments[a].Pending &gt; 1 </span><span class="cov0" title="0">{
+                                        course.Assignments[a].Pending--
+                                }</span>
+                        }
+                }
+        }
+        <span class="cov0" title="0">return data</span>
+}
+</pre>
+		
+		<pre class="file" id="file4" style="display: none">package http
+
+import (
+        "fmt"
         "net/http"
         "time"
 
@@ -315,15 +820,17 @@ import (
 
 // Handler wires HTTP routes to use cases.
 type Handler struct {
-        authService *app.AuthService
-        userService *app.UserService
+        authService      *app.AuthService
+        userService      *app.UserService
+        classroomService *app.ClassroomService
 }
 
 // New creates an Echo engine configured with routes and middleware.
-func New(authService *app.AuthService, userService *app.UserService) *echo.Echo <span class="cov8" title="1">{
+func New(authService *app.AuthService, userService *app.UserService, classroomService *app.ClassroomService) *echo.Echo <span class="cov8" title="1">{
         h := &amp;Handler{
-                authService: authService,
-                userService: userService,
+                authService:      authService,
+                userService:      userService,
+                classroomService: classroomService,
         }
 
         e := echo.New()
@@ -347,6 +854,14 @@ func New(authService *app.AuthService, userService *app.UserService) *echo.Echo 
         protected.GET("/users/me", h.me)
         protected.GET("/admin/ping", h.adminPing, RequireRole(domain.RoleAdmin))
 
+        protected.GET("/google/courses", h.listCourses)
+        protected.GET("/classroom/courses", h.listCourses)
+
+        protected.GET("/dashboard/admin", h.dashboardFor(domain.RoleAdmin), RequireRole(domain.RoleAdmin))
+        protected.GET("/dashboard/coordinator", h.dashboardFor(domain.RoleCoordinator), RequireRole(domain.RoleCoordinator))
+        protected.GET("/dashboard/teacher", h.dashboardFor(domain.RoleTeacher), RequireRole(domain.RoleTeacher))
+        protected.GET("/dashboard/student", h.dashboardFor(domain.RoleStudent), RequireRole(domain.RoleStudent))
+
         return e
 }</span>
 
@@ -358,12 +873,12 @@ func (h *Handler) health(c echo.Context) error <span class="cov8" title="1">{
 
 func (h *Handler) login(c echo.Context) error <span class="cov8" title="1">{
         var req loginRequest
-        if err := c.Bind(&amp;req); err != nil </span><span class="cov0" title="0">{
+        if err := c.Bind(&amp;req); err != nil </span><span class="cov8" title="1">{
                 return echo.NewHTTPError(http.StatusBadRequest, "invalid request payload")
         }</span>
         <span class="cov8" title="1">ctx := c.Request().Context()
         result, err := h.authService.LoginWithPassword(ctx, req.Email, req.Password)
-        if err != nil </span><span class="cov0" title="0">{
+        if err != nil </span><span class="cov8" title="1">{
                 return echo.NewHTTPError(http.StatusUnauthorized, err.Error())
         }</span>
         <span class="cov8" title="1">return c.JSON(http.StatusOK, authResponse{
@@ -390,11 +905,11 @@ func (h *Handler) oauthCallback(c echo.Context) error <span class="cov8" title="
         state := c.QueryParam("state")
         ctx := c.Request().Context()
         result, err := h.authService.CompleteOAuth(ctx, code, state)
-        if err != nil </span><span class="cov0" title="0">{
-                if err == shared.ErrUnauthorized </span><span class="cov0" title="0">{
+        if err != nil </span><span class="cov8" title="1">{
+                if err == shared.ErrUnauthorized </span><span class="cov8" title="1">{
                         return echo.NewHTTPError(http.StatusUnauthorized, err.Error())
                 }</span>
-                <span class="cov0" title="0">return echo.NewHTTPError(http.StatusBadRequest, err.Error())</span>
+                <span class="cov8" title="1">return echo.NewHTTPError(http.StatusBadRequest, err.Error())</span>
         }
         <span class="cov8" title="1">return c.JSON(http.StatusOK, authResponse{
                 AccessToken: result.AccessToken,
@@ -414,6 +929,53 @@ func (h *Handler) adminPing(c echo.Context) error <span class="cov8" title="1">{
         })
 }</span>
 
+func (h *Handler) listCourses(c echo.Context) error <span class="cov8" title="1">{
+        if h.classroomService == nil </span><span class="cov0" title="0">{
+                return echo.NewHTTPError(http.StatusServiceUnavailable, "classroom integration not configured")
+        }</span>
+        <span class="cov8" title="1">ctx := c.Request().Context()
+        mode := c.QueryParam("mode")
+        result, err := h.classroomService.ListCourses(ctx, mode)
+        if err != nil </span><span class="cov0" title="0">{
+                return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+        }</span>
+        <span class="cov8" title="1">return c.JSON(http.StatusOK, courseListResponse{
+                Mode:           result.Mode,
+                GeneratedAt:    result.GeneratedAt,
+                Courses:        result.Courses,
+                AvailableModes: h.classroomService.AvailableModes(),
+        })</span>
+}
+
+func (h *Handler) dashboardFor(role domain.Role) echo.HandlerFunc <span class="cov8" title="1">{
+        return func(c echo.Context) error </span><span class="cov8" title="1">{
+                if h.classroomService == nil </span><span class="cov0" title="0">{
+                        return echo.NewHTTPError(http.StatusServiceUnavailable, "classroom integration not configured")
+                }</span>
+                <span class="cov8" title="1">user := CurrentUser(c)
+                if user.ID == "" </span><span class="cov0" title="0">{
+                        return echo.NewHTTPError(http.StatusUnauthorized, "missing user")
+                }</span>
+                <span class="cov8" title="1">if user.Role != role </span><span class="cov0" title="0">{
+                        return echo.NewHTTPError(http.StatusForbidden, fmt.Sprintf("dashboard available only for %s role", role))
+                }</span>
+                <span class="cov8" title="1">ctx := c.Request().Context()
+                mode := c.QueryParam("mode")
+                data, err := h.classroomService.Dashboard(ctx, user, mode)
+                if err != nil </span><span class="cov0" title="0">{
+                        return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+                }</span>
+                <span class="cov8" title="1">return c.JSON(http.StatusOK, data)</span>
+        }
+}
+
+type courseListResponse struct {
+        Mode           string               `json:"mode"`
+        GeneratedAt    time.Time            `json:"generatedAt"`
+        Courses        []app.CourseOverview `json:"courses"`
+        AvailableModes []string             `json:"availableModes"`
+}
+
 type loginRequest struct {
         Email    string `json:"email"`
         Password string `json:"password"`
@@ -426,7 +988,7 @@ type authResponse struct {
 }
 </pre>
 		
-		<pre class="file" id="file3" style="display: none">package http
+		<pre class="file" id="file5" style="display: none">package http
 
 import (
         "net/http"
@@ -448,17 +1010,17 @@ func AuthMiddleware(auth *app.AuthService) echo.MiddlewareFunc <span class="cov8
         return func(next echo.HandlerFunc) echo.HandlerFunc </span><span class="cov8" title="1">{
                 return func(c echo.Context) error </span><span class="cov8" title="1">{
                         header := c.Request().Header.Get("Authorization")
-                        if header == "" </span><span class="cov0" title="0">{
+                        if header == "" </span><span class="cov8" title="1">{
                                 return echo.NewHTTPError(http.StatusUnauthorized, shared.ErrUnauthorized.Error())
                         }</span>
 
                         <span class="cov8" title="1">parts := strings.SplitN(header, " ", 2)
-                        if len(parts) != 2 || !strings.EqualFold(parts[0], "Bearer") </span><span class="cov0" title="0">{
+                        if len(parts) != 2 || !strings.EqualFold(parts[0], "Bearer") </span><span class="cov8" title="1">{
                                 return echo.NewHTTPError(http.StatusUnauthorized, shared.ErrUnauthorized.Error())
                         }</span>
 
                         <span class="cov8" title="1">user, err := auth.ValidateToken(c.Request().Context(), parts[1])
-                        if err != nil </span><span class="cov0" title="0">{
+                        if err != nil </span><span class="cov8" title="1">{
                                 return echo.NewHTTPError(http.StatusUnauthorized, shared.ErrUnauthorized.Error())
                         }</span>
 
@@ -473,7 +1035,7 @@ func RequireRole(role domain.Role) echo.MiddlewareFunc <span class="cov8" title=
         return func(next echo.HandlerFunc) echo.HandlerFunc </span><span class="cov8" title="1">{
                 return func(c echo.Context) error </span><span class="cov8" title="1">{
                         user := CurrentUser(c)
-                        if !user.Role.Allows(role) </span><span class="cov0" title="0">{
+                        if !user.Role.Allows(role) </span><span class="cov8" title="1">{
                                 return echo.NewHTTPError(http.StatusForbidden, shared.ErrForbidden.Error())
                         }</span>
                         <span class="cov8" title="1">return next(c)</span>
@@ -486,11 +1048,11 @@ func CurrentUser(c echo.Context) domain.User <span class="cov8" title="1">{
         if value, ok := c.Get(string(userContextKey)).(domain.User); ok </span><span class="cov8" title="1">{
                 return value
         }</span>
-        <span class="cov0" title="0">return domain.User{}</span>
+        <span class="cov8" title="1">return domain.User{}</span>
 }
 </pre>
 		
-		<pre class="file" id="file4" style="display: none">package oauth
+		<pre class="file" id="file6" style="display: none">package oauth
 
 import (
         "context"
@@ -586,7 +1148,7 @@ func (g *GoogleOAuth) Exchange(ctx context.Context, code string) (ports.OAuthUse
         }</span>
 
         <span class="cov8" title="1">token, err := g.config.Exchange(ctx, code)
-        if err != nil </span><span class="cov0" title="0">{
+        if err != nil </span><span class="cov8" title="1">{
                 return ports.OAuthUser{}, fmt.Errorf("exchange code: %w", err)
         }</span>
 
@@ -596,12 +1158,12 @@ func (g *GoogleOAuth) Exchange(ctx context.Context, code string) (ports.OAuthUse
                 SetError(&amp;oauthError{}).
                 SetResult(&amp;googleUser{}).
                 Get(g.userInfoURL)
-        if err != nil </span><span class="cov0" title="0">{
+        if err != nil </span><span class="cov8" title="1">{
                 return ports.OAuthUser{}, fmt.Errorf("request userinfo: %w", err)
         }</span>
 
-        <span class="cov8" title="1">if resp.IsError() </span><span class="cov0" title="0">{
-                if apiErr, ok := resp.Error().(*oauthError); ok </span><span class="cov0" title="0">{
+        <span class="cov8" title="1">if resp.IsError() </span><span class="cov8" title="1">{
+                if apiErr, ok := resp.Error().(*oauthError); ok </span><span class="cov8" title="1">{
                         return ports.OAuthUser{}, fmt.Errorf("userinfo error: %s", apiErr.Error())
                 }</span>
                 <span class="cov0" title="0">return ports.OAuthUser{}, fmt.Errorf("userinfo error: status %d", resp.StatusCode())</span>
@@ -641,7 +1203,7 @@ func (e *oauthError) Error() string <span class="cov8" title="1">{
 }
 </pre>
 		
-		<pre class="file" id="file5" style="display: none">package repo
+		<pre class="file" id="file7" style="display: none">package repo
 
 import (
         "context"
@@ -704,7 +1266,7 @@ func (r *MemoryUserRepository) Upsert(_ context.Context, user domain.User) error
 }</span>
 </pre>
 		
-		<pre class="file" id="file6" style="display: none">package app
+		<pre class="file" id="file8" style="display: none">package app
 
 import (
         "context"
@@ -737,13 +1299,13 @@ type AuthService struct {
 
 // NewAuthService constructs an AuthService.
 func NewAuthService(users ports.UserRepository, cache ports.Cache, oauth ports.OAuthProvider, cfg shared.Config) (*AuthService, error) <span class="cov8" title="1">{
-        if users == nil </span><span class="cov0" title="0">{
+        if users == nil </span><span class="cov8" title="1">{
                 return nil, fmt.Errorf("users repository is required")
         }</span>
-        <span class="cov8" title="1">if cache == nil </span><span class="cov0" title="0">{
+        <span class="cov8" title="1">if cache == nil </span><span class="cov8" title="1">{
                 return nil, fmt.Errorf("cache is required")
         }</span>
-        <span class="cov8" title="1">if oauth == nil </span><span class="cov0" title="0">{
+        <span class="cov8" title="1">if oauth == nil </span><span class="cov8" title="1">{
                 return nil, fmt.Errorf("oauth provider is required")
         }</span>
         <span class="cov8" title="1">return &amp;AuthService{
@@ -765,7 +1327,7 @@ type AuthTokens struct {
 // LoginWithPassword authenticates a user using email and password credentials.
 func (a *AuthService) LoginWithPassword(ctx context.Context, email, password string) (AuthTokens, error) <span class="cov8" title="1">{
         user, err := a.users.FindByEmail(ctx, email)
-        if err != nil </span><span class="cov0" title="0">{
+        if err != nil </span><span class="cov8" title="1">{
                 return AuthTokens{}, shared.ErrInvalidCredentials
         }</span>
 
@@ -791,11 +1353,11 @@ func (a *AuthService) StartOAuth(ctx context.Context) (string, string, error) <s
         if err != nil </span><span class="cov0" title="0">{
                 return "", "", err
         }</span>
-        <span class="cov8" title="1">if err := a.cache.Set(ctx, oauthStatePrefix+state, []byte("1"), oauthStateTTL); err != nil </span><span class="cov0" title="0">{
+        <span class="cov8" title="1">if err := a.cache.Set(ctx, oauthStatePrefix+state, []byte("1"), oauthStateTTL); err != nil </span><span class="cov8" title="1">{
                 return "", "", fmt.Errorf("store oauth state: %w", err)
         }</span>
         <span class="cov8" title="1">url, err := a.oauth.AuthURL(state)
-        if err != nil </span><span class="cov0" title="0">{
+        if err != nil </span><span class="cov8" title="1">{
                 return "", "", err
         }</span>
         <span class="cov8" title="1">return state, url, nil</span>
@@ -803,14 +1365,14 @@ func (a *AuthService) StartOAuth(ctx context.Context) (string, string, error) <s
 
 // CompleteOAuth processes the OAuth callback and returns signed tokens.
 func (a *AuthService) CompleteOAuth(ctx context.Context, code, state string) (AuthTokens, error) <span class="cov8" title="1">{
-        if state == "" </span><span class="cov0" title="0">{
+        if state == "" </span><span class="cov8" title="1">{
                 return AuthTokens{}, fmt.Errorf("state is required")
         }</span>
         <span class="cov8" title="1">value, err := a.cache.Get(ctx, oauthStatePrefix+state)
         if err != nil </span><span class="cov0" title="0">{
                 return AuthTokens{}, fmt.Errorf("validate oauth state: %w", err)
         }</span>
-        <span class="cov8" title="1">if len(value) == 0 </span><span class="cov0" title="0">{
+        <span class="cov8" title="1">if len(value) == 0 </span><span class="cov8" title="1">{
                 return AuthTokens{}, shared.ErrUnauthorized
         }</span>
         <span class="cov8" title="1">defer func() </span><span class="cov8" title="1">{
@@ -818,7 +1380,7 @@ func (a *AuthService) CompleteOAuth(ctx context.Context, code, state string) (Au
         }</span>()
 
         <span class="cov8" title="1">oauthUser, err := a.oauth.Exchange(ctx, code)
-        if err != nil </span><span class="cov0" title="0">{
+        if err != nil </span><span class="cov8" title="1">{
                 return AuthTokens{}, err
         }</span>
 
@@ -832,7 +1394,7 @@ func (a *AuthService) CompleteOAuth(ctx context.Context, code, state string) (Au
                         CreatedAt:   a.nowFunc(),
                         UpdatedAt:   a.nowFunc(),
                 }
-                if err := a.users.Upsert(ctx, user); err != nil </span><span class="cov0" title="0">{
+                if err := a.users.Upsert(ctx, user); err != nil </span><span class="cov8" title="1">{
                         return AuthTokens{}, fmt.Errorf("save oauth user: %w", err)
                 }</span>
         }
@@ -851,7 +1413,7 @@ func (a *AuthService) CompleteOAuth(ctx context.Context, code, state string) (Au
 
 // ValidateToken verifies the JWT and returns the associated user.
 func (a *AuthService) ValidateToken(ctx context.Context, tokenString string) (domain.User, error) <span class="cov8" title="1">{
-        if tokenString == "" </span><span class="cov0" title="0">{
+        if tokenString == "" </span><span class="cov8" title="1">{
                 return domain.User{}, shared.ErrUnauthorized
         }</span>
 
@@ -859,12 +1421,12 @@ func (a *AuthService) ValidateToken(ctx context.Context, tokenString string) (do
         _, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) </span><span class="cov8" title="1">{
                 return []byte(a.cfg.JWTSecret), nil
         }</span>)
-        <span class="cov8" title="1">if err != nil </span><span class="cov0" title="0">{
+        <span class="cov8" title="1">if err != nil </span><span class="cov8" title="1">{
                 return domain.User{}, shared.ErrUnauthorized
         }</span>
 
         <span class="cov8" title="1">user, err := a.users.FindByID(ctx, claims.Subject)
-        if err != nil </span><span class="cov0" title="0">{
+        if err != nil </span><span class="cov8" title="1">{
                 return domain.User{}, shared.ErrUnauthorized
         }</span>
         <span class="cov8" title="1">return user, nil</span>
@@ -902,7 +1464,931 @@ func (a *AuthService) SetNowFunc(fn func() time.Time) <span class="cov8" title="
 }
 </pre>
 		
-		<pre class="file" id="file7" style="display: none">package app
+		<pre class="file" id="file9" style="display: none">package app
+
+import (
+        "context"
+        "fmt"
+        "math"
+        "sort"
+        "strings"
+        "time"
+
+        "github.com/lbrines/classsphere/internal/domain"
+        "github.com/lbrines/classsphere/internal/ports"
+        "github.com/lbrines/classsphere/internal/shared"
+)
+
+// CourseListResult wraps the output of the course listing use case.
+type CourseListResult struct {
+        Mode        string
+        GeneratedAt time.Time
+        Courses     []CourseOverview
+}
+
+// ClassroomService orchestrates classroom providers (real Google or mock) and
+// builds analytics tailored to each role.
+type ClassroomService struct {
+        providers   map[string]ports.ClassroomProvider
+        defaultMode string
+        now         func() time.Time
+}
+
+// NewClassroomService constructs the service.
+func NewClassroomService(defaultMode string, providers ...ports.ClassroomProvider) (*ClassroomService, error) <span class="cov8" title="1">{
+        if len(providers) == 0 </span><span class="cov0" title="0">{
+                return nil, fmt.Errorf("at least one classroom provider must be supplied")
+        }</span>
+        <span class="cov8" title="1">modeMap := make(map[string]ports.ClassroomProvider, len(providers))
+        for _, provider := range providers </span><span class="cov8" title="1">{
+                if provider == nil </span><span class="cov0" title="0">{
+                        continue</span>
+                }
+                <span class="cov8" title="1">mode := shared.NormalizeIntegrationMode(provider.Mode())
+                modeMap[mode] = provider</span>
+        }
+        <span class="cov8" title="1">if len(modeMap) == 0 </span><span class="cov0" title="0">{
+                return nil, fmt.Errorf("no valid classroom providers registered")
+        }</span>
+        <span class="cov8" title="1">normalizedDefault := shared.NormalizeIntegrationMode(defaultMode)
+        if _, ok := modeMap[normalizedDefault]; !ok </span><span class="cov0" title="0">{
+                // If the requested default mode is unavailable fall back to mock.
+                if provider, okMock := modeMap[shared.IntegrationModeMock]; okMock </span><span class="cov0" title="0">{
+                        normalizedDefault = shared.IntegrationModeMock
+                        modeMap[shared.IntegrationModeMock] = provider
+                }</span> else<span class="cov0" title="0"> {
+                        for mode := range modeMap </span><span class="cov0" title="0">{
+                                normalizedDefault = mode
+                                break</span>
+                        }
+                }
+        }
+        <span class="cov8" title="1">return &amp;ClassroomService{
+                providers:   modeMap,
+                defaultMode: normalizedDefault,
+                now:         time.Now,
+        }, nil</span>
+}
+
+// WithClock allows overriding the internal time provider (testing).
+func (s *ClassroomService) WithClock(clock func() time.Time) <span class="cov8" title="1">{
+        if clock != nil </span><span class="cov8" title="1">{
+                s.now = clock
+        }</span>
+}
+
+// AvailableModes returns the modes registered in the service.
+func (s *ClassroomService) AvailableModes() []string <span class="cov0" title="0">{
+        modes := make([]string, 0, len(s.providers))
+        for mode := range s.providers </span><span class="cov0" title="0">{
+                modes = append(modes, mode)
+        }</span>
+        <span class="cov0" title="0">sort.Strings(modes)
+        return modes</span>
+}
+
+// ListCourses returns condensed course information for the current mode.
+func (s *ClassroomService) ListCourses(ctx context.Context, mode string) (CourseListResult, error) <span class="cov8" title="1">{
+        provider, resolvedMode, err := s.resolveMode(mode)
+        if err != nil </span><span class="cov0" title="0">{
+                return CourseListResult{}, err
+        }</span>
+        <span class="cov8" title="1">snapshot, err := provider.Snapshot(ctx)
+        if err != nil </span><span class="cov0" title="0">{
+                return CourseListResult{}, fmt.Errorf("retrieve classroom snapshot: %w", err)
+        }</span>
+
+        <span class="cov8" title="1">courses := make([]CourseOverview, 0, len(snapshot.Courses))
+        for _, course := range snapshot.Courses </span><span class="cov8" title="1">{
+                courses = append(courses, overviewFromCourse(course, snapshot.GeneratedAt))
+        }</span>
+
+        <span class="cov8" title="1">sort.Slice(courses, func(i, j int) bool </span><span class="cov8" title="1">{
+                return courses[i].CompletionRate &gt; courses[j].CompletionRate
+        }</span>)
+
+        <span class="cov8" title="1">return CourseListResult{
+                Mode:        resolvedMode,
+                GeneratedAt: snapshot.GeneratedAt,
+                Courses:     courses,
+        }, nil</span>
+}
+
+// Dashboard resolves the role-specific dashboard view.
+func (s *ClassroomService) Dashboard(ctx context.Context, user domain.User, requestedMode string) (DashboardData, error) <span class="cov8" title="1">{
+        provider, resolvedMode, err := s.resolveMode(requestedMode)
+        if err != nil </span><span class="cov0" title="0">{
+                return DashboardData{}, err
+        }</span>
+        <span class="cov8" title="1">snapshot, err := provider.Snapshot(ctx)
+        if err != nil </span><span class="cov0" title="0">{
+                return DashboardData{}, fmt.Errorf("retrieve classroom snapshot: %w", err)
+        }</span>
+
+        <span class="cov8" title="1">snapshot.Mode = resolvedMode
+        switch user.Role </span>{
+        case domain.RoleAdmin:<span class="cov8" title="1">
+                return buildAdminDashboard(snapshot), nil</span>
+        case domain.RoleCoordinator:<span class="cov8" title="1">
+                return buildCoordinatorDashboard(snapshot, user), nil</span>
+        case domain.RoleTeacher:<span class="cov8" title="1">
+                return buildTeacherDashboard(snapshot, user), nil</span>
+        case domain.RoleStudent:<span class="cov8" title="1">
+                return buildStudentDashboard(snapshot, user), nil</span>
+        default:<span class="cov0" title="0">
+                return DashboardData{}, fmt.Errorf("unsupported role %s", user.Role)</span>
+        }
+}
+
+func (s *ClassroomService) resolveMode(requested string) (ports.ClassroomProvider, string, error) <span class="cov8" title="1">{
+        mode := shared.NormalizeIntegrationMode(requested)
+        if mode == "" </span><span class="cov0" title="0">{
+                mode = s.defaultMode
+        }</span>
+        <span class="cov8" title="1">provider, ok := s.providers[mode]
+        if !ok </span><span class="cov0" title="0">{
+                // fallback to default
+                provider, ok = s.providers[s.defaultMode]
+                mode = s.defaultMode
+        }</span>
+        <span class="cov8" title="1">if !ok </span><span class="cov0" title="0">{
+                return nil, "", fmt.Errorf("no classroom provider available")
+        }</span>
+        <span class="cov8" title="1">return provider, mode, nil</span>
+}
+
+func buildAdminDashboard(snapshot domain.ClassroomSnapshot) DashboardData <span class="cov8" title="1">{
+        now := snapshot.GeneratedAt
+        totalCourses := len(snapshot.Courses)
+        totalStudents := uniqueStudentCount(snapshot.Courses)
+        avgCompletion := averageCourseCompletion(snapshot.Courses)
+        onTimeRate := globalOnTimeSubmissionRate(snapshot.Courses)
+
+        completionDelta, completionTrend := deltaAndTrend(avgCompletion, 78)
+        studentDelta, studentTrend := deltaAndTrend(float64(totalStudents), 55)
+        courseDelta, courseTrend := deltaAndTrend(float64(totalCourses), 3)
+        onTimeDelta, onTimeTrend := deltaAndTrend(onTimeRate, 84)
+
+        summary := []SummaryMetric{
+                {ID: "totalCourses", Label: "Total Courses", Value: float64(totalCourses), Delta: courseDelta, Trend: courseTrend, Format: "number"},
+                {ID: "activeStudents", Label: "Active Students", Value: float64(totalStudents), Delta: studentDelta, Trend: studentTrend, Format: "number"},
+                {ID: "avgCompletion", Label: "Avg Completion", Value: round2(avgCompletion), Delta: completionDelta, Trend: completionTrend, Format: "percent"},
+                {ID: "onTimeSubmissions", Label: "On-time Submissions", Value: round2(onTimeRate), Delta: onTimeDelta, Trend: onTimeTrend, Format: "percent"},
+        }
+
+        charts := []ChartData{
+                buildSubmissionChart(snapshot.Courses),
+                buildCoursePerformanceChart(snapshot.Courses),
+        }
+
+        highlights := buildAdminHighlights(snapshot.Courses)
+        alerts := buildAdminAlerts(snapshot.Courses)
+
+        courseOverviews := make([]CourseOverview, 0, len(snapshot.Courses))
+        for _, course := range snapshot.Courses </span><span class="cov8" title="1">{
+                courseOverviews = append(courseOverviews, overviewFromCourse(course, snapshot.GeneratedAt))
+        }</span>
+
+        <span class="cov8" title="1">return DashboardData{
+                Role:        string(domain.RoleAdmin),
+                Mode:        snapshot.Mode,
+                GeneratedAt: now,
+                Summary:     summary,
+                Charts:      charts,
+                Highlights:  highlights,
+                Alerts:      alerts,
+                Courses:     courseOverviews,
+        }</span>
+}
+
+func buildCoordinatorDashboard(snapshot domain.ClassroomSnapshot, user domain.User) DashboardData <span class="cov8" title="1">{
+        courses := filterCoursesByCoordinator(snapshot.Courses, user.Email)
+        if len(courses) == 0 </span><span class="cov0" title="0">{
+                return emptyDashboard(snapshot.Mode, user.Role, snapshot.GeneratedAt, []string{"No courses assigned to coordinator"})
+        }</span>
+        <span class="cov8" title="1">totalCourses := len(courses)
+        enrollment := totalEnrollment(courses)
+        avgCompletion := averageCourseCompletion(courses)
+        atRiskCourses := countAtRiskCourses(courses)
+
+        enrollmentDelta, enrollmentTrend := deltaAndTrend(float64(enrollment), 40)
+        atRiskDelta, atRiskTrend := deltaAndTrend(float64(atRiskCourses), 3)
+        courseDelta, courseTrend := deltaAndTrend(float64(totalCourses), 2)
+        completionDelta, completionTrend := deltaAndTrend(avgCompletion, 80)
+
+        summary := []SummaryMetric{
+                {ID: "coordinatorCourses", Label: "Program Courses", Value: float64(totalCourses), Delta: courseDelta, Trend: courseTrend, Format: "number"},
+                {ID: "enrollment", Label: "Total Enrollment", Value: float64(enrollment), Delta: enrollmentDelta, Trend: enrollmentTrend, Format: "number"},
+                {ID: "avgCompletion", Label: "Average Completion", Value: round2(avgCompletion), Delta: completionDelta, Trend: completionTrend, Format: "percent"},
+                {ID: "atRiskCourses", Label: "Courses at Risk", Value: float64(atRiskCourses), Delta: atRiskDelta, Trend: atRiskTrend, Format: "number"},
+        }
+
+        charts := []ChartData{
+                buildProgramDistributionChart(courses),
+                buildLateSubmissionChart(courses),
+        }
+
+        highlights := buildCoordinatorHighlights(courses)
+
+        courseOverviews := make([]CourseOverview, 0, len(courses))
+        for _, course := range courses </span><span class="cov8" title="1">{
+                courseOverviews = append(courseOverviews, overviewFromCourse(course, snapshot.GeneratedAt))
+        }</span>
+
+        <span class="cov8" title="1">return DashboardData{
+                Role:        string(domain.RoleCoordinator),
+                Mode:        snapshot.Mode,
+                GeneratedAt: snapshot.GeneratedAt,
+                Summary:     summary,
+                Charts:      charts,
+                Highlights:  highlights,
+                Courses:     courseOverviews,
+        }</span>
+}
+
+func buildTeacherDashboard(snapshot domain.ClassroomSnapshot, user domain.User) DashboardData <span class="cov8" title="1">{
+        courses := filterCoursesByTeacher(snapshot.Courses, user.Email)
+        if len(courses) == 0 </span><span class="cov0" title="0">{
+                return emptyDashboard(snapshot.Mode, user.Role, snapshot.GeneratedAt, []string{"No active courses for this teacher"})
+        }</span>
+
+        <span class="cov8" title="1">totalStudents := totalEnrollment(courses)
+        avgCompletion := averageCourseCompletion(courses)
+        upcomingAssignments := upcomingAssignmentsForCourses(courses, snapshot.GeneratedAt)
+        lateAssignments := lateAssignmentsForCourses(courses)
+
+        summary := []SummaryMetric{
+                {ID: "teacherCourses", Label: "Active Courses", Value: float64(len(courses)), Delta: delta(len(courses), 2), Trend: trend(len(courses), 2), Format: "number"},
+                {ID: "teacherStudents", Label: "Enrolled Students", Value: float64(totalStudents), Delta: delta(totalStudents, 35), Trend: trend(totalStudents, 35), Format: "number"},
+                {ID: "teacherCompletion", Label: "Avg Completion", Value: round2(avgCompletion), Delta: deltaFloat(avgCompletion, 82), Trend: trendFloat(avgCompletion, 82), Format: "percent"},
+                {ID: "upcomingAssignments", Label: "Upcoming Assignments", Value: float64(upcomingAssignments), Delta: delta(upcomingAssignments, 4), Trend: trend(upcomingAssignments, 4), Format: "number"},
+                {ID: "lateAssignments", Label: "Late Assignments", Value: float64(lateAssignments), Delta: delta(lateAssignments, 2), Trend: trendInverse(lateAssignments, 2), Format: "number"},
+        }
+
+        charts := []ChartData{
+                buildAssignmentStatusChart(courses),
+                buildAttendanceTrendChart(courses),
+        }
+
+        timeline := buildUpcomingTimeline(courses, snapshot.GeneratedAt)
+        highlights := buildTeacherHighlights(courses)
+
+        courseOverviews := make([]CourseOverview, 0, len(courses))
+        for _, course := range courses </span><span class="cov8" title="1">{
+                courseOverviews = append(courseOverviews, overviewFromCourse(course, snapshot.GeneratedAt))
+        }</span>
+
+        <span class="cov8" title="1">return DashboardData{
+                Role:        string(domain.RoleTeacher),
+                Mode:        snapshot.Mode,
+                GeneratedAt: snapshot.GeneratedAt,
+                Summary:     summary,
+                Charts:      charts,
+                Highlights:  highlights,
+                Timeline:    timeline,
+                Courses:     courseOverviews,
+        }</span>
+}
+
+func buildStudentDashboard(snapshot domain.ClassroomSnapshot, user domain.User) DashboardData <span class="cov8" title="1">{
+        courses, progress := filterCoursesByStudent(snapshot.Courses, user.Email)
+        if len(courses) == 0 </span><span class="cov0" title="0">{
+                return emptyDashboard(snapshot.Mode, user.Role, snapshot.GeneratedAt, []string{"No enrollments found for this student"})
+        }</span>
+
+        <span class="cov8" title="1">totalCompleted := 0
+        totalPending := 0
+        var avgScore float64
+        var attendance float64
+
+        for _, p := range progress </span><span class="cov8" title="1">{
+                totalCompleted += p.CompletedAssignments
+                totalPending += p.PendingAssignments
+                avgScore += p.AverageScore
+                attendance += p.AttendanceRate
+        }</span>
+
+        <span class="cov8" title="1">count := float64(len(progress))
+        if count &gt; 0 </span><span class="cov8" title="1">{
+                avgScore = avgScore / count
+                attendance = attendance / count
+        }</span>
+
+        <span class="cov8" title="1">summary := []SummaryMetric{
+                {ID: "completedAssignments", Label: "Completed Assignments", Value: float64(totalCompleted), Delta: delta(totalCompleted, 8), Trend: trend(totalCompleted, 8), Format: "number"},
+                {ID: "pendingAssignments", Label: "Pending Assignments", Value: float64(totalPending), Delta: delta(totalPending, 3), Trend: trendInverse(totalPending, 3), Format: "number"},
+                {ID: "averageScore", Label: "Average Score", Value: round2(avgScore), Delta: deltaFloat(avgScore, 88), Trend: trendFloat(avgScore, 88), Format: "percent"},
+                {ID: "attendance", Label: "Attendance", Value: round2(attendance * 100), Delta: deltaFloat(attendance*100, 93), Trend: trendFloat(attendance*100, 93), Format: "percent"},
+        }
+
+        charts := []ChartData{
+                buildStudentProgressChart(courses, progress),
+        }
+
+        timeline := buildUpcomingTimeline(courses, snapshot.GeneratedAt)
+        highlights := buildStudentHighlights(courses, user.Email)
+
+        courseOverviews := make([]CourseOverview, 0, len(courses))
+        for _, course := range courses </span><span class="cov8" title="1">{
+                courseOverviews = append(courseOverviews, overviewFromCourse(course, snapshot.GeneratedAt))
+        }</span>
+
+        <span class="cov8" title="1">return DashboardData{
+                Role:        string(domain.RoleStudent),
+                Mode:        snapshot.Mode,
+                GeneratedAt: snapshot.GeneratedAt,
+                Summary:     summary,
+                Charts:      charts,
+                Highlights:  highlights,
+                Timeline:    timeline,
+                Courses:     courseOverviews,
+        }</span>
+}
+
+func overviewFromCourse(course domain.Course, now time.Time) CourseOverview <span class="cov8" title="1">{
+        return CourseOverview{
+                ID:                  course.ID,
+                Name:                course.Name,
+                Section:             course.Section,
+                Program:             course.Program,
+                PrimaryTeacher:      primaryTeacher(course),
+                Enrollment:          len(course.Students),
+                CompletionRate:      round2(courseCompletionRate(course)),
+                UpcomingAssignments: upcomingAssignments(course, now),
+                LastActivity:        course.LastActivity,
+        }
+}</span>
+
+func emptyDashboard(mode string, role domain.Role, generated time.Time, alerts []string) DashboardData <span class="cov0" title="0">{
+        return DashboardData{
+                Role:        string(role),
+                Mode:        mode,
+                GeneratedAt: generated,
+                Summary:     []SummaryMetric{},
+                Charts:      []ChartData{},
+                Highlights:  []Highlight{},
+                Alerts:      alerts,
+        }
+}</span>
+
+// Helper functions for calculations ------------------------------------------------
+
+func primaryTeacher(course domain.Course) string <span class="cov8" title="1">{
+        if len(course.Teachers) == 0 </span><span class="cov0" title="0">{
+                return "Unassigned"
+        }</span>
+        <span class="cov8" title="1">return course.Teachers[0].Name</span>
+}
+
+func courseCompletionRate(course domain.Course) float64 <span class="cov8" title="1">{
+        if len(course.Students) == 0 </span><span class="cov0" title="0">{
+                return 0
+        }</span>
+        <span class="cov8" title="1">total := 0.0
+        for _, student := range course.Students </span><span class="cov8" title="1">{
+                completed := float64(student.Progress.CompletedAssignments)
+                totalAssignments := float64(student.Progress.CompletedAssignments + student.Progress.PendingAssignments)
+                if totalAssignments == 0 </span><span class="cov0" title="0">{
+                        continue</span>
+                }
+                <span class="cov8" title="1">total += (completed / totalAssignments) * 100</span>
+        }
+        <span class="cov8" title="1">return total / float64(len(course.Students))</span>
+}
+
+func averageCourseCompletion(courses []domain.Course) float64 <span class="cov8" title="1">{
+        if len(courses) == 0 </span><span class="cov0" title="0">{
+                return 0
+        }</span>
+        <span class="cov8" title="1">total := 0.0
+        count := 0
+        for _, course := range courses </span><span class="cov8" title="1">{
+                rate := courseCompletionRate(course)
+                if rate &gt; 0 </span><span class="cov8" title="1">{
+                        total += rate
+                        count++
+                }</span>
+        }
+        <span class="cov8" title="1">if count == 0 </span><span class="cov0" title="0">{
+                return 0
+        }</span>
+        <span class="cov8" title="1">return total / float64(count)</span>
+}
+
+func globalOnTimeSubmissionRate(courses []domain.Course) float64 <span class="cov8" title="1">{
+        completed := 0
+        onTime := 0
+        for _, course := range courses </span><span class="cov8" title="1">{
+                for _, assignment := range course.Assignments </span><span class="cov8" title="1">{
+                        completed += assignment.Completed
+                        onTime += assignment.Completed - assignment.Late
+                }</span>
+        }
+        <span class="cov8" title="1">if completed == 0 </span><span class="cov0" title="0">{
+                return 0
+        }</span>
+        <span class="cov8" title="1">return (float64(onTime) / float64(completed)) * 100</span>
+}
+
+func upcomingAssignments(course domain.Course, now time.Time) int <span class="cov8" title="1">{
+        count := 0
+        for _, assignment := range course.Assignments </span><span class="cov8" title="1">{
+                if assignment.DueDate.After(now) </span><span class="cov8" title="1">{
+                        count++
+                }</span>
+        }
+        <span class="cov8" title="1">return count</span>
+}
+
+func upcomingAssignmentsForCourses(courses []domain.Course, now time.Time) int <span class="cov8" title="1">{
+        total := 0
+        for _, course := range courses </span><span class="cov8" title="1">{
+                total += upcomingAssignments(course, now)
+        }</span>
+        <span class="cov8" title="1">return total</span>
+}
+
+func lateAssignmentsForCourses(courses []domain.Course) int <span class="cov8" title="1">{
+        total := 0
+        for _, course := range courses </span><span class="cov8" title="1">{
+                for _, assignment := range course.Assignments </span><span class="cov8" title="1">{
+                        total += assignment.Late
+                }</span>
+        }
+        <span class="cov8" title="1">return total</span>
+}
+
+func totalEnrollment(courses []domain.Course) int <span class="cov8" title="1">{
+        total := 0
+        for _, course := range courses </span><span class="cov8" title="1">{
+                total += len(course.Students)
+        }</span>
+        <span class="cov8" title="1">return total</span>
+}
+
+func uniqueStudentCount(courses []domain.Course) int <span class="cov8" title="1">{
+        set := make(map[string]struct{})
+        for _, course := range courses </span><span class="cov8" title="1">{
+                for _, student := range course.Students </span><span class="cov8" title="1">{
+                        set[strings.ToLower(student.Person.Email)] = struct{}{}
+                }</span>
+        }
+        <span class="cov8" title="1">return len(set)</span>
+}
+
+func countAtRiskCourses(courses []domain.Course) int <span class="cov8" title="1">{
+        count := 0
+        for _, course := range courses </span><span class="cov8" title="1">{
+                if courseCompletionRate(course) &lt; 75 || lateAssignmentsForCourses([]domain.Course{course}) &gt; 3 </span><span class="cov8" title="1">{
+                        count++
+                }</span>
+        }
+        <span class="cov8" title="1">return count</span>
+}
+
+func filterCoursesByCoordinator(courses []domain.Course, email string) []domain.Course <span class="cov8" title="1">{
+        email = strings.ToLower(email)
+        result := make([]domain.Course, 0)
+        for _, course := range courses </span><span class="cov8" title="1">{
+                if strings.ToLower(course.CoordinatorEmail) == email </span><span class="cov8" title="1">{
+                        result = append(result, course)
+                }</span>
+        }
+        <span class="cov8" title="1">return result</span>
+}
+
+func filterCoursesByTeacher(courses []domain.Course, email string) []domain.Course <span class="cov8" title="1">{
+        email = strings.ToLower(email)
+        result := make([]domain.Course, 0)
+        for _, course := range courses </span><span class="cov8" title="1">{
+                for _, teacher := range course.Teachers </span><span class="cov8" title="1">{
+                        if strings.ToLower(teacher.Email) == email </span><span class="cov8" title="1">{
+                                result = append(result, course)
+                                break</span>
+                        }
+                }
+        }
+        <span class="cov8" title="1">return result</span>
+}
+
+func filterCoursesByStudent(courses []domain.Course, email string) ([]domain.Course, []domain.StudentProgress) <span class="cov8" title="1">{
+        email = strings.ToLower(email)
+        resultCourses := make([]domain.Course, 0)
+        progress := make([]domain.StudentProgress, 0)
+        for _, course := range courses </span><span class="cov8" title="1">{
+                for _, student := range course.Students </span><span class="cov8" title="1">{
+                        if strings.ToLower(student.Person.Email) == email </span><span class="cov8" title="1">{
+                                resultCourses = append(resultCourses, course)
+                                progress = append(progress, student.Progress)
+                                break</span>
+                        }
+                }
+        }
+        <span class="cov8" title="1">return resultCourses, progress</span>
+}
+
+func buildSubmissionChart(courses []domain.Course) ChartData <span class="cov8" title="1">{
+        type bucket struct {
+                completed float64
+                pending   float64
+                date      time.Time
+        }
+        buckets := map[string]*bucket{}
+        for _, course := range courses </span><span class="cov8" title="1">{
+                for _, assignment := range course.Assignments </span><span class="cov8" title="1">{
+                        key := assignment.DueDate.Format("2006-01-02")
+                        b, ok := buckets[key]
+                        if !ok </span><span class="cov8" title="1">{
+                                b = &amp;bucket{date: assignment.DueDate}
+                                buckets[key] = b
+                        }</span>
+                        <span class="cov8" title="1">b.completed += float64(assignment.Completed)
+                        b.pending += float64(assignment.Pending)</span>
+                }
+        }
+        <span class="cov8" title="1">dates := make([]time.Time, 0, len(buckets))
+        for _, b := range buckets </span><span class="cov8" title="1">{
+                dates = append(dates, b.date)
+        }</span>
+        <span class="cov8" title="1">sort.Slice(dates, func(i, j int) bool </span><span class="cov8" title="1">{ return dates[i].Before(dates[j]) }</span>)
+
+        <span class="cov8" title="1">categories := make([]string, 0, len(dates))
+        completedData := make([]ChartPoint, 0, len(dates))
+        pendingData := make([]ChartPoint, 0, len(dates))
+
+        for _, date := range dates </span><span class="cov8" title="1">{
+                key := date.Format("2006-01-02")
+                b := buckets[key]
+                label := date.Format("Jan 2")
+                categories = append(categories, label)
+                completedData = append(completedData, ChartPoint{X: label, Y: round1(b.completed)})
+                pendingData = append(pendingData, ChartPoint{X: label, Y: round1(b.pending)})
+        }</span>
+
+        <span class="cov8" title="1">return ChartData{
+                ID:         "weeklySubmissions",
+                Title:      "Weekly Submissions",
+                Type:       "area",
+                Categories: categories,
+                Series: []ChartSeries{
+                        {Name: "Completed", Data: completedData},
+                        {Name: "Pending", Data: pendingData},
+                },
+        }</span>
+}
+
+func buildCoursePerformanceChart(courses []domain.Course) ChartData <span class="cov8" title="1">{
+        sort.Slice(courses, func(i, j int) bool </span><span class="cov8" title="1">{
+                return courseCompletionRate(courses[i]) &gt; courseCompletionRate(courses[j])
+        }</span>)
+        <span class="cov8" title="1">categories := make([]string, 0, len(courses))
+        values := make([]ChartPoint, 0, len(courses))
+        for _, course := range courses </span><span class="cov8" title="1">{
+                categories = append(categories, course.Name)
+                values = append(values, ChartPoint{X: course.Name, Y: round2(courseCompletionRate(course))})
+        }</span>
+        <span class="cov8" title="1">return ChartData{
+                ID:         "coursePerformance",
+                Title:      "Course Completion Rate",
+                Type:       "bar",
+                Categories: categories,
+                Series: []ChartSeries{
+                        {Name: "Completion %", Data: values},
+                },
+        }</span>
+}
+
+func buildProgramDistributionChart(courses []domain.Course) ChartData <span class="cov8" title="1">{
+        counts := make(map[string]float64)
+        for _, course := range courses </span><span class="cov8" title="1">{
+                counts[course.Program]++
+        }</span>
+        <span class="cov8" title="1">programs := make([]string, 0, len(counts))
+        for program := range counts </span><span class="cov8" title="1">{
+                programs = append(programs, program)
+        }</span>
+        <span class="cov8" title="1">sort.Strings(programs)
+        points := make([]ChartPoint, 0, len(programs))
+        for _, program := range programs </span><span class="cov8" title="1">{
+                points = append(points, ChartPoint{X: program, Y: counts[program]})
+        }</span>
+        <span class="cov8" title="1">return ChartData{
+                ID:     "programDistribution",
+                Title:  "Course Distribution by Program",
+                Type:   "donut",
+                Series: []ChartSeries{{Name: "Courses", Data: points}},
+        }</span>
+}
+
+func buildLateSubmissionChart(courses []domain.Course) ChartData <span class="cov8" title="1">{
+        ordered := append([]domain.Course(nil), courses...)
+        sort.Slice(ordered, func(i, j int) bool </span><span class="cov8" title="1">{ return ordered[i].Name &lt; ordered[j].Name }</span>)
+        <span class="cov8" title="1">categories := make([]string, 0, len(ordered))
+        values := make([]ChartPoint, 0, len(ordered))
+        for _, course := range ordered </span><span class="cov8" title="1">{
+                late := 0.0
+                total := 0.0
+                for _, assignment := range course.Assignments </span><span class="cov8" title="1">{
+                        late += float64(assignment.Late)
+                        total += float64(assignment.Completed + assignment.Pending)
+                }</span>
+                <span class="cov8" title="1">categories = append(categories, course.Name)
+                percentage := 0.0
+                if total &gt; 0 </span><span class="cov8" title="1">{
+                        percentage = (late / total) * 100
+                }</span>
+                <span class="cov8" title="1">values = append(values, ChartPoint{X: course.Name, Y: round2(percentage)})</span>
+        }
+        <span class="cov8" title="1">return ChartData{
+                ID:         "lateSubmissions",
+                Title:      "Late Submission Rate",
+                Type:       "bar",
+                Categories: categories,
+                Series: []ChartSeries{
+                        {Name: "Late %", Data: values},
+                },
+        }</span>
+}
+
+func buildAssignmentStatusChart(courses []domain.Course) ChartData <span class="cov8" title="1">{
+        ordered := append([]domain.Course(nil), courses...)
+        sort.Slice(ordered, func(i, j int) bool </span><span class="cov0" title="0">{ return ordered[i].Name &lt; ordered[j].Name }</span>)
+        <span class="cov8" title="1">categories := make([]string, 0, len(ordered))
+        completedSeries := make([]ChartPoint, 0, len(ordered))
+        pendingSeries := make([]ChartPoint, 0, len(ordered))
+        for _, course := range ordered </span><span class="cov8" title="1">{
+                completed := 0.0
+                pending := 0.0
+                for _, assignment := range course.Assignments </span><span class="cov8" title="1">{
+                        completed += float64(assignment.Completed)
+                        pending += float64(assignment.Pending)
+                }</span>
+                <span class="cov8" title="1">categories = append(categories, course.Name)
+                completedSeries = append(completedSeries, ChartPoint{X: course.Name, Y: completed})
+                pendingSeries = append(pendingSeries, ChartPoint{X: course.Name, Y: pending})</span>
+        }
+        <span class="cov8" title="1">return ChartData{
+                ID:         "assignmentStatus",
+                Title:      "Assignment Status by Course",
+                Type:       "bar",
+                Categories: categories,
+                Series: []ChartSeries{
+                        {Name: "Completed", Data: completedSeries},
+                        {Name: "Pending", Data: pendingSeries},
+                },
+        }</span>
+}
+
+func buildAttendanceTrendChart(courses []domain.Course) ChartData <span class="cov8" title="1">{
+        ordered := append([]domain.Course(nil), courses...)
+        sort.Slice(ordered, func(i, j int) bool </span><span class="cov0" title="0">{ return ordered[i].Name &lt; ordered[j].Name }</span>)
+        <span class="cov8" title="1">points := make([]ChartPoint, 0, len(ordered))
+        for _, course := range ordered </span><span class="cov8" title="1">{
+                rate := 0.0
+                if len(course.Students) &gt; 0 </span><span class="cov8" title="1">{
+                        total := 0.0
+                        for _, student := range course.Students </span><span class="cov8" title="1">{
+                                total += student.Progress.AttendanceRate
+                        }</span>
+                        <span class="cov8" title="1">rate = (total / float64(len(course.Students))) * 100</span>
+                }
+                <span class="cov8" title="1">points = append(points, ChartPoint{X: course.Name, Y: round2(rate)})</span>
+        }
+        <span class="cov8" title="1">return ChartData{
+                ID:     "attendanceTrend",
+                Title:  "Average Attendance",
+                Type:   "line",
+                Series: []ChartSeries{{Name: "Attendance %", Data: points}},
+        }</span>
+}
+
+func buildStudentProgressChart(courses []domain.Course, progress []domain.StudentProgress) ChartData <span class="cov8" title="1">{
+        pointsCompleted := make([]ChartPoint, 0, len(courses))
+        pointsPending := make([]ChartPoint, 0, len(courses))
+        for idx, course := range courses </span><span class="cov8" title="1">{
+                if idx &gt;= len(progress) </span><span class="cov0" title="0">{
+                        continue</span>
+                }
+                <span class="cov8" title="1">pointsCompleted = append(pointsCompleted, ChartPoint{X: course.Name, Y: float64(progress[idx].CompletedAssignments)})
+                pointsPending = append(pointsPending, ChartPoint{X: course.Name, Y: float64(progress[idx].PendingAssignments)})</span>
+        }
+        <span class="cov8" title="1">return ChartData{
+                ID:    "studentProgress",
+                Title: "Assignments Progress",
+                Type:  "bar",
+                Series: []ChartSeries{
+                        {Name: "Completed", Data: pointsCompleted},
+                        {Name: "Pending", Data: pointsPending},
+                },
+        }</span>
+}
+
+func buildUpcomingTimeline(courses []domain.Course, now time.Time) []TimelineItem <span class="cov8" title="1">{
+        timeline := make([]TimelineItem, 0)
+        for _, course := range courses </span><span class="cov8" title="1">{
+                for _, assignment := range course.Assignments </span><span class="cov8" title="1">{
+                        if assignment.DueDate.After(now) &amp;&amp; assignment.DueDate.Before(now.Add(14*24*time.Hour)) </span><span class="cov8" title="1">{
+                                status := "onTrack"
+                                if assignment.Pending &gt; 0 </span><span class="cov8" title="1">{
+                                        status = "pending"
+                                }</span>
+                                <span class="cov8" title="1">if assignment.Late &gt; 0 </span><span class="cov8" title="1">{
+                                        status = "atRisk"
+                                }</span>
+                                <span class="cov8" title="1">timeline = append(timeline, TimelineItem{
+                                        ID:       assignment.ID,
+                                        Title:    assignment.Title,
+                                        DueDate:  assignment.DueDate,
+                                        CourseID: course.ID,
+                                        Status:   status,
+                                })</span>
+                        }
+                }
+        }
+        <span class="cov8" title="1">sort.Slice(timeline, func(i, j int) bool </span><span class="cov0" title="0">{
+                return timeline[i].DueDate.Before(timeline[j].DueDate)
+        }</span>)
+        <span class="cov8" title="1">if len(timeline) &gt; 8 </span><span class="cov0" title="0">{
+                timeline = timeline[:8]
+        }</span>
+        <span class="cov8" title="1">return timeline</span>
+}
+
+func buildAdminHighlights(courses []domain.Course) []Highlight <span class="cov8" title="1">{
+        highlights := []Highlight{}
+        if len(courses) == 0 </span><span class="cov0" title="0">{
+                return highlights
+        }</span>
+        <span class="cov8" title="1">sort.Slice(courses, func(i, j int) bool </span><span class="cov8" title="1">{
+                return courseCompletionRate(courses[i]) &gt; courseCompletionRate(courses[j])
+        }</span>)
+
+        <span class="cov8" title="1">bestCourse := courses[0]
+        highlights = append(highlights, Highlight{
+                ID:      "highlight-top-course",
+                Title:   "Top Performing Course",
+                Details: fmt.Sprintf("%s leads with %.1f%% completion", bestCourse.Name, courseCompletionRate(bestCourse)),
+                Status:  "success",
+        })
+
+        lateCourse := courses[0]
+        maxLate := 0
+        for _, course := range courses </span><span class="cov8" title="1">{
+                late := lateAssignmentsForCourses([]domain.Course{course})
+                if late &gt; maxLate </span><span class="cov8" title="1">{
+                        maxLate = late
+                        lateCourse = course
+                }</span>
+        }
+        <span class="cov8" title="1">if maxLate &gt; 0 </span><span class="cov8" title="1">{
+                highlights = append(highlights, Highlight{
+                        ID:      "highlight-late-submissions",
+                        Title:   "Late Submissions Spike",
+                        Details: fmt.Sprintf("%s has %d late submissions", lateCourse.Name, maxLate),
+                        Status:  "warning",
+                })
+        }</span>
+
+        <span class="cov8" title="1">return highlights</span>
+}
+
+func buildCoordinatorHighlights(courses []domain.Course) []Highlight <span class="cov8" title="1">{
+        if len(courses) == 0 </span><span class="cov0" title="0">{
+                return nil
+        }</span>
+        <span class="cov8" title="1">sort.Slice(courses, func(i, j int) bool </span><span class="cov8" title="1">{
+                return len(courses[i].Students) &gt; len(courses[j].Students)
+        }</span>)
+        <span class="cov8" title="1">return []Highlight{
+                {
+                        ID:      "highlight-enrollment",
+                        Title:   "Highest Enrollment",
+                        Details: fmt.Sprintf("%s hosts %d students", courses[0].Name, len(courses[0].Students)),
+                        Status:  "info",
+                },
+        }</span>
+}
+
+func buildTeacherHighlights(courses []domain.Course) []Highlight <span class="cov8" title="1">{
+        if len(courses) == 0 </span><span class="cov0" title="0">{
+                return nil
+        }</span>
+        <span class="cov8" title="1">highlights := []Highlight{}
+        for _, course := range courses </span><span class="cov8" title="1">{
+                if courseCompletionRate(course) &gt;= 90 </span><span class="cov0" title="0">{
+                        highlights = append(highlights, Highlight{
+                                ID:      "highlight-course-" + course.ID,
+                                Title:   fmt.Sprintf("%s Engagement", course.Name),
+                                Details: fmt.Sprintf("Maintaining %.1f%% completion", courseCompletionRate(course)),
+                                Status:  "success",
+                        })
+                }</span>
+        }
+        <span class="cov8" title="1">return highlights</span>
+}
+
+func buildStudentHighlights(courses []domain.Course, email string) []Highlight <span class="cov8" title="1">{
+        highlights := []Highlight{}
+        for _, course := range courses </span><span class="cov8" title="1">{
+                progress := 0.0
+                for _, student := range course.Students </span><span class="cov8" title="1">{
+                        if strings.ToLower(student.Person.Email) == strings.ToLower(email) </span><span class="cov8" title="1">{
+                                total := student.Progress.CompletedAssignments + student.Progress.PendingAssignments
+                                if total &gt; 0 </span><span class="cov8" title="1">{
+                                        progress = (float64(student.Progress.CompletedAssignments) / float64(total)) * 100
+                                }</span>
+                                <span class="cov8" title="1">break</span>
+                        }
+                }
+                <span class="cov8" title="1">if progress &gt;= 90 </span><span class="cov0" title="0">{
+                        highlights = append(highlights, Highlight{
+                                ID:      "highlight-progress-" + course.ID,
+                                Title:   fmt.Sprintf("%s Progress", course.Name),
+                                Details: "Outstanding completion rate – keep it up!",
+                                Status:  "success",
+                        })
+                }</span>
+        }
+        <span class="cov8" title="1">return highlights</span>
+}
+
+func buildAdminAlerts(courses []domain.Course) []string <span class="cov8" title="1">{
+        alerts := []string{}
+        for _, course := range courses </span><span class="cov8" title="1">{
+                if lateAssignmentsForCourses([]domain.Course{course}) &gt; 3 </span><span class="cov0" title="0">{
+                        alerts = append(alerts, fmt.Sprintf("Late submission spike detected in %s", course.Name))
+                }</span>
+        }
+        <span class="cov8" title="1">return alerts</span>
+}
+
+func delta(value int, baseline int) float64 <span class="cov8" title="1">{
+        return float64(value - baseline)
+}</span>
+
+func deltaFloat(value float64, baseline float64) float64 <span class="cov8" title="1">{
+        return round1(value - baseline)
+}</span>
+
+func trend(value int, baseline int) string <span class="cov8" title="1">{
+        diff := value - baseline
+        switch </span>{
+        case diff &gt; 0:<span class="cov0" title="0">
+                return "up"</span>
+        case diff &lt; 0:<span class="cov8" title="1">
+                return "down"</span>
+        default:<span class="cov0" title="0">
+                return "flat"</span>
+        }
+}
+
+func trendFloat(value float64, baseline float64) string <span class="cov8" title="1">{
+        diff := value - baseline
+        switch </span>{
+        case diff &gt; 0.5:<span class="cov8" title="1">
+                return "up"</span>
+        case diff &lt; -0.5:<span class="cov8" title="1">
+                return "down"</span>
+        default:<span class="cov8" title="1">
+                return "flat"</span>
+        }
+}
+
+func trendInverse(value int, baseline int) string <span class="cov8" title="1">{
+        diff := value - baseline
+        switch </span>{
+        case diff &lt; 0:<span class="cov8" title="1">
+                return "up"</span>
+        case diff &gt; 0:<span class="cov8" title="1">
+                return "down"</span>
+        default:<span class="cov0" title="0">
+                return "flat"</span>
+        }
+}
+
+func deltaAndTrend(value float64, baseline float64) (float64, string) <span class="cov8" title="1">{
+        delta := round1(value - baseline)
+        return delta, trendFloat(value, baseline)
+}</span>
+
+func round1(value float64) float64 <span class="cov8" title="1">{
+        return mathRound(value, 1)
+}</span>
+
+func round2(value float64) float64 <span class="cov8" title="1">{
+        return mathRound(value, 2)
+}</span>
+
+func mathRound(value float64, precision int) float64 <span class="cov8" title="1">{
+        if precision &lt;= 0 </span><span class="cov0" title="0">{
+                return float64(int(value + 0.5))
+        }</span>
+        <span class="cov8" title="1">multiplier := math.Pow(10, float64(precision))
+        return math.Round(value*multiplier) / multiplier</span>
+}
+</pre>
+		
+		<pre class="file" id="file10" style="display: none">package app
 
 import (
         "context"
@@ -936,7 +2422,7 @@ func (s *UserService) GetByID(ctx context.Context, id string) (domain.User, erro
 }
 </pre>
 		
-		<pre class="file" id="file8" style="display: none">package domain
+		<pre class="file" id="file11" style="display: none">package domain
 
 import "strings"
 
@@ -978,7 +2464,7 @@ func (r Role) IsValid() bool <span class="cov8" title="1">{
 }</span>
 </pre>
 		
-		<pre class="file" id="file9" style="display: none">package domain
+		<pre class="file" id="file12" style="display: none">package domain
 
 import "time"
 
@@ -999,7 +2485,7 @@ func (u User) CanAccessRole(role Role) bool <span class="cov8" title="1">{
 }</span>
 </pre>
 		
-		<pre class="file" id="file10" style="display: none">package shared
+		<pre class="file" id="file13" style="display: none">package shared
 
 import (
         "fmt"
@@ -1025,6 +2511,8 @@ type Config struct {
         GoogleClientID     string
         GoogleClientSecret string
         GoogleRedirectURL  string
+        GoogleCredentials  string
+        ClassroomMode      string
 }
 
 // LoadConfig constructs a Config instance using environment variables. It applies
@@ -1039,22 +2527,24 @@ func LoadConfig() (Config, error) <span class="cov8" title="1">{
                 GoogleRedirectURL:  os.Getenv("GOOGLE_REDIRECT_URL"),
                 JWTSecret:          os.Getenv("JWT_SECRET"),
                 JWTIssuer:          getEnv("JWT_ISSUER", "classsphere"),
+                GoogleCredentials:  os.Getenv("GOOGLE_CREDENTIALS_FILE"),
+                ClassroomMode:      NormalizeIntegrationMode(getEnv("CLASSROOM_MODE", IntegrationModeMock)),
         }
 
         port, err := parseIntEnv("SERVER_PORT", defaultServerPort)
-        if err != nil </span><span class="cov0" title="0">{
+        if err != nil </span><span class="cov8" title="1">{
                 return Config{}, fmt.Errorf("invalid SERVER_PORT: %w", err)
         }</span>
         <span class="cov8" title="1">cfg.ServerPort = port
 
         expiryMinutes, err := parseIntEnv("JWT_EXPIRY_MINUTES", 60)
-        if err != nil </span><span class="cov0" title="0">{
+        if err != nil </span><span class="cov8" title="1">{
                 return Config{}, fmt.Errorf("invalid JWT_EXPIRY_MINUTES: %w", err)
         }</span>
         <span class="cov8" title="1">cfg.JWTExpiryMinutes = expiryMinutes
 
         redisDB, err := parseIntEnv("REDIS_DB", 0)
-        if err != nil </span><span class="cov0" title="0">{
+        if err != nil </span><span class="cov8" title="1">{
                 return Config{}, fmt.Errorf("invalid REDIS_DB: %w", err)
         }</span>
         <span class="cov8" title="1">cfg.RedisDB = redisDB
@@ -1067,14 +2557,17 @@ func (c Config) Validate() error <span class="cov8" title="1">{
         if c.JWTSecret == "" </span><span class="cov8" title="1">{
                 return fmt.Errorf("JWT_SECRET must be provided")
         }</span>
-        <span class="cov8" title="1">if c.GoogleClientID == "" </span><span class="cov0" title="0">{
+        <span class="cov8" title="1">if c.GoogleClientID == "" </span><span class="cov8" title="1">{
                 return fmt.Errorf("GOOGLE_CLIENT_ID must be provided")
         }</span>
-        <span class="cov8" title="1">if c.GoogleClientSecret == "" </span><span class="cov0" title="0">{
+        <span class="cov8" title="1">if c.GoogleClientSecret == "" </span><span class="cov8" title="1">{
                 return fmt.Errorf("GOOGLE_CLIENT_SECRET must be provided")
         }</span>
-        <span class="cov8" title="1">if c.GoogleRedirectURL == "" </span><span class="cov0" title="0">{
+        <span class="cov8" title="1">if c.GoogleRedirectURL == "" </span><span class="cov8" title="1">{
                 return fmt.Errorf("GOOGLE_REDIRECT_URL must be provided")
+        }</span>
+        <span class="cov8" title="1">if c.ClassroomMode == IntegrationModeGoogle &amp;&amp; c.GoogleCredentials == "" </span><span class="cov0" title="0">{
+                return fmt.Errorf("GOOGLE_CREDENTIALS_FILE must be provided for google classroom mode")
         }</span>
         <span class="cov8" title="1">return nil</span>
 }
@@ -1092,14 +2585,37 @@ func parseIntEnv(key string, fallback int) (int, error) <span class="cov8" title
                 return fallback, nil
         }</span>
         <span class="cov8" title="1">value, err := strconv.Atoi(raw)
-        if err != nil </span><span class="cov0" title="0">{
+        if err != nil </span><span class="cov8" title="1">{
                 return 0, err
         }</span>
         <span class="cov8" title="1">return value, nil</span>
 }
 </pre>
 		
-		<pre class="file" id="file11" style="display: none">package shared
+		<pre class="file" id="file14" style="display: none">package shared
+
+import "strings"
+
+// IntegrationMode enumerates supported integration backends.
+const (
+        IntegrationModeGoogle = "google"
+        IntegrationModeMock   = "mock"
+)
+
+// NormalizeIntegrationMode sanitizes and normalizes user-provided mode values.
+func NormalizeIntegrationMode(mode string) string <span class="cov8" title="1">{
+        switch strings.ToLower(strings.TrimSpace(mode)) </span>{
+        case IntegrationModeGoogle:<span class="cov0" title="0">
+                return IntegrationModeGoogle</span>
+        case IntegrationModeMock:<span class="cov8" title="1">
+                return IntegrationModeMock</span>
+        default:<span class="cov0" title="0">
+                return IntegrationModeMock</span>
+        }
+}
+</pre>
+		
+		<pre class="file" id="file15" style="display: none">package shared
 
 import (
         "context"
