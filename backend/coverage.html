@@ -1,0 +1,1162 @@
+
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+		<title>api: Go Coverage Report</title>
+		<style>
+			body {
+				background: black;
+				color: rgb(80, 80, 80);
+			}
+			body, pre, #legend span {
+				font-family: Menlo, monospace;
+				font-weight: bold;
+			}
+			#topbar {
+				background: black;
+				position: fixed;
+				top: 0; left: 0; right: 0;
+				height: 42px;
+				border-bottom: 1px solid rgb(80, 80, 80);
+			}
+			#content {
+				margin-top: 50px;
+			}
+			#nav, #legend {
+				float: left;
+				margin-left: 10px;
+			}
+			#legend {
+				margin-top: 12px;
+			}
+			#nav {
+				margin-top: 10px;
+			}
+			#legend span {
+				margin: 0 5px;
+			}
+			.cov0 { color: rgb(192, 0, 0) }
+.cov1 { color: rgb(128, 128, 128) }
+.cov2 { color: rgb(116, 140, 131) }
+.cov3 { color: rgb(104, 152, 134) }
+.cov4 { color: rgb(92, 164, 137) }
+.cov5 { color: rgb(80, 176, 140) }
+.cov6 { color: rgb(68, 188, 143) }
+.cov7 { color: rgb(56, 200, 146) }
+.cov8 { color: rgb(44, 212, 149) }
+.cov9 { color: rgb(32, 224, 152) }
+.cov10 { color: rgb(20, 236, 155) }
+
+		</style>
+	</head>
+	<body>
+		<div id="topbar">
+			<div id="nav">
+				<select id="files">
+				
+				<option value="file0">github.com/lbrines/classsphere/cmd/api/main.go (71.9%)</option>
+				
+				<option value="file1">github.com/lbrines/classsphere/internal/adapters/cache/redis_cache.go (100.0%)</option>
+				
+				<option value="file2">github.com/lbrines/classsphere/internal/adapters/http/handler.go (86.0%)</option>
+				
+				<option value="file3">github.com/lbrines/classsphere/internal/adapters/http/middleware.go (77.3%)</option>
+				
+				<option value="file4">github.com/lbrines/classsphere/internal/adapters/oauth/google_oauth.go (81.6%)</option>
+				
+				<option value="file5">github.com/lbrines/classsphere/internal/adapters/repo/memory_repo.go (95.0%)</option>
+				
+				<option value="file6">github.com/lbrines/classsphere/internal/app/auth_service.go (72.5%)</option>
+				
+				<option value="file7">github.com/lbrines/classsphere/internal/app/user_service.go (100.0%)</option>
+				
+				<option value="file8">github.com/lbrines/classsphere/internal/domain/role.go (100.0%)</option>
+				
+				<option value="file9">github.com/lbrines/classsphere/internal/domain/user.go (100.0%)</option>
+				
+				<option value="file10">github.com/lbrines/classsphere/internal/shared/config.go (75.8%)</option>
+				
+				<option value="file11">github.com/lbrines/classsphere/internal/shared/logger.go (100.0%)</option>
+				
+				</select>
+			</div>
+			<div id="legend">
+				<span>not tracked</span>
+			
+				<span class="cov0">not covered</span>
+				<span class="cov8">covered</span>
+			
+			</div>
+		</div>
+		<div id="content">
+		
+		<pre class="file" id="file0" style="display: none">package main
+
+import (
+        "context"
+        "fmt"
+        "log"
+        "log/slog"
+        "net/http"
+        "os"
+        "os/signal"
+        "syscall"
+        "time"
+
+        "github.com/labstack/echo/v4"
+        "github.com/redis/go-redis/v9"
+        "golang.org/x/crypto/bcrypt"
+
+        "github.com/lbrines/classsphere/internal/adapters/cache"
+        httpadapter "github.com/lbrines/classsphere/internal/adapters/http"
+        "github.com/lbrines/classsphere/internal/adapters/oauth"
+        "github.com/lbrines/classsphere/internal/adapters/repo"
+        "github.com/lbrines/classsphere/internal/app"
+        "github.com/lbrines/classsphere/internal/domain"
+        "github.com/lbrines/classsphere/internal/ports"
+        "github.com/lbrines/classsphere/internal/shared"
+)
+
+var signalChannelFactory = func() (chan os.Signal, func()) <span class="cov0" title="0">{
+        ch := make(chan os.Signal, 1)
+        signal.Notify(ch, syscall.SIGINT, syscall.SIGTERM)
+        return ch, func() </span><span class="cov0" title="0">{ signal.Stop(ch) }</span>
+}
+
+func main() <span class="cov8" title="1">{
+        ctx := context.Background()
+
+        app, cleanup, err := initialize(ctx)
+        if err != nil </span><span class="cov0" title="0">{
+                log.Fatalf("initialization error: %v", err)
+        }</span>
+        <span class="cov8" title="1">defer cleanup()
+
+        signalCh, stop := signalChannelFactory()
+        defer stop()
+
+        startServer(ctx, app.server, app.config.ServerPort, app.logger, signalCh)</span>
+}
+
+type application struct {
+        server *echo.Echo
+        logger *slog.Logger
+        config shared.Config
+        cache  ports.Cache
+}
+
+func initialize(ctx context.Context) (application, func(), error) <span class="cov8" title="1">{
+        cfg, err := shared.LoadConfig()
+        if err != nil </span><span class="cov0" title="0">{
+                return application{}, nil, fmt.Errorf("load config: %w", err)
+        }</span>
+
+        <span class="cov8" title="1">logger := shared.Logger()
+
+        redisClient := redis.NewClient(&amp;redis.Options{
+                Addr:     cfg.RedisAddr,
+                Password: cfg.RedisPassword,
+                DB:       cfg.RedisDB,
+        })
+
+        cacheAdapter := cache.NewRedisCache(redisClient)
+        if err := cacheAdapter.Ping(ctx); err != nil </span><span class="cov0" title="0">{
+                logger.Error("redis ping failed", slog.String("error", err.Error()))
+        }</span>
+
+        <span class="cov8" title="1">userRepo := repo.NewMemoryUserRepository(seedUsers(logger))
+        oauthProvider := oauth.NewGoogleOAuth(cfg.GoogleClientID, cfg.GoogleClientSecret, cfg.GoogleRedirectURL)
+
+        authService, err := app.NewAuthService(userRepo, cacheAdapter, oauthProvider, cfg)
+        if err != nil </span><span class="cov0" title="0">{
+                return application{}, nil, fmt.Errorf("auth service: %w", err)
+        }</span>
+        <span class="cov8" title="1">userService, err := app.NewUserService(userRepo)
+        if err != nil </span><span class="cov0" title="0">{
+                return application{}, nil, fmt.Errorf("user service: %w", err)
+        }</span>
+
+        <span class="cov8" title="1">server := httpadapter.New(authService, userService)
+
+        cleanup := func() </span><span class="cov8" title="1">{
+                _ = cacheAdapter.Close()
+        }</span>
+
+        <span class="cov8" title="1">return application{
+                server: server,
+                logger: logger,
+                config: cfg,
+                cache:  cacheAdapter,
+        }, cleanup, nil</span>
+}
+
+func startServer(ctx context.Context, e *echo.Echo, port int, logger *slog.Logger, signalCh &lt;-chan os.Signal) <span class="cov8" title="1">{
+        addr := fmt.Sprintf(":%d", port)
+        go func() </span><span class="cov8" title="1">{
+                if err := e.Start(addr); err != nil &amp;&amp; err != http.ErrServerClosed </span><span class="cov0" title="0">{
+                        logger.Error("server failed", slog.String("error", err.Error()))
+                        os.Exit(1)
+                }</span>
+        }()
+
+        <span class="cov8" title="1">logger.Info("server started", slog.String("addr", addr))
+
+        if signalCh == nil </span><span class="cov8" title="1">{
+                ch, stop := signalChannelFactory()
+                defer stop()
+                signalCh = ch
+        }</span>
+
+        <span class="cov8" title="1">&lt;-signalCh
+
+        ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+        defer cancel()
+
+        if err := e.Shutdown(ctx); err != nil </span><span class="cov0" title="0">{
+                logger.Error("server shutdown failed", slog.String("error", err.Error()))
+        }</span>
+        <span class="cov8" title="1">logger.Info("server stopped gracefully")</span>
+}
+
+func seedUsers(logger *slog.Logger) []domain.User <span class="cov8" title="1">{
+        adminHash, err := bcrypt.GenerateFromPassword([]byte("admin123"), bcrypt.DefaultCost)
+        if err != nil </span><span class="cov0" title="0">{
+                logger.Error("failed to hash admin password", slog.String("error", err.Error()))
+                os.Exit(1)
+        }</span>
+        <span class="cov8" title="1">coordinatorHash, err := bcrypt.GenerateFromPassword([]byte("coord123"), bcrypt.DefaultCost)
+        if err != nil </span><span class="cov0" title="0">{
+                logger.Error("failed to hash coordinator password", slog.String("error", err.Error()))
+                os.Exit(1)
+        }</span>
+
+        <span class="cov8" title="1">return []domain.User{
+                {
+                        ID:             "admin-1",
+                        Email:          "admin@classsphere.edu",
+                        DisplayName:    "Admin",
+                        HashedPassword: string(adminHash),
+                        Role:           domain.RoleAdmin,
+                        CreatedAt:      time.Now(),
+                        UpdatedAt:      time.Now(),
+                },
+                {
+                        ID:             "coord-1",
+                        Email:          "coordinator@classsphere.edu",
+                        DisplayName:    "Coordinator",
+                        HashedPassword: string(coordinatorHash),
+                        Role:           domain.RoleCoordinator,
+                        CreatedAt:      time.Now(),
+                        UpdatedAt:      time.Now(),
+                },
+        }</span>
+}
+</pre>
+		
+		<pre class="file" id="file1" style="display: none">package cache
+
+import (
+        "context"
+        "time"
+
+        "github.com/redis/go-redis/v9"
+)
+
+// RedisCache implements ports.Cache backed by Redis.
+type RedisCache struct {
+        client redis.UniversalClient
+}
+
+// NewRedisCache accepts a configured redis client.
+func NewRedisCache(client redis.UniversalClient) *RedisCache <span class="cov8" title="1">{
+        return &amp;RedisCache{client: client}
+}</span>
+
+func (c *RedisCache) Set(ctx context.Context, key string, value []byte, ttlSeconds int) error <span class="cov8" title="1">{
+        return c.client.Set(ctx, key, value, time.Duration(ttlSeconds)*time.Second).Err()
+}</span>
+
+func (c *RedisCache) Get(ctx context.Context, key string) ([]byte, error) <span class="cov8" title="1">{
+        cmd := c.client.Get(ctx, key)
+        value, err := cmd.Bytes()
+        if err == redis.Nil </span><span class="cov8" title="1">{
+                return nil, nil
+        }</span>
+        <span class="cov8" title="1">return value, err</span>
+}
+
+func (c *RedisCache) Delete(ctx context.Context, key string) error <span class="cov8" title="1">{
+        return c.client.Del(ctx, key).Err()
+}</span>
+
+func (c *RedisCache) Ping(ctx context.Context) error <span class="cov8" title="1">{
+        return c.client.Ping(ctx).Err()
+}</span>
+
+func (c *RedisCache) Close() error <span class="cov8" title="1">{
+        return c.client.Close()
+}</span>
+</pre>
+		
+		<pre class="file" id="file2" style="display: none">package http
+
+import (
+        "net/http"
+        "time"
+
+        echo "github.com/labstack/echo/v4"
+        "github.com/labstack/echo/v4/middleware"
+
+        "github.com/lbrines/classsphere/internal/app"
+        "github.com/lbrines/classsphere/internal/domain"
+        "github.com/lbrines/classsphere/internal/shared"
+)
+
+// Handler wires HTTP routes to use cases.
+type Handler struct {
+        authService *app.AuthService
+        userService *app.UserService
+}
+
+// New creates an Echo engine configured with routes and middleware.
+func New(authService *app.AuthService, userService *app.UserService) *echo.Echo <span class="cov8" title="1">{
+        h := &amp;Handler{
+                authService: authService,
+                userService: userService,
+        }
+
+        e := echo.New()
+        e.HideBanner = true
+
+        e.Use(middleware.Recover())
+        e.Use(middleware.CORS())
+        e.Use(middleware.RequestID())
+        e.Use(middleware.Secure())
+
+        e.GET("/health", h.health)
+
+        api := e.Group("/api/v1")
+        api.POST("/auth/login", h.login)
+        api.GET("/auth/oauth/google", h.oauthStart)
+        api.GET("/auth/oauth/callback", h.oauthCallback)
+
+        protected := api.Group("")
+        protected.Use(AuthMiddleware(authService))
+
+        protected.GET("/users/me", h.me)
+        protected.GET("/admin/ping", h.adminPing, RequireRole(domain.RoleAdmin))
+
+        return e
+}</span>
+
+func (h *Handler) health(c echo.Context) error <span class="cov8" title="1">{
+        return c.JSON(http.StatusOK, map[string]string{
+                "status": "ok",
+        })
+}</span>
+
+func (h *Handler) login(c echo.Context) error <span class="cov8" title="1">{
+        var req loginRequest
+        if err := c.Bind(&amp;req); err != nil </span><span class="cov0" title="0">{
+                return echo.NewHTTPError(http.StatusBadRequest, "invalid request payload")
+        }</span>
+        <span class="cov8" title="1">ctx := c.Request().Context()
+        result, err := h.authService.LoginWithPassword(ctx, req.Email, req.Password)
+        if err != nil </span><span class="cov0" title="0">{
+                return echo.NewHTTPError(http.StatusUnauthorized, err.Error())
+        }</span>
+        <span class="cov8" title="1">return c.JSON(http.StatusOK, authResponse{
+                AccessToken: result.AccessToken,
+                ExpiresAt:   result.ExpiresAt,
+                User:        result.User,
+        })</span>
+}
+
+func (h *Handler) oauthStart(c echo.Context) error <span class="cov8" title="1">{
+        ctx := c.Request().Context()
+        state, url, err := h.authService.StartOAuth(ctx)
+        if err != nil </span><span class="cov0" title="0">{
+                return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+        }</span>
+        <span class="cov8" title="1">return c.JSON(http.StatusOK, map[string]string{
+                "state": state,
+                "url":   url,
+        })</span>
+}
+
+func (h *Handler) oauthCallback(c echo.Context) error <span class="cov8" title="1">{
+        code := c.QueryParam("code")
+        state := c.QueryParam("state")
+        ctx := c.Request().Context()
+        result, err := h.authService.CompleteOAuth(ctx, code, state)
+        if err != nil </span><span class="cov0" title="0">{
+                if err == shared.ErrUnauthorized </span><span class="cov0" title="0">{
+                        return echo.NewHTTPError(http.StatusUnauthorized, err.Error())
+                }</span>
+                <span class="cov0" title="0">return echo.NewHTTPError(http.StatusBadRequest, err.Error())</span>
+        }
+        <span class="cov8" title="1">return c.JSON(http.StatusOK, authResponse{
+                AccessToken: result.AccessToken,
+                ExpiresAt:   result.ExpiresAt,
+                User:        result.User,
+        })</span>
+}
+
+func (h *Handler) me(c echo.Context) error <span class="cov8" title="1">{
+        user := CurrentUser(c)
+        return c.JSON(http.StatusOK, user)
+}</span>
+
+func (h *Handler) adminPing(c echo.Context) error <span class="cov8" title="1">{
+        return c.JSON(http.StatusOK, map[string]string{
+                "message": "admin pong",
+        })
+}</span>
+
+type loginRequest struct {
+        Email    string `json:"email"`
+        Password string `json:"password"`
+}
+
+type authResponse struct {
+        AccessToken string      `json:"accessToken"`
+        ExpiresAt   time.Time   `json:"expiresAt"`
+        User        domain.User `json:"user"`
+}
+</pre>
+		
+		<pre class="file" id="file3" style="display: none">package http
+
+import (
+        "net/http"
+        "strings"
+
+        echo "github.com/labstack/echo/v4"
+
+        "github.com/lbrines/classsphere/internal/app"
+        "github.com/lbrines/classsphere/internal/domain"
+        "github.com/lbrines/classsphere/internal/shared"
+)
+
+type contextKey string
+
+const userContextKey contextKey = "current_user"
+
+// AuthMiddleware validates bearer tokens and injects the authenticated user.
+func AuthMiddleware(auth *app.AuthService) echo.MiddlewareFunc <span class="cov8" title="1">{
+        return func(next echo.HandlerFunc) echo.HandlerFunc </span><span class="cov8" title="1">{
+                return func(c echo.Context) error </span><span class="cov8" title="1">{
+                        header := c.Request().Header.Get("Authorization")
+                        if header == "" </span><span class="cov0" title="0">{
+                                return echo.NewHTTPError(http.StatusUnauthorized, shared.ErrUnauthorized.Error())
+                        }</span>
+
+                        <span class="cov8" title="1">parts := strings.SplitN(header, " ", 2)
+                        if len(parts) != 2 || !strings.EqualFold(parts[0], "Bearer") </span><span class="cov0" title="0">{
+                                return echo.NewHTTPError(http.StatusUnauthorized, shared.ErrUnauthorized.Error())
+                        }</span>
+
+                        <span class="cov8" title="1">user, err := auth.ValidateToken(c.Request().Context(), parts[1])
+                        if err != nil </span><span class="cov0" title="0">{
+                                return echo.NewHTTPError(http.StatusUnauthorized, shared.ErrUnauthorized.Error())
+                        }</span>
+
+                        <span class="cov8" title="1">c.Set(string(userContextKey), user)
+                        return next(c)</span>
+                }
+        }
+}
+
+// RequireRole ensures the authenticated user has the required role or higher.
+func RequireRole(role domain.Role) echo.MiddlewareFunc <span class="cov8" title="1">{
+        return func(next echo.HandlerFunc) echo.HandlerFunc </span><span class="cov8" title="1">{
+                return func(c echo.Context) error </span><span class="cov8" title="1">{
+                        user := CurrentUser(c)
+                        if !user.Role.Allows(role) </span><span class="cov0" title="0">{
+                                return echo.NewHTTPError(http.StatusForbidden, shared.ErrForbidden.Error())
+                        }</span>
+                        <span class="cov8" title="1">return next(c)</span>
+                }
+        }
+}
+
+// CurrentUser returns the authenticated user stored in the context.
+func CurrentUser(c echo.Context) domain.User <span class="cov8" title="1">{
+        if value, ok := c.Get(string(userContextKey)).(domain.User); ok </span><span class="cov8" title="1">{
+                return value
+        }</span>
+        <span class="cov0" title="0">return domain.User{}</span>
+}
+</pre>
+		
+		<pre class="file" id="file4" style="display: none">package oauth
+
+import (
+        "context"
+        "fmt"
+        "net/http"
+
+        "github.com/go-resty/resty/v2"
+        "golang.org/x/oauth2"
+        "golang.org/x/oauth2/google"
+
+        "github.com/lbrines/classsphere/internal/ports"
+)
+
+const googleUserInfoEndpoint = "https://www.googleapis.com/oauth2/v3/userinfo"
+
+// GoogleOAuth integrates with Google OAuth 2.0 endpoints.
+type GoogleOAuth struct {
+        config      *oauth2.Config
+        client      *resty.Client
+        userInfoURL string
+}
+
+// Option configures the GoogleOAuth adapter.
+type Option func(*GoogleOAuth)
+
+// NewGoogleOAuth constructs the adapter.
+func NewGoogleOAuth(clientID, clientSecret, redirectURL string, opts ...Option) *GoogleOAuth <span class="cov8" title="1">{
+        cfg := &amp;oauth2.Config{
+                ClientID:     clientID,
+                ClientSecret: clientSecret,
+                RedirectURL:  redirectURL,
+                Scopes: []string{
+                        "openid",
+                        "profile",
+                        "email",
+                        "https://www.googleapis.com/auth/classroom.courses.readonly",
+                },
+                Endpoint: google.Endpoint,
+        }
+
+        oauthClient := &amp;GoogleOAuth{
+                config:      cfg,
+                client:      resty.New().SetRetryCount(2),
+                userInfoURL: googleUserInfoEndpoint,
+        }
+
+        for _, opt := range opts </span><span class="cov8" title="1">{
+                opt(oauthClient)
+        }</span>
+
+        <span class="cov8" title="1">return oauthClient</span>
+}
+
+// WithOAuth2Config overrides the default OAuth2 configuration.
+func WithOAuth2Config(cfg *oauth2.Config) Option <span class="cov8" title="1">{
+        return func(g *GoogleOAuth) </span><span class="cov8" title="1">{
+                if cfg != nil </span><span class="cov8" title="1">{
+                        g.config = cfg
+                }</span>
+        }
+}
+
+// WithRestyClient overrides the HTTP client used for Google APIs.
+func WithRestyClient(client *resty.Client) Option <span class="cov8" title="1">{
+        return func(g *GoogleOAuth) </span><span class="cov8" title="1">{
+                if client != nil </span><span class="cov8" title="1">{
+                        g.client = client
+                }</span>
+        }
+}
+
+// WithUserInfoURL overrides the user info endpoint (useful for testing).
+func WithUserInfoURL(url string) Option <span class="cov8" title="1">{
+        return func(g *GoogleOAuth) </span><span class="cov8" title="1">{
+                if url != "" </span><span class="cov8" title="1">{
+                        g.userInfoURL = url
+                }</span>
+        }
+}
+
+// AuthURL generates the Google authorization URL.
+func (g *GoogleOAuth) AuthURL(state string) (string, error) <span class="cov8" title="1">{
+        if state == "" </span><span class="cov8" title="1">{
+                return "", fmt.Errorf("state is required")
+        }</span>
+        <span class="cov8" title="1">return g.config.AuthCodeURL(state, oauth2.AccessTypeOffline), nil</span>
+}
+
+// Exchange exchanges the authorization code for user info.
+func (g *GoogleOAuth) Exchange(ctx context.Context, code string) (ports.OAuthUser, error) <span class="cov8" title="1">{
+        if code == "" </span><span class="cov8" title="1">{
+                return ports.OAuthUser{}, fmt.Errorf("authorization code is required")
+        }</span>
+
+        <span class="cov8" title="1">token, err := g.config.Exchange(ctx, code)
+        if err != nil </span><span class="cov0" title="0">{
+                return ports.OAuthUser{}, fmt.Errorf("exchange code: %w", err)
+        }</span>
+
+        <span class="cov8" title="1">resp, err := g.client.R().
+                SetContext(ctx).
+                SetHeader("Authorization", "Bearer "+token.AccessToken).
+                SetError(&amp;oauthError{}).
+                SetResult(&amp;googleUser{}).
+                Get(g.userInfoURL)
+        if err != nil </span><span class="cov0" title="0">{
+                return ports.OAuthUser{}, fmt.Errorf("request userinfo: %w", err)
+        }</span>
+
+        <span class="cov8" title="1">if resp.IsError() </span><span class="cov0" title="0">{
+                if apiErr, ok := resp.Error().(*oauthError); ok </span><span class="cov0" title="0">{
+                        return ports.OAuthUser{}, fmt.Errorf("userinfo error: %s", apiErr.Error())
+                }</span>
+                <span class="cov0" title="0">return ports.OAuthUser{}, fmt.Errorf("userinfo error: status %d", resp.StatusCode())</span>
+        }
+
+        <span class="cov8" title="1">userInfo, ok := resp.Result().(*googleUser)
+        if !ok </span><span class="cov0" title="0">{
+                return ports.OAuthUser{}, fmt.Errorf("unexpected userinfo response")
+        }</span>
+
+        <span class="cov8" title="1">return ports.OAuthUser{
+                ID:          userInfo.Sub,
+                Email:       userInfo.Email,
+                DisplayName: userInfo.Name,
+        }, nil</span>
+}
+
+type googleUser struct {
+        Sub   string `json:"sub"`
+        Email string `json:"email"`
+        Name  string `json:"name"`
+}
+
+type oauthError struct {
+        Code        string `json:"error"`
+        Description string `json:"error_description"`
+}
+
+func (e *oauthError) Error() string <span class="cov8" title="1">{
+        if e == nil </span><span class="cov0" title="0">{
+                return http.StatusText(http.StatusInternalServerError)
+        }</span>
+        <span class="cov8" title="1">if e.Description != "" </span><span class="cov8" title="1">{
+                return e.Description
+        }</span>
+        <span class="cov8" title="1">return e.Code</span>
+}
+</pre>
+		
+		<pre class="file" id="file5" style="display: none">package repo
+
+import (
+        "context"
+        "sync"
+
+        "github.com/lbrines/classsphere/internal/domain"
+        "github.com/lbrines/classsphere/internal/shared"
+)
+
+// MemoryUserRepository stores users in-memory for development/testing.
+type MemoryUserRepository struct {
+        mu      sync.RWMutex
+        byID    map[string]domain.User
+        byEmail map[string]domain.User
+}
+
+// NewMemoryUserRepository constructs the repository with optional seed data.
+func NewMemoryUserRepository(seed []domain.User) *MemoryUserRepository <span class="cov8" title="1">{
+        repo := &amp;MemoryUserRepository{
+                byID:    make(map[string]domain.User),
+                byEmail: make(map[string]domain.User),
+        }
+        for _, user := range seed </span><span class="cov8" title="1">{
+                repo.save(user)
+        }</span>
+        <span class="cov8" title="1">return repo</span>
+}
+
+func (r *MemoryUserRepository) save(user domain.User) <span class="cov8" title="1">{
+        r.byID[user.ID] = user
+        r.byEmail[user.Email] = user
+}</span>
+
+// FindByEmail retrieves a user by email.
+func (r *MemoryUserRepository) FindByEmail(_ context.Context, email string) (domain.User, error) <span class="cov8" title="1">{
+        r.mu.RLock()
+        defer r.mu.RUnlock()
+        if user, ok := r.byEmail[email]; ok </span><span class="cov8" title="1">{
+                return user, nil
+        }</span>
+        <span class="cov0" title="0">return domain.User{}, shared.ErrUserNotFound</span>
+}
+
+// FindByID retrieves a user by ID.
+func (r *MemoryUserRepository) FindByID(_ context.Context, id string) (domain.User, error) <span class="cov8" title="1">{
+        r.mu.RLock()
+        defer r.mu.RUnlock()
+        if user, ok := r.byID[id]; ok </span><span class="cov8" title="1">{
+                return user, nil
+        }</span>
+        <span class="cov8" title="1">return domain.User{}, shared.ErrUserNotFound</span>
+}
+
+// Upsert stores a user.
+func (r *MemoryUserRepository) Upsert(_ context.Context, user domain.User) error <span class="cov8" title="1">{
+        r.mu.Lock()
+        defer r.mu.Unlock()
+        r.save(user)
+        return nil
+}</span>
+</pre>
+		
+		<pre class="file" id="file6" style="display: none">package app
+
+import (
+        "context"
+        "crypto/rand"
+        "encoding/base64"
+        "fmt"
+        "time"
+
+        "github.com/golang-jwt/jwt/v5"
+        "golang.org/x/crypto/bcrypt"
+
+        "github.com/lbrines/classsphere/internal/domain"
+        "github.com/lbrines/classsphere/internal/ports"
+        "github.com/lbrines/classsphere/internal/shared"
+)
+
+const (
+        oauthStatePrefix = "oauth_state:"
+        oauthStateTTL    = 300 // 5 minutes
+)
+
+// AuthService coordinates authentication flows (password and OAuth based).
+type AuthService struct {
+        users   ports.UserRepository
+        cache   ports.Cache
+        oauth   ports.OAuthProvider
+        nowFunc func() time.Time
+        cfg     shared.Config
+}
+
+// NewAuthService constructs an AuthService.
+func NewAuthService(users ports.UserRepository, cache ports.Cache, oauth ports.OAuthProvider, cfg shared.Config) (*AuthService, error) <span class="cov8" title="1">{
+        if users == nil </span><span class="cov0" title="0">{
+                return nil, fmt.Errorf("users repository is required")
+        }</span>
+        <span class="cov8" title="1">if cache == nil </span><span class="cov0" title="0">{
+                return nil, fmt.Errorf("cache is required")
+        }</span>
+        <span class="cov8" title="1">if oauth == nil </span><span class="cov0" title="0">{
+                return nil, fmt.Errorf("oauth provider is required")
+        }</span>
+        <span class="cov8" title="1">return &amp;AuthService{
+                users:   users,
+                cache:   cache,
+                oauth:   oauth,
+                nowFunc: time.Now,
+                cfg:     cfg,
+        }, nil</span>
+}
+
+// AuthTokens represents the authentication outcome.
+type AuthTokens struct {
+        AccessToken string
+        ExpiresAt   time.Time
+        User        domain.User
+}
+
+// LoginWithPassword authenticates a user using email and password credentials.
+func (a *AuthService) LoginWithPassword(ctx context.Context, email, password string) (AuthTokens, error) <span class="cov8" title="1">{
+        user, err := a.users.FindByEmail(ctx, email)
+        if err != nil </span><span class="cov0" title="0">{
+                return AuthTokens{}, shared.ErrInvalidCredentials
+        }</span>
+
+        <span class="cov8" title="1">if err := bcrypt.CompareHashAndPassword([]byte(user.HashedPassword), []byte(password)); err != nil </span><span class="cov8" title="1">{
+                return AuthTokens{}, shared.ErrInvalidCredentials
+        }</span>
+
+        <span class="cov8" title="1">token, expiresAt, err := a.generateToken(user)
+        if err != nil </span><span class="cov0" title="0">{
+                return AuthTokens{}, err
+        }</span>
+
+        <span class="cov8" title="1">return AuthTokens{
+                AccessToken: token,
+                ExpiresAt:   expiresAt,
+                User:        user,
+        }, nil</span>
+}
+
+// StartOAuth generates a state parameter, persists it, and returns the authorization URL.
+func (a *AuthService) StartOAuth(ctx context.Context) (string, string, error) <span class="cov8" title="1">{
+        state, err := generateState()
+        if err != nil </span><span class="cov0" title="0">{
+                return "", "", err
+        }</span>
+        <span class="cov8" title="1">if err := a.cache.Set(ctx, oauthStatePrefix+state, []byte("1"), oauthStateTTL); err != nil </span><span class="cov0" title="0">{
+                return "", "", fmt.Errorf("store oauth state: %w", err)
+        }</span>
+        <span class="cov8" title="1">url, err := a.oauth.AuthURL(state)
+        if err != nil </span><span class="cov0" title="0">{
+                return "", "", err
+        }</span>
+        <span class="cov8" title="1">return state, url, nil</span>
+}
+
+// CompleteOAuth processes the OAuth callback and returns signed tokens.
+func (a *AuthService) CompleteOAuth(ctx context.Context, code, state string) (AuthTokens, error) <span class="cov8" title="1">{
+        if state == "" </span><span class="cov0" title="0">{
+                return AuthTokens{}, fmt.Errorf("state is required")
+        }</span>
+        <span class="cov8" title="1">value, err := a.cache.Get(ctx, oauthStatePrefix+state)
+        if err != nil </span><span class="cov0" title="0">{
+                return AuthTokens{}, fmt.Errorf("validate oauth state: %w", err)
+        }</span>
+        <span class="cov8" title="1">if len(value) == 0 </span><span class="cov0" title="0">{
+                return AuthTokens{}, shared.ErrUnauthorized
+        }</span>
+        <span class="cov8" title="1">defer func() </span><span class="cov8" title="1">{
+                _ = a.cache.Delete(ctx, oauthStatePrefix+state)
+        }</span>()
+
+        <span class="cov8" title="1">oauthUser, err := a.oauth.Exchange(ctx, code)
+        if err != nil </span><span class="cov0" title="0">{
+                return AuthTokens{}, err
+        }</span>
+
+        <span class="cov8" title="1">user, err := a.users.FindByEmail(ctx, oauthUser.Email)
+        if err != nil </span><span class="cov8" title="1">{
+                user = domain.User{
+                        ID:          oauthUser.ID,
+                        Email:       oauthUser.Email,
+                        DisplayName: oauthUser.DisplayName,
+                        Role:        domain.RoleTeacher,
+                        CreatedAt:   a.nowFunc(),
+                        UpdatedAt:   a.nowFunc(),
+                }
+                if err := a.users.Upsert(ctx, user); err != nil </span><span class="cov0" title="0">{
+                        return AuthTokens{}, fmt.Errorf("save oauth user: %w", err)
+                }</span>
+        }
+
+        <span class="cov8" title="1">token, expiresAt, err := a.generateToken(user)
+        if err != nil </span><span class="cov0" title="0">{
+                return AuthTokens{}, err
+        }</span>
+
+        <span class="cov8" title="1">return AuthTokens{
+                AccessToken: token,
+                ExpiresAt:   expiresAt,
+                User:        user,
+        }, nil</span>
+}
+
+// ValidateToken verifies the JWT and returns the associated user.
+func (a *AuthService) ValidateToken(ctx context.Context, tokenString string) (domain.User, error) <span class="cov8" title="1">{
+        if tokenString == "" </span><span class="cov0" title="0">{
+                return domain.User{}, shared.ErrUnauthorized
+        }</span>
+
+        <span class="cov8" title="1">claims := &amp;jwt.RegisteredClaims{}
+        _, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) </span><span class="cov8" title="1">{
+                return []byte(a.cfg.JWTSecret), nil
+        }</span>)
+        <span class="cov8" title="1">if err != nil </span><span class="cov0" title="0">{
+                return domain.User{}, shared.ErrUnauthorized
+        }</span>
+
+        <span class="cov8" title="1">user, err := a.users.FindByID(ctx, claims.Subject)
+        if err != nil </span><span class="cov0" title="0">{
+                return domain.User{}, shared.ErrUnauthorized
+        }</span>
+        <span class="cov8" title="1">return user, nil</span>
+}
+
+func (a *AuthService) generateToken(user domain.User) (string, time.Time, error) <span class="cov8" title="1">{
+        exp := a.nowFunc().Add(time.Minute * time.Duration(a.cfg.JWTExpiryMinutes))
+        token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.RegisteredClaims{
+                Subject:   user.ID,
+                Issuer:    a.cfg.JWTIssuer,
+                ExpiresAt: jwt.NewNumericDate(exp),
+                IssuedAt:  jwt.NewNumericDate(a.nowFunc()),
+        })
+
+        tokenString, err := token.SignedString([]byte(a.cfg.JWTSecret))
+        if err != nil </span><span class="cov0" title="0">{
+                return "", time.Time{}, fmt.Errorf("sign token: %w", err)
+        }</span>
+        <span class="cov8" title="1">return tokenString, exp, nil</span>
+}
+
+func generateState() (string, error) <span class="cov8" title="1">{
+        buf := make([]byte, 32)
+        if _, err := rand.Read(buf); err != nil </span><span class="cov0" title="0">{
+                return "", fmt.Errorf("generate state: %w", err)
+        }</span>
+        <span class="cov8" title="1">return base64.RawURLEncoding.EncodeToString(buf), nil</span>
+}
+
+// SetNowFunc allows tests to control the time provider.
+func (a *AuthService) SetNowFunc(fn func() time.Time) <span class="cov8" title="1">{
+        if fn != nil </span><span class="cov8" title="1">{
+                a.nowFunc = fn
+        }</span>
+}
+</pre>
+		
+		<pre class="file" id="file7" style="display: none">package app
+
+import (
+        "context"
+        "fmt"
+
+        "github.com/lbrines/classsphere/internal/domain"
+        "github.com/lbrines/classsphere/internal/ports"
+        "github.com/lbrines/classsphere/internal/shared"
+)
+
+// UserService exposes user related use cases.
+type UserService struct {
+        users ports.UserRepository
+}
+
+// NewUserService constructs a UserService instance.
+func NewUserService(users ports.UserRepository) (*UserService, error) <span class="cov8" title="1">{
+        if users == nil </span><span class="cov8" title="1">{
+                return nil, fmt.Errorf("users repository is required")
+        }</span>
+        <span class="cov8" title="1">return &amp;UserService{users: users}, nil</span>
+}
+
+// GetByID fetches a user.
+func (s *UserService) GetByID(ctx context.Context, id string) (domain.User, error) <span class="cov8" title="1">{
+        user, err := s.users.FindByID(ctx, id)
+        if err != nil </span><span class="cov8" title="1">{
+                return domain.User{}, shared.ErrUserNotFound
+        }</span>
+        <span class="cov8" title="1">return user, nil</span>
+}
+</pre>
+		
+		<pre class="file" id="file8" style="display: none">package domain
+
+import "strings"
+
+// Role models access levels within the platform.
+type Role string
+
+const (
+        RoleAdmin       Role = "admin"
+        RoleCoordinator Role = "coordinator"
+        RoleTeacher     Role = "teacher"
+        RoleStudent     Role = "student"
+)
+
+var roleHierarchy = map[Role]int{
+        RoleAdmin:       4,
+        RoleCoordinator: 3,
+        RoleTeacher:     2,
+        RoleStudent:     1,
+}
+
+// ParseRole converts string input into a valid Role.
+func ParseRole(raw string) Role <span class="cov8" title="1">{
+        role := Role(strings.ToLower(strings.TrimSpace(raw)))
+        if _, ok := roleHierarchy[role]; !ok </span><span class="cov8" title="1">{
+                return RoleStudent
+        }</span>
+        <span class="cov8" title="1">return role</span>
+}
+
+// Allows returns true when the current role grants access to the requested role.
+func (r Role) Allows(target Role) bool <span class="cov8" title="1">{
+        return roleHierarchy[r] &gt;= roleHierarchy[target]
+}</span>
+
+// IsValid returns true when the role exists in the hierarchy map.
+func (r Role) IsValid() bool <span class="cov8" title="1">{
+        _, ok := roleHierarchy[r]
+        return ok
+}</span>
+</pre>
+		
+		<pre class="file" id="file9" style="display: none">package domain
+
+import "time"
+
+// User represents an authenticated platform member.
+type User struct {
+        ID             string    `json:"id"`
+        Email          string    `json:"email"`
+        HashedPassword string    `json:"-"`
+        Role           Role      `json:"role"`
+        DisplayName    string    `json:"displayName"`
+        CreatedAt      time.Time `json:"createdAt"`
+        UpdatedAt      time.Time `json:"updatedAt"`
+}
+
+// CanAccessRole determines if the user can access resources requiring the given role.
+func (u User) CanAccessRole(role Role) bool <span class="cov8" title="1">{
+        return u.Role.Allows(role)
+}</span>
+</pre>
+		
+		<pre class="file" id="file10" style="display: none">package shared
+
+import (
+        "fmt"
+        "os"
+        "strconv"
+)
+
+const (
+        defaultServerPort = 8080
+        defaultRedisAddr  = "localhost:6379"
+)
+
+// Config groups runtime configuration sourced from environment variables.
+type Config struct {
+        AppEnv             string
+        ServerPort         int
+        JWTSecret          string
+        JWTIssuer          string
+        JWTExpiryMinutes   int
+        RedisAddr          string
+        RedisPassword      string
+        RedisDB            int
+        GoogleClientID     string
+        GoogleClientSecret string
+        GoogleRedirectURL  string
+}
+
+// LoadConfig constructs a Config instance using environment variables. It applies
+// sane defaults for local development so the service can start without extensive setup.
+func LoadConfig() (Config, error) <span class="cov8" title="1">{
+        cfg := Config{
+                AppEnv:             getEnv("APP_ENV", "development"),
+                RedisAddr:          getEnv("REDIS_ADDR", defaultRedisAddr),
+                RedisPassword:      os.Getenv("REDIS_PASSWORD"),
+                GoogleClientID:     os.Getenv("GOOGLE_CLIENT_ID"),
+                GoogleClientSecret: os.Getenv("GOOGLE_CLIENT_SECRET"),
+                GoogleRedirectURL:  os.Getenv("GOOGLE_REDIRECT_URL"),
+                JWTSecret:          os.Getenv("JWT_SECRET"),
+                JWTIssuer:          getEnv("JWT_ISSUER", "classsphere"),
+        }
+
+        port, err := parseIntEnv("SERVER_PORT", defaultServerPort)
+        if err != nil </span><span class="cov0" title="0">{
+                return Config{}, fmt.Errorf("invalid SERVER_PORT: %w", err)
+        }</span>
+        <span class="cov8" title="1">cfg.ServerPort = port
+
+        expiryMinutes, err := parseIntEnv("JWT_EXPIRY_MINUTES", 60)
+        if err != nil </span><span class="cov0" title="0">{
+                return Config{}, fmt.Errorf("invalid JWT_EXPIRY_MINUTES: %w", err)
+        }</span>
+        <span class="cov8" title="1">cfg.JWTExpiryMinutes = expiryMinutes
+
+        redisDB, err := parseIntEnv("REDIS_DB", 0)
+        if err != nil </span><span class="cov0" title="0">{
+                return Config{}, fmt.Errorf("invalid REDIS_DB: %w", err)
+        }</span>
+        <span class="cov8" title="1">cfg.RedisDB = redisDB
+
+        return cfg, cfg.Validate()</span>
+}
+
+// Validate ensures required configuration is present for secure operation.
+func (c Config) Validate() error <span class="cov8" title="1">{
+        if c.JWTSecret == "" </span><span class="cov8" title="1">{
+                return fmt.Errorf("JWT_SECRET must be provided")
+        }</span>
+        <span class="cov8" title="1">if c.GoogleClientID == "" </span><span class="cov0" title="0">{
+                return fmt.Errorf("GOOGLE_CLIENT_ID must be provided")
+        }</span>
+        <span class="cov8" title="1">if c.GoogleClientSecret == "" </span><span class="cov0" title="0">{
+                return fmt.Errorf("GOOGLE_CLIENT_SECRET must be provided")
+        }</span>
+        <span class="cov8" title="1">if c.GoogleRedirectURL == "" </span><span class="cov0" title="0">{
+                return fmt.Errorf("GOOGLE_REDIRECT_URL must be provided")
+        }</span>
+        <span class="cov8" title="1">return nil</span>
+}
+
+func getEnv(key, fallback string) string <span class="cov8" title="1">{
+        if value := os.Getenv(key); value != "" </span><span class="cov0" title="0">{
+                return value
+        }</span>
+        <span class="cov8" title="1">return fallback</span>
+}
+
+func parseIntEnv(key string, fallback int) (int, error) <span class="cov8" title="1">{
+        raw := os.Getenv(key)
+        if raw == "" </span><span class="cov8" title="1">{
+                return fallback, nil
+        }</span>
+        <span class="cov8" title="1">value, err := strconv.Atoi(raw)
+        if err != nil </span><span class="cov0" title="0">{
+                return 0, err
+        }</span>
+        <span class="cov8" title="1">return value, nil</span>
+}
+</pre>
+		
+		<pre class="file" id="file11" style="display: none">package shared
+
+import (
+        "context"
+        "log/slog"
+        "os"
+        "sync"
+)
+
+var (
+        logger     *slog.Logger
+        loggerOnce sync.Once
+)
+
+// Logger returns a shared structured logger configured for the current environment.
+func Logger() *slog.Logger <span class="cov8" title="1">{
+        loggerOnce.Do(func() </span><span class="cov8" title="1">{
+                handler := slog.NewJSONHandler(os.Stdout, &amp;slog.HandlerOptions{
+                        Level: slog.LevelInfo,
+                })
+                logger = slog.New(handler)
+        }</span>)
+        <span class="cov8" title="1">return logger</span>
+}
+
+// WithContext enriches a logger with the provided context.
+func WithContext(ctx context.Context) *slog.Logger <span class="cov8" title="1">{
+        return Logger().With(slog.Any("context", ctx.Value("request_id")))
+}</span>
+</pre>
+		
+		</div>
+	</body>
+	<script>
+	(function() {
+		var files = document.getElementById('files');
+		var visible;
+		files.addEventListener('change', onChange, false);
+		function select(part) {
+			if (visible)
+				visible.style.display = 'none';
+			visible = document.getElementById(part);
+			if (!visible)
+				return;
+			files.value = part;
+			visible.style.display = 'block';
+			location.hash = part;
+		}
+		function onChange() {
+			select(files.value);
+			window.scrollTo(0, 0);
+		}
+		if (location.hash != "") {
+			select(location.hash.substr(1));
+		}
+		if (!visible) {
+			select("file0");
+		}
+	})();
+	</script>
+</html>

@@ -13,10 +13,10 @@ max_tokens: 2000
 ## 🎯 INICIO: PHASE OBJECTIVES AND CRITICAL DEPENDENCIES
 
 ### Phase Overview
-Establish complete foundations for ClassSphere with Go 1.21+ backend (Echo v4) and Angular 19 frontend, implementing authentication (JWT + OAuth 2.0 Google), role system, and comprehensive testing infrastructure.
+Establish complete foundations for ClassSphere with Go 1.24.7 backend (Echo v4) and Angular 19 frontend, implementing authentication (JWT + OAuth 2.0 Google), role system, and comprehensive testing infrastructure.
 
 ### Critical Dependencies
-1. **Go 1.21+** installed and configured
+1. **Go 1.24.7** installed and configured
 2. **Node.js 18+** for Angular development
 3. **Redis** for caching and sessions
 4. **Git** for version control
@@ -34,7 +34,7 @@ Establish complete foundations for ClassSphere with Go 1.21+ backend (Echo v4) a
 ### Technology Stack
 ```yaml
 Backend:
-  Language: Go 1.21+
+  Language: Go 1.24.7
   Framework: Echo v4
   Authentication: JWT + OAuth 2.0 Google
   Cache: Redis
