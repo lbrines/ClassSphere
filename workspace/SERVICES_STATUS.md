@@ -1,6 +1,6 @@
 # ClassSphere - Estado de Servicios (Fase 3)
 
-**Última actualización**: 2025-10-07 18:30
+**Última actualización**: 2025-10-07 14:15
 
 ## 🎯 MILESTONE ALCANZADO: FASE 3 COMPLETADA ✅
 
@@ -19,8 +19,8 @@
 | Tecnología | Cobertura Anterior | Cobertura Actual | Estado |
 |------------|-------------------|------------------|--------|
 | **Backend (Go)** | 88.0% | **89.4%** | ✅ Objetivo ≥80% alcanzado |
-| **Frontend (Angular)** | 95% | **95%** | ✅ Milestone mantenido |
-| **Componentes Críticos** | 95%+ | **95%+** | ✅ Todos cubiertos |
+| **Frontend (Angular)** | 95% | **94.9% líneas / 94.1% statements / 93.1% branches** | ✅ Objetivo ≥90% ramas alcanzado |
+| **Componentes Críticos** | 95%+ | **≥90% líneas clave** | ✅ Cobertura mínima sostenida |
 
 ### 📈 Mejoras de Cobertura Backend (Fase 3):
 - **internal/app**: 88.9% → **93.2%** (+4.3%)
@@ -50,13 +50,10 @@
 - **Personalización avanzada**: Colores, tooltips, leyendas mejoradas
 - **Métodos públicos**: API programática para interacción externa
 
-### 🎯 Componentes con 95%+ Cobertura:
-- **DashboardViewComponent**: 31 tests exhaustivos (14.81% → 95%+)
-- **NavigationService**: 25+ tests casos edge (50% → 95%+)
-- **AuthService**: 20+ tests adicionales casos edge
-- **ApexChartComponent**: Tests tipos gráficos + manejo errores
-- **NotFoundComponent**: Cobertura completa (0% → 100%)
-- **GoogleConnectComponent**: Tests modos + estados
+### 🎯 Hallazgos clave de la sesión (Frontend)
+- Se estabilizaron los specs de `ClassroomService` drenando solicitudes iniciales, cubriendo ramas de `setMode`/`normalize` y validando la caché del dashboard.
+- `GoogleConnectComponent` ahora stubbea `window.open`, evitando recargas completas en Karma.
+- `AuthService`, `DashboardViewComponent` y `NotFoundComponent` mantienen cobertura funcional tras la depuración y amplían rutas/roles para el switch.
 
 ---
 
@@ -159,7 +156,7 @@ frontend/
 | Módulo | Comando | Resultado |
 |--------|---------|-----------|
 | Backend | `../workspace/tools/go1.24.7/bin/go test ./...` | ✅ OK |
-| Frontend | `npm test -- --watch=false` | ✅ OK |
+| Frontend | `npm test -- --watch=false --code-coverage --browsers=ChromeHeadless --progress=false` | ✅ OK (Statements 94.09%, Lines 94.87%, Branches 93.05%) |
 
 > Los tests de ClassroomService usan `HttpClientTestingModule` con fixtures `mock`/`google`. Los dashboards stubs moquean `ApexChartComponent` para evitar cargar ApexCharts real.
 
@@ -234,4 +231,3 @@ frontend/
 3. Crear sistema de backup y recuperación
 4. Implementar accesibilidad WCAG 2.2 AA
 5. Completar pipeline CI/CD
-
