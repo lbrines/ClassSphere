@@ -4,7 +4,22 @@ import { of } from 'rxjs';
 
 import { DashboardLayoutComponent } from './dashboard-layout.component';
 import { AuthService } from '../../core/services/auth.service';
+import { ClassroomService } from '../../core/services/classroom.service';
+import { IntegrationMode } from '../../core/models/classroom.model';
 import { User, UserRole } from '../../core/models/user.model';
+
+class ClassroomServiceStub {
+  readonly mode$ = of<IntegrationMode>('mock');
+  readonly courseState$ = of({
+    mode: 'mock' as IntegrationMode,
+    generatedAt: '2025-10-07T10:00:00Z',
+    availableModes: ['mock'] as IntegrationMode[],
+    courses: [],
+  });
+  readonly availableModes$ = of(['mock'] as IntegrationMode[]);
+  setMode = jasmine.createSpy('setMode');
+  refresh = jasmine.createSpy('refresh');
+}
 
 describe('DashboardLayoutComponent', () => {
   let component: DashboardLayoutComponent;
@@ -25,7 +40,10 @@ describe('DashboardLayoutComponent', () => {
 
     await TestBed.configureTestingModule({
       imports: [DashboardLayoutComponent, RouterTestingModule],
-      providers: [{ provide: AuthService, useValue: spy }],
+      providers: [
+        { provide: AuthService, useValue: spy },
+        { provide: ClassroomService, useClass: ClassroomServiceStub },
+      ],
     }).compileComponents();
 
     authServiceSpy = TestBed.inject(AuthService) as jasmine.SpyObj<AuthService>;
@@ -54,4 +72,3 @@ describe('DashboardLayoutComponent', () => {
     expect(compiled.querySelector('router-outlet')).toBeTruthy();
   });
 });
-

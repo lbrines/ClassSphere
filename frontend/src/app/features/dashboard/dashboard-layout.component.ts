@@ -3,11 +3,13 @@ import { Component, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 
 import { AuthService } from '../../core/services/auth.service';
+import { ModeSelectorComponent } from './components/mode-selector.component';
+import { GoogleConnectComponent } from './components/google-connect.component';
 
 @Component({
   selector: 'app-dashboard-layout',
   standalone: true,
-  imports: [RouterOutlet, NgIf, AsyncPipe, TitleCasePipe],
+  imports: [RouterOutlet, NgIf, AsyncPipe, TitleCasePipe, ModeSelectorComponent, GoogleConnectComponent],
   template: `
     <div class="min-h-screen bg-slate-950 text-slate-100">
       <header class="border-b border-slate-800 bg-slate-900/80 px-6 py-4">
@@ -24,6 +26,8 @@ import { AuthService } from '../../core/services/auth.service';
       </header>
 
       <main class="mx-auto max-w-5xl px-6 py-8">
+        <app-mode-selector></app-mode-selector>
+        <app-google-connect></app-google-connect>
         <router-outlet></router-outlet>
       </main>
     </div>

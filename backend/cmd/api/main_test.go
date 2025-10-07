@@ -17,9 +17,13 @@ import (
 
 func TestSeedUsers(t *testing.T) {
 	users := seedUsers(shared.Logger())
-	require.Len(t, users, 2)
+	require.Len(t, users, 4)
 	require.Equal(t, "admin@classsphere.edu", users[0].Email)
+	require.Equal(t, "coordinator@classsphere.edu", users[1].Email)
+	require.Equal(t, "teacher@classsphere.edu", users[2].Email)
+	require.Equal(t, "student@classsphere.edu", users[3].Email)
 	require.NotEqual(t, "admin123", users[0].HashedPassword)
+	require.NotEqual(t, "teach123", users[2].HashedPassword)
 }
 
 func TestStartServerShutdown(t *testing.T) {
@@ -161,20 +165,26 @@ func TestInitialize_ConfigValidationError(t *testing.T) {
 func TestSeedUsers_PasswordHashing(t *testing.T) {
 	logger := shared.Logger()
 	users := seedUsers(logger)
-	
-	require.Len(t, users, 2)
-	
+
+	require.Len(t, users, 4)
+
 	// Verify passwords are hashed (not plaintext)
 	require.NotEqual(t, "admin123", users[0].HashedPassword)
 	require.NotEqual(t, "coord123", users[1].HashedPassword)
-	
+	require.NotEqual(t, "teach123", users[2].HashedPassword)
+	require.NotEqual(t, "stud123", users[3].HashedPassword)
+
 	// Verify hashes are bcrypt format (starts with $2a$)
 	require.Contains(t, users[0].HashedPassword, "$2a$")
 	require.Contains(t, users[1].HashedPassword, "$2a$")
-	
+	require.Contains(t, users[2].HashedPassword, "$2a$")
+	require.Contains(t, users[3].HashedPassword, "$2a$")
+
 	// Verify roles
 	require.Equal(t, "admin", string(users[0].Role))
 	require.Equal(t, "coordinator", string(users[1].Role))
+	require.Equal(t, "teacher", string(users[2].Role))
+	require.Equal(t, "student", string(users[3].Role))
 }
 
 func TestStartServer_GracefulShutdownTimeout(t *testing.T) {
@@ -191,7 +201,7 @@ func TestStartServer_GracefulShutdownTimeout(t *testing.T) {
 
 	// Let server start
 	time.Sleep(50 * time.Millisecond)
-	
+
 	// Send shutdown signal
 	signalCh <- syscall.SIGINT
 
@@ -269,10 +279,10 @@ func TestInitialize_CleanupFunction(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, app)
 	require.NotNil(t, cleanup)
-	
+
 	// Test that cleanup works without error
 	cleanup()
-	
+
 	// Should be safe to call multiple times
 	cleanup()
 }
@@ -294,7 +304,7 @@ func TestInitialize_UserServiceError(t *testing.T) {
 	app, cleanup, err := initialize(context.Background())
 	require.NoError(t, err)
 	defer cleanup()
-	
+
 	// Verify all components initialized
 	require.NotNil(t, app.server)
 	require.NotNil(t, app.logger)
@@ -355,7 +365,7 @@ func TestStartServer_ContextHandling(t *testing.T) {
 	}()
 
 	time.Sleep(50 * time.Millisecond)
-	
+
 	// Test both signal types
 	signalCh <- syscall.SIGTERM
 
@@ -369,8 +379,8 @@ func TestStartServer_ContextHandling(t *testing.T) {
 func TestCreateSeedUsers(t *testing.T) {
 	users, err := createSeedUsers()
 	require.NoError(t, err)
-	require.Len(t, users, 2)
-	
+	require.Len(t, users, 4)
+
 	// Verify admin
 	require.Equal(t, "admin-1", users[0].ID)
 	require.Equal(t, "admin@classsphere.edu", users[0].Email)
@@ -378,7 +388,7 @@ func TestCreateSeedUsers(t *testing.T) {
 	require.Equal(t, "admin", string(users[0].Role))
 	require.NotEmpty(t, users[0].HashedPassword)
 	require.Contains(t, users[0].HashedPassword, "$2a$")
-	
+
 	// Verify coordinator
 	require.Equal(t, "coord-1", users[1].ID)
 	require.Equal(t, "coordinator@classsphere.edu", users[1].Email)
@@ -386,42 +396,67 @@ func TestCreateSeedUsers(t *testing.T) {
 	require.Equal(t, "coordinator", string(users[1].Role))
 	require.NotEmpty(t, users[1].HashedPassword)
 	require.Contains(t, users[1].HashedPassword, "$2a$")
-	
+
+	// Verify teacher
+	require.Equal(t, "teacher-1", users[2].ID)
+	require.Equal(t, "teacher@classsphere.edu", users[2].Email)
+	require.Equal(t, "Teacher", users[2].DisplayName)
+	require.Equal(t, "teacher", string(users[2].Role))
+	require.NotEmpty(t, users[2].HashedPassword)
+	require.Contains(t, users[2].HashedPassword, "$2a$")
+
+	// Verify student
+	require.Equal(t, "student-1", users[3].ID)
+	require.Equal(t, "student@classsphere.edu", users[3].Email)
+	require.Equal(t, "Student", users[3].DisplayName)
+	require.Equal(t, "student", string(users[3].Role))
+	require.NotEmpty(t, users[3].HashedPassword)
+	require.Contains(t, users[3].HashedPassword, "$2a$")
+
 	// Verify hashes are different
 	require.NotEqual(t, users[0].HashedPassword, users[1].HashedPassword)
-	
+	require.NotEqual(t, users[2].HashedPassword, users[3].HashedPassword)
+
 	// Verify passwords are not plaintext
 	require.NotEqual(t, "admin123", users[0].HashedPassword)
 	require.NotEqual(t, "coord123", users[1].HashedPassword)
+	require.NotEqual(t, "teach123", users[2].HashedPassword)
+	require.NotEqual(t, "stud123", users[3].HashedPassword)
 }
 
 func TestSeedUsers_CallsCreateSeedUsers(t *testing.T) {
 	logger := shared.Logger()
 	users := seedUsers(logger)
-	
+
 	// Verify it returns the same result as createSeedUsers
 	expectedUsers, _ := createSeedUsers()
 	require.Len(t, users, len(expectedUsers))
-	require.Equal(t, expectedUsers[0].Email, users[0].Email)
-	require.Equal(t, expectedUsers[1].Email, users[1].Email)
+	for i := range expectedUsers {
+		require.Equal(t, expectedUsers[i].Email, users[i].Email)
+	}
 }
 
 func TestCreateSeedUsers_Deterministic(t *testing.T) {
 	// Test that createSeedUsers returns consistent structure
 	users1, err1 := createSeedUsers()
 	require.NoError(t, err1)
-	
+
 	users2, err2 := createSeedUsers()
 	require.NoError(t, err2)
-	
+
 	// Same emails and IDs
 	require.Equal(t, users1[0].Email, users2[0].Email)
 	require.Equal(t, users1[0].ID, users2[0].ID)
 	require.Equal(t, users1[1].Email, users2[1].Email)
 	require.Equal(t, users1[1].ID, users2[1].ID)
-	
+	require.Equal(t, users1[2].Email, users2[2].Email)
+	require.Equal(t, users1[2].ID, users2[2].ID)
+	require.Equal(t, users1[3].Email, users2[3].Email)
+	require.Equal(t, users1[3].ID, users2[3].ID)
+
 	// Different hashes (bcrypt generates new salt each time)
 	require.NotEqual(t, users1[0].HashedPassword, users2[0].HashedPassword)
+	require.NotEqual(t, users1[2].HashedPassword, users2[2].HashedPassword)
 }
 
 func TestInitialize_AllComponents(t *testing.T) {
@@ -441,19 +476,19 @@ func TestInitialize_AllComponents(t *testing.T) {
 	app, cleanup, err := initialize(context.Background())
 	require.NoError(t, err)
 	defer cleanup()
-	
+
 	// Verify server is Echo instance
 	require.NotNil(t, app.server)
-	
+
 	// Verify logger initialized
 	require.NotNil(t, app.logger)
-	
+
 	// Verify config loaded correctly
 	require.Equal(t, "test-secret-key-for-testing", app.config.JWTSecret)
 	require.Equal(t, "classsphere-test", app.config.JWTIssuer)
 	require.Equal(t, 120, app.config.JWTExpiryMinutes)
 	require.Equal(t, 9999, app.config.ServerPort)
-	
+
 	// Verify cache initialized
 	require.NotNil(t, app.cache)
 	err = app.cache.Ping(context.Background())
@@ -536,5 +571,43 @@ func TestCreateSeedUsers_CoordinatorHashError(t *testing.T) {
 	users, err := createSeedUsers()
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "hash coordinator password")
+	require.Nil(t, users)
+}
+
+func TestCreateSeedUsers_TeacherHashError(t *testing.T) {
+	originalHashFunc := hashPasswordFunc
+	defer func() { hashPasswordFunc = originalHashFunc }()
+
+	callCount := 0
+	hashPasswordFunc = func(password []byte, cost int) ([]byte, error) {
+		callCount++
+		if callCount == 3 {
+			return nil, fmt.Errorf("mock bcrypt error for teacher")
+		}
+		return originalHashFunc(password, cost)
+	}
+
+	users, err := createSeedUsers()
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "hash teacher password")
+	require.Nil(t, users)
+}
+
+func TestCreateSeedUsers_StudentHashError(t *testing.T) {
+	originalHashFunc := hashPasswordFunc
+	defer func() { hashPasswordFunc = originalHashFunc }()
+
+	callCount := 0
+	hashPasswordFunc = func(password []byte, cost int) ([]byte, error) {
+		callCount++
+		if callCount == 4 {
+			return nil, fmt.Errorf("mock bcrypt error for student")
+		}
+		return originalHashFunc(password, cost)
+	}
+
+	users, err := createSeedUsers()
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "hash student password")
 	require.Nil(t, users)
 }

@@ -22,8 +22,8 @@ import (
 )
 
 func TestLoginHandler(t *testing.T) {
-	authService, userService, _ := newTestServices(t)
-	router := httpadapter.New(authService, userService)
+	authService, userService, _, classroomService := newTestServices(t)
+	router := httpadapter.New(authService, userService, classroomService)
 
 	payload := map[string]string{
 		"email":    "admin@classsphere.edu",
@@ -42,7 +42,7 @@ func TestLoginHandler(t *testing.T) {
 }
 
 func TestAuthMiddleware(t *testing.T) {
-	authService, _, _ := newTestServices(t)
+	authService, _, _, _ := newTestServices(t)
 	ctx := context.Background()
 	tokens, err := authService.LoginWithPassword(ctx, "admin@classsphere.edu", "admin123")
 	require.NoError(t, err)
@@ -66,7 +66,7 @@ func TestAuthMiddleware(t *testing.T) {
 }
 
 func TestRequireRole(t *testing.T) {
-	authService, userService, _ := newTestServices(t)
+	authService, userService, _, classroomService := newTestServices(t)
 	ctx := context.Background()
 	tokens, err := authService.LoginWithPassword(ctx, "admin@classsphere.edu", "admin123")
 	require.NoError(t, err)
@@ -75,15 +75,15 @@ func TestRequireRole(t *testing.T) {
 	req.Header.Set("Authorization", "Bearer "+tokens.AccessToken)
 	rec := httptest.NewRecorder()
 
-	e := httpadapter.New(authService, userService)
+	e := httpadapter.New(authService, userService, classroomService)
 	e.ServeHTTP(rec, req)
 
 	require.Equal(t, http.StatusOK, rec.Code)
 }
 
 func TestHealthEndpoint(t *testing.T) {
-	authService, userService, _ := newTestServices(t)
-	router := httpadapter.New(authService, userService)
+	authService, userService, _, classroomService := newTestServices(t)
+	router := httpadapter.New(authService, userService, classroomService)
 
 	req := httptest.NewRequest(http.MethodGet, "/health", nil)
 	rec := httptest.NewRecorder()
@@ -93,8 +93,8 @@ func TestHealthEndpoint(t *testing.T) {
 }
 
 func TestOAuthEndpoints(t *testing.T) {
-	authService, userService, cache := newTestServices(t)
-	router := httpadapter.New(authService, userService)
+	authService, userService, cache, classroomService := newTestServices(t)
+	router := httpadapter.New(authService, userService, classroomService)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/auth/oauth/google", nil)
 	rec := httptest.NewRecorder()
@@ -114,8 +114,8 @@ func TestOAuthEndpoints(t *testing.T) {
 }
 
 func TestMeEndpoint(t *testing.T) {
-	authService, userService, _ := newTestServices(t)
-	router := httpadapter.New(authService, userService)
+	authService, userService, _, classroomService := newTestServices(t)
+	router := httpadapter.New(authService, userService, classroomService)
 
 	loginPayload := map[string]string{
 		"email":    "admin@classsphere.edu",
@@ -142,9 +142,55 @@ func TestMeEndpoint(t *testing.T) {
 	require.Equal(t, http.StatusOK, meRec.Code)
 }
 
+func TestCoursesEndpoint(t *testing.T) {
+	authService, userService, _, classroomService := newTestServices(t)
+	router := httpadapter.New(authService, userService, classroomService)
+
+	ctx := context.Background()
+	tokens, err := authService.LoginWithPassword(ctx, "admin@classsphere.edu", "admin123")
+	require.NoError(t, err)
+
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/google/courses", nil)
+	req.Header.Set("Authorization", "Bearer "+tokens.AccessToken)
+	rec := httptest.NewRecorder()
+
+	router.ServeHTTP(rec, req)
+	require.Equal(t, http.StatusOK, rec.Code)
+
+	var resp struct {
+		Mode           string           `json:"mode"`
+		Courses        []map[string]any `json:"courses"`
+		AvailableModes []string         `json:"availableModes"`
+	}
+	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &resp))
+	require.Contains(t, resp.Mode, "mock")
+	require.NotEmpty(t, resp.Courses)
+	require.NotEmpty(t, resp.AvailableModes)
+}
+
+func TestAdminDashboardEndpoint(t *testing.T) {
+	authService, userService, _, classroomService := newTestServices(t)
+	router := httpadapter.New(authService, userService, classroomService)
+
+	ctx := context.Background()
+	tokens, err := authService.LoginWithPassword(ctx, "admin@classsphere.edu", "admin123")
+	require.NoError(t, err)
+
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/dashboard/admin", nil)
+	req.Header.Set("Authorization", "Bearer "+tokens.AccessToken)
+	rec := httptest.NewRecorder()
+
+	router.ServeHTTP(rec, req)
+	require.Equal(t, http.StatusOK, rec.Code)
+
+	var resp map[string]any
+	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &resp))
+	require.Equal(t, "admin", resp["role"])
+}
+
 // Helpers
 
-func newTestServices(t *testing.T) (*app.AuthService, *app.UserService, *inMemoryCache) {
+func newTestServices(t *testing.T) (*app.AuthService, *app.UserService, *inMemoryCache, *app.ClassroomService) {
 	t.Helper()
 
 	hash, err := bcrypt.GenerateFromPassword([]byte("admin123"), bcrypt.DefaultCost)
@@ -176,7 +222,17 @@ func newTestServices(t *testing.T) (*app.AuthService, *app.UserService, *inMemor
 	userService, err := app.NewUserService(repository)
 	require.NoError(t, err)
 
-	return authService, userService, cache
+	classroomService := newStubClassroomService(t)
+
+	return authService, userService, cache, classroomService
+}
+
+func newStubClassroomService(t *testing.T) *app.ClassroomService {
+	provider := &stubClassroomProvider{mode: shared.IntegrationModeMock}
+	svc, err := app.NewClassroomService(shared.IntegrationModeMock, provider)
+	require.NoError(t, err)
+	svc.WithClock(func() time.Time { return time.Unix(0, 0) })
+	return svc
 }
 
 type inMemoryCache struct {
@@ -211,11 +267,50 @@ func (s *staticOAuth) Exchange(_ context.Context, _ string) (ports.OAuthUser, er
 	return ports.OAuthUser{ID: "admin-1", Email: "admin@classsphere.edu"}, nil
 }
 
+type stubClassroomProvider struct {
+	mode string
+}
+
+func (s *stubClassroomProvider) Mode() string {
+	return s.mode
+}
+
+func (s *stubClassroomProvider) Snapshot(_ context.Context) (domain.ClassroomSnapshot, error) {
+	now := time.Unix(0, 0)
+	return domain.ClassroomSnapshot{
+		Mode:        s.mode,
+		GeneratedAt: now,
+		Courses: []domain.Course{
+			{
+				ID:               "course-test",
+				Name:             "Test Course",
+				Program:          "STEM",
+				CoordinatorEmail: "coordinator@classsphere.edu",
+				Teachers: []domain.CourseTeacher{{
+					ID:    "teacher-1",
+					Name:  "Teacher",
+					Email: "teacher@classsphere.edu",
+				}},
+				Students: []domain.CourseStudent{},
+				Assignments: []domain.CourseAssignment{{
+					ID:        "assign-1",
+					Title:     "Assignment",
+					DueDate:   now.Add(48 * time.Hour),
+					Status:    domain.AssignmentStatusOpen,
+					Completed: 10,
+					Pending:   5,
+				}},
+				LastActivity: now,
+			},
+		},
+	}, nil
+}
+
 // === ADDITIONAL TESTS FOR 90% COVERAGE ===
 
 func TestLoginHandler_Errors(t *testing.T) {
-	authService, userService, _ := newTestServices(t)
-	router := httpadapter.New(authService, userService)
+	authService, userService, _, classroomService := newTestServices(t)
+	router := httpadapter.New(authService, userService, classroomService)
 
 	t.Run("invalid json", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodPost, "/api/v1/auth/login", bytes.NewReader([]byte("invalid-json")))
@@ -229,7 +324,7 @@ func TestLoginHandler_Errors(t *testing.T) {
 	t.Run("missing email", func(t *testing.T) {
 		payload := map[string]string{"password": "test"}
 		body, _ := json.Marshal(payload)
-		
+
 		req := httptest.NewRequest(http.MethodPost, "/api/v1/auth/login", bytes.NewReader(body))
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		rec := httptest.NewRecorder()
@@ -245,7 +340,7 @@ func TestLoginHandler_Errors(t *testing.T) {
 			"password": "wrong",
 		}
 		body, _ := json.Marshal(payload)
-		
+
 		req := httptest.NewRequest(http.MethodPost, "/api/v1/auth/login", bytes.NewReader(body))
 		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 		rec := httptest.NewRecorder()
@@ -257,9 +352,9 @@ func TestLoginHandler_Errors(t *testing.T) {
 
 func TestAuthMiddleware_Errors(t *testing.T) {
 	t.Run("missing authorization header", func(t *testing.T) {
-		authService, userService, _ := newTestServices(t)
-		router := httpadapter.New(authService, userService)
-		
+		authService, userService, _, classroomService := newTestServices(t)
+		router := httpadapter.New(authService, userService, classroomService)
+
 		req := httptest.NewRequest(http.MethodGet, "/api/v1/users/me", nil)
 		rec := httptest.NewRecorder()
 
@@ -268,9 +363,9 @@ func TestAuthMiddleware_Errors(t *testing.T) {
 	})
 
 	t.Run("invalid token format", func(t *testing.T) {
-		authService, userService, _ := newTestServices(t)
-		router := httpadapter.New(authService, userService)
-		
+		authService, userService, _, classroomService := newTestServices(t)
+		router := httpadapter.New(authService, userService, classroomService)
+
 		req := httptest.NewRequest(http.MethodGet, "/api/v1/users/me", nil)
 		req.Header.Set("Authorization", "InvalidFormat")
 		rec := httptest.NewRecorder()
@@ -280,9 +375,9 @@ func TestAuthMiddleware_Errors(t *testing.T) {
 	})
 
 	t.Run("invalid token", func(t *testing.T) {
-		authService, userService, _ := newTestServices(t)
-		router := httpadapter.New(authService, userService)
-		
+		authService, userService, _, classroomService := newTestServices(t)
+		router := httpadapter.New(authService, userService, classroomService)
+
 		req := httptest.NewRequest(http.MethodGet, "/api/v1/users/me", nil)
 		req.Header.Set("Authorization", "Bearer invalid-token")
 		rec := httptest.NewRecorder()
@@ -307,7 +402,7 @@ func TestRequireRole_Unauthorized(t *testing.T) {
 	// Create a combined repo with both admin and teacher
 	hash1, _ := bcrypt.GenerateFromPassword([]byte("admin123"), bcrypt.DefaultCost)
 	hash2, _ := bcrypt.GenerateFromPassword([]byte("teacher123"), bcrypt.DefaultCost)
-	
+
 	combinedRepo := repo.NewMemoryUserRepository([]domain.User{
 		{
 			ID:             "admin-1",
@@ -339,7 +434,8 @@ func TestRequireRole_Unauthorized(t *testing.T) {
 
 	sharedAuthService, _ := app.NewAuthService(combinedRepo, cache, oauth, cfg)
 	sharedUserService, _ := app.NewUserService(combinedRepo)
-	
+	classroomService := newStubClassroomService(t)
+
 	ctx := context.Background()
 	tokens, err := sharedAuthService.LoginWithPassword(ctx, "teacher@classsphere.edu", "teacher123")
 	require.NoError(t, err)
@@ -349,15 +445,15 @@ func TestRequireRole_Unauthorized(t *testing.T) {
 	req.Header.Set("Authorization", "Bearer "+tokens.AccessToken)
 	rec := httptest.NewRecorder()
 
-	e := httpadapter.New(sharedAuthService, sharedUserService)
+	e := httpadapter.New(sharedAuthService, sharedUserService, classroomService)
 	e.ServeHTTP(rec, req)
 
 	require.Equal(t, http.StatusForbidden, rec.Code)
 }
 
 func TestOAuthCallback_Errors(t *testing.T) {
-	authService, userService, _ := newTestServices(t)
-	router := httpadapter.New(authService, userService)
+	authService, userService, _, classroomService := newTestServices(t)
+	router := httpadapter.New(authService, userService, classroomService)
 
 	t.Run("missing state", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/api/v1/auth/oauth/callback?code=test", nil)
