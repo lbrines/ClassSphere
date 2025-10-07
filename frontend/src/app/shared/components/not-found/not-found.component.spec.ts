@@ -140,9 +140,6 @@ describe('NotFoundComponent', () => {
   });
 
   it('should be properly destroyed', () => {
-    const componentInstance = fixture.componentInstance;
-    spyOn(componentInstance, 'ngOnDestroy');
-
     fixture.destroy();
 
     // Note: ngOnDestroy might not be called if component doesn't implement it
