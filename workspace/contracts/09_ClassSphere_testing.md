@@ -756,37 +756,62 @@ class Settings(BaseSettings):
     )
 ```
 
-### Template TDD para FastAPI con Lifespan
+### Template TDD para Go + Echo con Lifecycle Management
 
-```python
-# Template estándar para FastAPI con lifespan
-from contextlib import asynccontextmanager
-from fastapi import FastAPI
+```go
+// Template estándar para Echo con graceful shutdown
+package main
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    # Startup logic
-    try:
-        # Initialize services
-        pass
-    except Exception as e:
-        print(f"Warning: Startup error: {e}")
+import (
+    "context"
+    "github.com/labstack/echo/v4"
+    "os"
+    "os/signal"
+    "time"
+)
+
+func main() {
+    e := echo.New()
     
-    yield
+    // Startup logic
+    redisClient := setupRedis()
+    defer redisClient.Close()
     
-    # Shutdown logic
-    try:
-        # Cleanup services
-        pass
-    except Exception as e:
-        print(f"Warning: Shutdown error: {e}")
+    // Routes setup
+    e.GET("/health", healthHandler)
+    e.POST("/auth/login", loginHandler)
+    
+    // Graceful shutdown
+    go func() {
+        if err := e.Start(":8080"); err != nil && err != http.ErrServerClosed {
+            e.Logger.Fatal("shutting down the server")
+        }
+    }()
+    
+    // Wait for interrupt
+    quit := make(chan os.Signal, 1)
+    signal.Notify(quit, os.Interrupt)
+    <-quit
+    
+    // Shutdown logic
+    ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+    defer cancel()
+    if err := e.Shutdown(ctx); err != nil {
+        e.Logger.Fatal(err)
+    }
+}
+```
 
-def create_app() -> FastAPI:
-    return FastAPI(
-        title="App Name",
-        version="1.0.0",
-        lifespan=lifespan
-    )
+**Testing del template**:
+```go
+func TestServerLifecycle(t *testing.T) {
+    e := setupEchoServer()
+    req := httptest.NewRequest(http.MethodGet, "/health", nil)
+    rec := httptest.NewRecorder()
+    e.ServeHTTP(rec, req)
+    
+    assert.Equal(t, http.StatusOK, rec.Code)
+}
 ```
 
 ## Fixtures y Mocks Consolidados

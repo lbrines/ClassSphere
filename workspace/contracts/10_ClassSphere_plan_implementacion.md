@@ -757,9 +757,9 @@ find backend/src -name "*.py" -exec grep -l "model_config = ConfigDict" {} \; | 
 find backend/tests -name "test_*.py" -exec grep -l "async def test" {} \; | \
   xargs -I {} sh -c 'grep -q "AsyncMock" {} || (echo "❌ Pattern 4: {}" && exit 1)'
 
-# Pattern 2: Next.js config
-if grep -q "swcMinify" frontend/next.config.js 2>/dev/null; then
-    echo "❌ Pattern 2: next.config.js contains deprecated swcMinify"
+# Pattern 2: Angular testing config
+if ! grep -q "karma-jasmine" frontend/package.json 2>/dev/null; then
+    echo "❌ Pattern 2: Angular testing dependencies missing"
     exit 1
 fi
 
@@ -793,9 +793,9 @@ jobs:
           find backend/tests -name "test_*.py" -exec grep -l "async def test" {} \; | \
             xargs -I {} sh -c 'grep -q "AsyncMock" {} || exit 1'
       
-      - name: Validate Pattern 2 (Next.js config)
+      - name: Validate Pattern 2 (Angular testing config)
         run: |
-          ! grep -q "swcMinify" frontend/next.config.js
+          grep -q "karma-jasmine" frontend/package.json
       
       - name: Report Success
         run: echo "✅ All patterns validated successfully"
