@@ -53,4 +53,9 @@ logs
 
 # Coverage reports
 coverage/
-.nyc_outputworkspace/tools/
+.nyc_output
+
+# Project specific temporary outputs
+frontend/test-results/
+frontend/playwright-report/
+workspace/tools/

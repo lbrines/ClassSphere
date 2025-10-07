@@ -16,6 +16,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 
 	"github.com/lbrines/classsphere/internal/adapters/cache"
+	googleadapter "github.com/lbrines/classsphere/internal/adapters/google"
 	httpadapter "github.com/lbrines/classsphere/internal/adapters/http"
 	"github.com/lbrines/classsphere/internal/adapters/oauth"
 	"github.com/lbrines/classsphere/internal/adapters/repo"
@@ -84,7 +85,28 @@ func initialize(ctx context.Context) (application, func(), error) {
 		return application{}, nil, fmt.Errorf("user service: %w", err)
 	}
 
-	server := httpadapter.New(authService, userService)
+	classroomProviders := []ports.ClassroomProvider{}
+	mockProvider, err := googleadapter.NewClassroomService("", shared.IntegrationModeMock)
+	if err != nil {
+		return application{}, nil, fmt.Errorf("init mock classroom provider: %w", err)
+	}
+	classroomProviders = append(classroomProviders, mockProvider)
+
+	if cfg.GoogleCredentials != "" {
+		googleProvider, err := googleadapter.NewClassroomService(cfg.GoogleCredentials, shared.IntegrationModeGoogle)
+		if err != nil {
+			logger.Warn("google classroom provider unavailable", slog.String("error", err.Error()))
+		} else {
+			classroomProviders = append(classroomProviders, googleProvider)
+		}
+	}
+
+	classroomService, err := app.NewClassroomService(cfg.ClassroomMode, classroomProviders...)
+	if err != nil {
+		return application{}, nil, fmt.Errorf("classroom service: %w", err)
+	}
+
+	server := httpadapter.New(authService, userService, classroomService)
 
 	cleanup := func() {
 		_ = cacheAdapter.Close()
@@ -148,6 +170,14 @@ func createSeedUsers() ([]domain.User, error) {
 	if err != nil {
 		return nil, fmt.Errorf("hash coordinator password: %w", err)
 	}
+	teacherHash, err := hashPasswordFunc([]byte("teach123"), bcrypt.DefaultCost)
+	if err != nil {
+		return nil, fmt.Errorf("hash teacher password: %w", err)
+	}
+	studentHash, err := hashPasswordFunc([]byte("stud123"), bcrypt.DefaultCost)
+	if err != nil {
+		return nil, fmt.Errorf("hash student password: %w", err)
+	}
 
 	return []domain.User{
 		{
@@ -165,6 +195,24 @@ func createSeedUsers() ([]domain.User, error) {
 			DisplayName:    "Coordinator",
 			HashedPassword: string(coordinatorHash),
 			Role:           domain.RoleCoordinator,
+			CreatedAt:      time.Now(),
+			UpdatedAt:      time.Now(),
+		},
+		{
+			ID:             "teacher-1",
+			Email:          "teacher@classsphere.edu",
+			DisplayName:    "Teacher",
+			HashedPassword: string(teacherHash),
+			Role:           domain.RoleTeacher,
+			CreatedAt:      time.Now(),
+			UpdatedAt:      time.Now(),
+		},
+		{
+			ID:             "student-1",
+			Email:          "student@classsphere.edu",
+			DisplayName:    "Student",
+			HashedPassword: string(studentHash),
+			Role:           domain.RoleStudent,
 			CreatedAt:      time.Now(),
 			UpdatedAt:      time.Now(),
 		},

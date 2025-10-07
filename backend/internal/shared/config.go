@@ -24,6 +24,8 @@ type Config struct {
 	GoogleClientID     string
 	GoogleClientSecret string
 	GoogleRedirectURL  string
+	GoogleCredentials  string
+	ClassroomMode      string
 }
 
 // LoadConfig constructs a Config instance using environment variables. It applies
@@ -38,6 +40,8 @@ func LoadConfig() (Config, error) {
 		GoogleRedirectURL:  os.Getenv("GOOGLE_REDIRECT_URL"),
 		JWTSecret:          os.Getenv("JWT_SECRET"),
 		JWTIssuer:          getEnv("JWT_ISSUER", "classsphere"),
+		GoogleCredentials:  os.Getenv("GOOGLE_CREDENTIALS_FILE"),
+		ClassroomMode:      NormalizeIntegrationMode(getEnv("CLASSROOM_MODE", IntegrationModeMock)),
 	}
 
 	port, err := parseIntEnv("SERVER_PORT", defaultServerPort)
@@ -74,6 +78,9 @@ func (c Config) Validate() error {
 	}
 	if c.GoogleRedirectURL == "" {
 		return fmt.Errorf("GOOGLE_REDIRECT_URL must be provided")
+	}
+	if c.ClassroomMode == IntegrationModeGoogle && c.GoogleCredentials == "" {
+		return fmt.Errorf("GOOGLE_CREDENTIALS_FILE must be provided for google classroom mode")
 	}
 	return nil
 }

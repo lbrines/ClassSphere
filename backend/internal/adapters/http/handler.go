@@ -1,6 +1,7 @@
 package http
 
 import (
+	"fmt"
 	"net/http"
 	"time"
 
@@ -14,15 +15,17 @@ import (
 
 // Handler wires HTTP routes to use cases.
 type Handler struct {
-	authService *app.AuthService
-	userService *app.UserService
+	authService      *app.AuthService
+	userService      *app.UserService
+	classroomService *app.ClassroomService
 }
 
 // New creates an Echo engine configured with routes and middleware.
-func New(authService *app.AuthService, userService *app.UserService) *echo.Echo {
+func New(authService *app.AuthService, userService *app.UserService, classroomService *app.ClassroomService) *echo.Echo {
 	h := &Handler{
-		authService: authService,
-		userService: userService,
+		authService:      authService,
+		userService:      userService,
+		classroomService: classroomService,
 	}
 
 	e := echo.New()
@@ -45,6 +48,14 @@ func New(authService *app.AuthService, userService *app.UserService) *echo.Echo 
 
 	protected.GET("/users/me", h.me)
 	protected.GET("/admin/ping", h.adminPing, RequireRole(domain.RoleAdmin))
+
+	protected.GET("/google/courses", h.listCourses)
+	protected.GET("/classroom/courses", h.listCourses)
+
+	protected.GET("/dashboard/admin", h.dashboardFor(domain.RoleAdmin), RequireRole(domain.RoleAdmin))
+	protected.GET("/dashboard/coordinator", h.dashboardFor(domain.RoleCoordinator), RequireRole(domain.RoleCoordinator))
+	protected.GET("/dashboard/teacher", h.dashboardFor(domain.RoleTeacher), RequireRole(domain.RoleTeacher))
+	protected.GET("/dashboard/student", h.dashboardFor(domain.RoleStudent), RequireRole(domain.RoleStudent))
 
 	return e
 }
@@ -111,6 +122,53 @@ func (h *Handler) adminPing(c echo.Context) error {
 	return c.JSON(http.StatusOK, map[string]string{
 		"message": "admin pong",
 	})
+}
+
+func (h *Handler) listCourses(c echo.Context) error {
+	if h.classroomService == nil {
+		return echo.NewHTTPError(http.StatusServiceUnavailable, "classroom integration not configured")
+	}
+	ctx := c.Request().Context()
+	mode := c.QueryParam("mode")
+	result, err := h.classroomService.ListCourses(ctx, mode)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+	return c.JSON(http.StatusOK, courseListResponse{
+		Mode:           result.Mode,
+		GeneratedAt:    result.GeneratedAt,
+		Courses:        result.Courses,
+		AvailableModes: h.classroomService.AvailableModes(),
+	})
+}
+
+func (h *Handler) dashboardFor(role domain.Role) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		if h.classroomService == nil {
+			return echo.NewHTTPError(http.StatusServiceUnavailable, "classroom integration not configured")
+		}
+		user := CurrentUser(c)
+		if user.ID == "" {
+			return echo.NewHTTPError(http.StatusUnauthorized, "missing user")
+		}
+		if user.Role != role {
+			return echo.NewHTTPError(http.StatusForbidden, fmt.Sprintf("dashboard available only for %s role", role))
+		}
+		ctx := c.Request().Context()
+		mode := c.QueryParam("mode")
+		data, err := h.classroomService.Dashboard(ctx, user, mode)
+		if err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		}
+		return c.JSON(http.StatusOK, data)
+	}
+}
+
+type courseListResponse struct {
+	Mode           string               `json:"mode"`
+	GeneratedAt    time.Time            `json:"generatedAt"`
+	Courses        []app.CourseOverview `json:"courses"`
+	AvailableModes []string             `json:"availableModes"`
 }
 
 type loginRequest struct {
