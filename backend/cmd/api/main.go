@@ -106,7 +106,10 @@ func initialize(ctx context.Context) (application, func(), error) {
 		return application{}, nil, fmt.Errorf("classroom service: %w", err)
 	}
 
-	server := httpadapter.New(authService, userService, classroomService)
+	notificationHub := app.NewNotificationHub()
+	searchService := app.NewSearchService()
+
+	server := httpadapter.NewWithSearch(authService, userService, classroomService, notificationHub, searchService)
 
 	cleanup := func() {
 		_ = cacheAdapter.Close()
