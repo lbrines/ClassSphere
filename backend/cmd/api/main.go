@@ -73,7 +73,7 @@ func initialize(ctx context.Context) (application, func(), error) {
 		logger.Error("redis ping failed", slog.String("error", err.Error()))
 	}
 
-	userRepo := repo.NewMemoryUserRepository(seedUsers(logger))
+	userRepo := initializeUserRepository(cfg, logger)
 	oauthProvider := oauth.NewGoogleOAuth(cfg.GoogleClientID, cfg.GoogleClientSecret, cfg.GoogleRedirectURL)
 
 	authService, err := app.NewAuthService(userRepo, cacheAdapter, oauthProvider, cfg)
@@ -149,6 +149,25 @@ func startServer(ctx context.Context, e *echo.Echo, port int, logger *slog.Logge
 		logger.Error("server shutdown failed", slog.String("error", err.Error()))
 	}
 	logger.Info("server stopped gracefully")
+}
+
+// initializeUserRepository creates the user repository based on environment.
+// In production, returns an empty repository (users should be loaded from database).
+// In development/local, returns a repository pre-populated with seed users for testing.
+//
+// Security: This prevents hardcoded test credentials from being available in production.
+// TODO Phase 4: Replace memory repository with PostgreSQL implementation.
+func initializeUserRepository(cfg shared.Config, logger *slog.Logger) ports.UserRepository {
+	if cfg.Environment == shared.EnvProduction {
+		logger.Info("production environment: initializing empty user repository",
+			slog.String("environment", cfg.Environment))
+		return repo.NewMemoryUserRepository([]domain.User{})
+	}
+
+	logger.Info("non-production environment: loading seed users for testing",
+		slog.String("environment", cfg.Environment),
+		slog.Int("seed_user_count", 4))
+	return repo.NewMemoryUserRepository(seedUsers(logger))
 }
 
 func seedUsers(logger *slog.Logger) []domain.User {

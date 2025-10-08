@@ -11,9 +11,16 @@ const (
 	defaultRedisAddr  = "localhost:6379"
 )
 
+// Environment constants
+const (
+	EnvProduction  = "production"
+	EnvDevelopment = "development"
+	EnvLocal       = "local"
+)
+
 // Config groups runtime configuration sourced from environment variables.
 type Config struct {
-	AppEnv             string
+	Environment        string // Environment: production, development, local
 	ServerPort         int
 	JWTSecret          string
 	JWTIssuer          string
@@ -32,7 +39,7 @@ type Config struct {
 // sane defaults for local development so the service can start without extensive setup.
 func LoadConfig() (Config, error) {
 	cfg := Config{
-		AppEnv:             getEnv("APP_ENV", "development"),
+		Environment:        getEnv("APP_ENV", "development"),
 		RedisAddr:          getEnv("REDIS_ADDR", defaultRedisAddr),
 		RedisPassword:      os.Getenv("REDIS_PASSWORD"),
 		GoogleClientID:     os.Getenv("GOOGLE_CLIENT_ID"),

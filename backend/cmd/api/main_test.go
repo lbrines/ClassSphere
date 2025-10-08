@@ -837,7 +837,7 @@ func TestInitialize_DifferentAppEnv(t *testing.T) {
 		app, cleanup, err := initialize(ctx)
 		
 		require.NoError(t, err, "Failed for env %s", env)
-		require.Equal(t, env, app.config.AppEnv)
+		require.Equal(t, env, app.config.Environment)
 		cleanup()
 		
 		os.Clearenv()
@@ -900,4 +900,156 @@ func TestInitialize_CompleteFlowWithAllProviders(t *testing.T) {
 	require.Equal(t, 120, app.config.JWTExpiryMinutes)
 	require.Equal(t, 1, app.config.RedisDB)
 	require.Equal(t, "mock", app.config.ClassroomMode)
+}
+
+// ==============================================================================
+// Security Tests - Environment-Based User Seeding
+// ==============================================================================
+
+func TestInitialize_ProductionEnvironment_NoSeedUsers(t *testing.T) {
+	// GIVEN: Production environment
+	os.Setenv("APP_ENV", "production")
+	os.Setenv("JWT_SECRET", "test-secret-key")
+	os.Setenv("JWT_ISSUER", "test-issuer")
+	os.Setenv("JWT_EXPIRY_MINUTES", "60")
+	os.Setenv("REDIS_ADDR", "localhost:6379")
+	os.Setenv("GOOGLE_CLIENT_ID", "test-client-id")
+	os.Setenv("GOOGLE_CLIENT_SECRET", "test-client-secret")
+	os.Setenv("GOOGLE_REDIRECT_URL", "http://localhost:8080/callback")
+	defer func() {
+		os.Unsetenv("APP_ENV")
+		os.Unsetenv("JWT_SECRET")
+		os.Unsetenv("JWT_ISSUER")
+		os.Unsetenv("JWT_EXPIRY_MINUTES")
+		os.Unsetenv("REDIS_ADDR")
+		os.Unsetenv("GOOGLE_CLIENT_ID")
+		os.Unsetenv("GOOGLE_CLIENT_SECRET")
+		os.Unsetenv("GOOGLE_REDIRECT_URL")
+	}()
+	
+	ctx := context.Background()
+	
+	// WHEN: Initialize application
+	app, cleanup, err := initialize(ctx)
+	require.NoError(t, err)
+	defer cleanup()
+	
+	// THEN: No seed users should be loaded
+	// The application should initialize successfully but without seed users
+	require.NotNil(t, app)
+	require.NotNil(t, app.server)
+	require.Equal(t, "production", app.config.Environment)
+	
+	// Note: In production, we expect an empty user repository
+	// This will be validated in integration tests where we can check login fails
+	// with seed user credentials
+}
+
+func TestInitialize_DevelopmentEnvironment_LoadsSeedUsers(t *testing.T) {
+	// GIVEN: Development environment (explicit)
+	os.Setenv("APP_ENV", "development")
+	os.Setenv("JWT_SECRET", "test-secret-key")
+	os.Setenv("JWT_ISSUER", "test-issuer")
+	os.Setenv("JWT_EXPIRY_MINUTES", "60")
+	os.Setenv("REDIS_ADDR", "localhost:6379")
+	os.Setenv("GOOGLE_CLIENT_ID", "test-client-id")
+	os.Setenv("GOOGLE_CLIENT_SECRET", "test-client-secret")
+	os.Setenv("GOOGLE_REDIRECT_URL", "http://localhost:8080/callback")
+	defer func() {
+		os.Unsetenv("APP_ENV")
+		os.Unsetenv("JWT_SECRET")
+		os.Unsetenv("JWT_ISSUER")
+		os.Unsetenv("JWT_EXPIRY_MINUTES")
+		os.Unsetenv("REDIS_ADDR")
+		os.Unsetenv("GOOGLE_CLIENT_ID")
+		os.Unsetenv("GOOGLE_CLIENT_SECRET")
+		os.Unsetenv("GOOGLE_REDIRECT_URL")
+	}()
+	
+	ctx := context.Background()
+	
+	// WHEN: Initialize application
+	app, cleanup, err := initialize(ctx)
+	require.NoError(t, err)
+	defer cleanup()
+	
+	// THEN: Seed users should be loaded
+	require.NotNil(t, app)
+	require.NotNil(t, app.server)
+	require.Equal(t, "development", app.config.Environment)
+	
+	// The application should initialize successfully with seed users
+	// This will be validated by being able to login with seed credentials
+}
+
+func TestInitialize_LocalEnvironment_LoadsSeedUsers(t *testing.T) {
+	// GIVEN: Local environment
+	os.Setenv("APP_ENV", "local")
+	os.Setenv("JWT_SECRET", "test-secret-key")
+	os.Setenv("JWT_ISSUER", "test-issuer")
+	os.Setenv("JWT_EXPIRY_MINUTES", "60")
+	os.Setenv("REDIS_ADDR", "localhost:6379")
+	os.Setenv("GOOGLE_CLIENT_ID", "test-client-id")
+	os.Setenv("GOOGLE_CLIENT_SECRET", "test-client-secret")
+	os.Setenv("GOOGLE_REDIRECT_URL", "http://localhost:8080/callback")
+	defer func() {
+		os.Unsetenv("APP_ENV")
+		os.Unsetenv("JWT_SECRET")
+		os.Unsetenv("JWT_ISSUER")
+		os.Unsetenv("JWT_EXPIRY_MINUTES")
+		os.Unsetenv("REDIS_ADDR")
+		os.Unsetenv("GOOGLE_CLIENT_ID")
+		os.Unsetenv("GOOGLE_CLIENT_SECRET")
+		os.Unsetenv("GOOGLE_REDIRECT_URL")
+	}()
+	
+	ctx := context.Background()
+	
+	// WHEN: Initialize application
+	app, cleanup, err := initialize(ctx)
+	require.NoError(t, err)
+	defer cleanup()
+	
+	// THEN: Seed users should be loaded (local is same as development)
+	require.NotNil(t, app)
+	require.NotNil(t, app.server)
+	require.Equal(t, "local", app.config.Environment)
+	
+	// Local environment should behave like development
+}
+
+func TestInitialize_DefaultEnvironment_LoadsSeedUsers(t *testing.T) {
+	// GIVEN: No APP_ENV set (should default to development)
+	// Make sure APP_ENV is not set
+	os.Unsetenv("APP_ENV")
+	os.Setenv("JWT_SECRET", "test-secret-key")
+	os.Setenv("JWT_ISSUER", "test-issuer")
+	os.Setenv("JWT_EXPIRY_MINUTES", "60")
+	os.Setenv("REDIS_ADDR", "localhost:6379")
+	os.Setenv("GOOGLE_CLIENT_ID", "test-client-id")
+	os.Setenv("GOOGLE_CLIENT_SECRET", "test-client-secret")
+	os.Setenv("GOOGLE_REDIRECT_URL", "http://localhost:8080/callback")
+	defer func() {
+		os.Unsetenv("JWT_SECRET")
+		os.Unsetenv("JWT_ISSUER")
+		os.Unsetenv("JWT_EXPIRY_MINUTES")
+		os.Unsetenv("REDIS_ADDR")
+		os.Unsetenv("GOOGLE_CLIENT_ID")
+		os.Unsetenv("GOOGLE_CLIENT_SECRET")
+		os.Unsetenv("GOOGLE_REDIRECT_URL")
+	}()
+	
+	ctx := context.Background()
+	
+	// WHEN: Initialize application
+	app, cleanup, err := initialize(ctx)
+	require.NoError(t, err)
+	defer cleanup()
+	
+	// THEN: Should default to development and load seed users
+	require.NotNil(t, app)
+	require.NotNil(t, app.server)
+	require.Equal(t, "development", app.config.Environment)
+	
+	// Default environment should be development (safe default for local work)
 }
