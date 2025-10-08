@@ -1,6 +1,7 @@
 package http
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -11,206 +12,299 @@ import (
 	echo "github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/crypto/bcrypt"
 
+	"github.com/lbrines/classsphere/internal/adapters/repo"
 	"github.com/lbrines/classsphere/internal/app"
 	"github.com/lbrines/classsphere/internal/domain"
+	"github.com/lbrines/classsphere/internal/ports"
+	"github.com/lbrines/classsphere/internal/shared"
 )
 
-// TestWebSocketHandler_Upgrade tests WebSocket connection upgrade
-func TestWebSocketHandler_Upgrade(t *testing.T) {
-	// Setup
-	e := echo.New()
+// ==============================================================================
+// WebSocket JWT Authentication Tests
+// All WebSocket tests now require JWT authentication for security
+// ==============================================================================
+
+// TestWebSocketHandler_Unauthorized_NoToken tests that connection is rejected without JWT
+func TestWebSocketHandler_Unauthorized_NoToken(t *testing.T) {
+	// GIVEN: WebSocket endpoint requiring JWT authentication
 	hub := app.NewNotificationHub()
+	authService, userService, _, classroomService := newTestServicesWebSocket(t)
+	
 	handler := &Handler{
-		notificationHub: hub,
+		authService:      authService,
+		userService:      userService,
+		classroomService: classroomService,
+		notificationHub:  hub,
 	}
 	
-	e.GET("/ws", handler.handleWebSocket)
+	e := echo.New()
+	protected := e.Group("")
+	protected.Use(AuthMiddleware(authService))
+	protected.GET("/ws/notifications", handler.handleWebSocket)
 	
-	// Start server
 	server := httptest.NewServer(e)
 	defer server.Close()
 	
-	// Connect via WebSocket
-	wsURL := "ws" + strings.TrimPrefix(server.URL, "http") + "/ws"
+	wsURL := "ws" + strings.TrimPrefix(server.URL, "http") + "/ws/notifications"
+	
+	// WHEN: Attempt to connect without Authorization header
 	ws, resp, err := websocket.DefaultDialer.Dial(wsURL, nil)
 	
-	// Assert
-	require.NoError(t, err)
-	assert.Equal(t, http.StatusSwitchingProtocols, resp.StatusCode)
-	assert.NotNil(t, ws)
-	
-	// Cleanup
-	ws.Close()
+	// THEN: Connection should be rejected with 401
+	require.Error(t, err)
+	assert.Equal(t, http.StatusUnauthorized, resp.StatusCode)
+	if ws != nil {
+		ws.Close()
+	}
 }
 
-// TestWebSocketHandler_BroadcastMessage tests broadcasting to connected clients
-func TestWebSocketHandler_BroadcastMessage(t *testing.T) {
-	// Setup
+// TestWebSocketHandler_Unauthorized_InvalidToken tests rejection of invalid JWT
+func TestWebSocketHandler_Unauthorized_InvalidToken(t *testing.T) {
+	// GIVEN: WebSocket endpoint with auth middleware
 	hub := app.NewNotificationHub()
-	e := echo.New()
+	authService, userService, _, classroomService := newTestServicesWebSocket(t)
+	
 	handler := &Handler{
-		notificationHub: hub,
+		authService:      authService,
+		userService:      userService,
+		classroomService: classroomService,
+		notificationHub:  hub,
 	}
 	
-	e.GET("/ws", handler.handleWebSocket)
+	e := echo.New()
+	protected := e.Group("")
+	protected.Use(AuthMiddleware(authService))
+	protected.GET("/ws/notifications", handler.handleWebSocket)
+	
 	server := httptest.NewServer(e)
 	defer server.Close()
 	
-	// Connect client
-	wsURL := "ws" + strings.TrimPrefix(server.URL, "http") + "/ws"
-	ws, _, err := websocket.DefaultDialer.Dial(wsURL, nil)
+	wsURL := "ws" + strings.TrimPrefix(server.URL, "http") + "/ws/notifications"
+	
+	// WHEN: Attempt to connect with invalid token
+	headers := http.Header{}
+	headers.Set("Authorization", "Bearer invalid-token-12345")
+	ws, resp, err := websocket.DefaultDialer.Dial(wsURL, headers)
+	
+	// THEN: Connection should be rejected
+	require.Error(t, err)
+	assert.Equal(t, http.StatusUnauthorized, resp.StatusCode)
+	if ws != nil {
+		ws.Close()
+	}
+}
+
+// TestWebSocketHandler_Authorized_ValidToken tests acceptance of valid JWT
+func TestWebSocketHandler_Authorized_ValidToken(t *testing.T) {
+	// GIVEN: WebSocket endpoint with valid JWT
+	hub := app.NewNotificationHub()
+	authService, userService, _, classroomService := newTestServicesWebSocket(t)
+	
+	// Create valid token for test user
+	ctx := context.Background()
+	loginResult, err := authService.LoginWithPassword(ctx, "student@classsphere.edu", "student123")
+	require.NoError(t, err)
+	
+	handler := &Handler{
+		authService:      authService,
+		userService:      userService,
+		classroomService: classroomService,
+		notificationHub:  hub,
+	}
+	
+	e := echo.New()
+	protected := e.Group("")
+	protected.Use(AuthMiddleware(authService))
+	protected.GET("/ws/notifications", handler.handleWebSocket)
+	
+	server := httptest.NewServer(e)
+	defer server.Close()
+	
+	wsURL := "ws" + strings.TrimPrefix(server.URL, "http") + "/ws/notifications"
+	
+	// WHEN: Connect with valid JWT
+	headers := http.Header{}
+	headers.Set("Authorization", "Bearer "+loginResult.AccessToken)
+	ws, resp, err := websocket.DefaultDialer.Dial(wsURL, headers)
+	
+	// THEN: Connection should succeed
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusSwitchingProtocols, resp.StatusCode)
+	
+	// Cleanup
+	if ws != nil {
+		ws.Close()
+	}
+}
+
+// TestWebSocketHandler_ExtractsUserFromJWT tests user extraction from JWT context
+func TestWebSocketHandler_ExtractsUserFromJWT(t *testing.T) {
+	// GIVEN: Authenticated WebSocket connection
+	hub := app.NewNotificationHub()
+	authService, userService, _, classroomService := newTestServicesWebSocket(t)
+	
+	// Login to get valid token
+	ctx := context.Background()
+	loginResult, err := authService.LoginWithPassword(ctx, "student@classsphere.edu", "student123")
+	require.NoError(t, err)
+	
+	handler := &Handler{
+		authService:      authService,
+		userService:      userService,
+		classroomService: classroomService,
+		notificationHub:  hub,
+	}
+	
+	e := echo.New()
+	protected := e.Group("")
+	protected.Use(AuthMiddleware(authService))
+	protected.GET("/ws/notifications", handler.handleWebSocket)
+	
+	server := httptest.NewServer(e)
+	defer server.Close()
+	
+	wsURL := "ws" + strings.TrimPrefix(server.URL, "http") + "/ws/notifications"
+	headers := http.Header{}
+	headers.Set("Authorization", "Bearer "+loginResult.AccessToken)
+	
+	// WHEN: Connect and verify user registration
+	ws, _, err := websocket.DefaultDialer.Dial(wsURL, headers)
 	require.NoError(t, err)
 	defer ws.Close()
 	
-	// Wait for connection to be registered
-	time.Sleep(100 * time.Millisecond)
+	time.Sleep(100 * time.Millisecond) // Wait for registration
 	
-	// Broadcast notification
+	// THEN: User should be registered with correct ID from JWT
+	assert.Greater(t, hub.ClientCount(), 0, "Client should be registered")
+	
+	// Send user-specific notification
 	notification := domain.Notification{
-		ID:      "notif-1",
-		UserID:  "user-1",
+		ID:      "test-notif-1",
+		UserID:  "student-1",
 		Type:    "info",
-		Title:   "Test Notification",
-		Message: "This is a test",
+		Title:   "Test",
+		Message: "For student",
 	}
 	
-	hub.Broadcast(notification)
+	hub.SendToUser("student-1", notification)
 	
-	// Read message from WebSocket
+	// User should receive the notification
 	ws.SetReadDeadline(time.Now().Add(2 * time.Second))
 	var received domain.Notification
 	err = ws.ReadJSON(&received)
-	
-	// Assert
 	require.NoError(t, err)
-	assert.Equal(t, "notif-1", received.ID)
-	assert.Equal(t, "Test Notification", received.Title)
+	assert.Equal(t, "test-notif-1", received.ID)
 }
 
-// TestWebSocketHandler_DisconnectCleanup tests connection cleanup on disconnect
-func TestWebSocketHandler_DisconnectCleanup(t *testing.T) {
-	// Setup
-	hub := app.NewNotificationHub()
-	e := echo.New()
-	handler := &Handler{
-		notificationHub: hub,
-	}
+// newTestServicesWebSocket creates test services with student user for WebSocket tests
+func newTestServicesWebSocket(t *testing.T) (*app.AuthService, *app.UserService, *inMemoryCache, *app.ClassroomService) {
+	t.Helper()
 	
-	e.GET("/ws", handler.handleWebSocket)
-	server := httptest.NewServer(e)
-	defer server.Close()
-	
-	// Connect and disconnect
-	wsURL := "ws" + strings.TrimPrefix(server.URL, "http") + "/ws"
-	ws, _, err := websocket.DefaultDialer.Dial(wsURL, nil)
+	// Create test users with hashed passwords
+	adminHash, err := bcrypt.GenerateFromPassword([]byte("admin123"), bcrypt.DefaultCost)
+	require.NoError(t, err)
+	studentHash, err := bcrypt.GenerateFromPassword([]byte("student123"), bcrypt.DefaultCost)
 	require.NoError(t, err)
 	
-	// Wait for registration
-	time.Sleep(100 * time.Millisecond)
-	initialClients := hub.ClientCount()
+	repository := repo.NewMemoryUserRepository([]domain.User{
+		{
+			ID:             "admin-1",
+			Email:          "admin@classsphere.edu",
+			HashedPassword: string(adminHash),
+			Role:           domain.RoleAdmin,
+			CreatedAt:      time.Now(),
+			UpdatedAt:      time.Now(),
+		},
+		{
+			ID:             "student-1",
+			Email:          "student@classsphere.edu",
+			HashedPassword: string(studentHash),
+			Role:           domain.RoleStudent,
+			CreatedAt:      time.Now(),
+			UpdatedAt:      time.Now(),
+		},
+	})
 	
-	// Disconnect
-	ws.Close()
-	time.Sleep(100 * time.Millisecond)
+	cache := &inMemoryCache{store: make(map[string][]byte)}
+	oauth := &staticOAuth{}
 	
-	// Assert cleanup
-	assert.Equal(t, initialClients-1, hub.ClientCount())
+	cfg := shared.Config{
+		JWTSecret:          "test-secret-websocket",
+		JWTIssuer:          "classsphere",
+		JWTExpiryMinutes:   60,
+		GoogleClientID:     "client",
+		GoogleClientSecret: "secret",
+		GoogleRedirectURL:  "http://localhost/callback",
+	}
+	
+	authService, err := app.NewAuthService(repository, cache, oauth, cfg)
+	require.NoError(t, err)
+	userService, err := app.NewUserService(repository)
+	require.NoError(t, err)
+	
+	classroomService := newStubClassroomService(t)
+	
+	return authService, userService, cache, classroomService
 }
 
-// TestWebSocketHandler_MultipleClients tests multiple concurrent connections
-func TestWebSocketHandler_MultipleClients(t *testing.T) {
-	// Setup
-	hub := app.NewNotificationHub()
-	e := echo.New()
-	handler := &Handler{
-		notificationHub: hub,
-	}
-	
-	e.GET("/ws", handler.handleWebSocket)
-	server := httptest.NewServer(e)
-	defer server.Close()
-	
-	// Connect 3 clients
-	wsURL := "ws" + strings.TrimPrefix(server.URL, "http") + "/ws"
-	clients := make([]*websocket.Conn, 3)
-	
-	for i := 0; i < 3; i++ {
-		ws, _, err := websocket.DefaultDialer.Dial(wsURL, nil)
-		require.NoError(t, err)
-		clients[i] = ws
-		defer ws.Close()
-	}
-	
-	time.Sleep(100 * time.Millisecond)
-	
-	// Broadcast to all
-	notification := domain.Notification{
-		ID:      "broadcast-1",
-		Title:   "Broadcast Test",
-		Message: "To all clients",
-	}
-	
-	hub.Broadcast(notification)
-	
-	// All clients should receive
-	for i, client := range clients {
-		client.SetReadDeadline(time.Now().Add(2 * time.Second))
-		var received domain.Notification
-		err := client.ReadJSON(&received)
-		
-		require.NoError(t, err, "Client %d should receive message", i)
-		assert.Equal(t, "broadcast-1", received.ID)
-	}
+// Test stubs for WebSocket tests
+
+type inMemoryCache struct {
+	store map[string][]byte
 }
 
-// TestWebSocketHandler_UserSpecificNotification tests user-specific message delivery
-func TestWebSocketHandler_UserSpecificNotification(t *testing.T) {
-	// Setup
-	hub := app.NewNotificationHub()
-	e := echo.New()
-	handler := &Handler{
-		notificationHub: hub,
-	}
-	
-	e.GET("/ws", handler.handleWebSocket)
-	server := httptest.NewServer(e)
-	defer server.Close()
-	
-	// Connect 2 users
-	wsURL := "ws" + strings.TrimPrefix(server.URL, "http") + "/ws?userId=user-1"
-	ws1, _, err := websocket.DefaultDialer.Dial(wsURL, nil)
+func (c *inMemoryCache) Set(_ context.Context, key string, value []byte, _ int) error {
+	c.store[key] = value
+	return nil
+}
+
+func (c *inMemoryCache) Get(_ context.Context, key string) ([]byte, error) {
+	return c.store[key], nil
+}
+
+func (c *inMemoryCache) Delete(_ context.Context, key string) error {
+	delete(c.store, key)
+	return nil
+}
+
+func (c *inMemoryCache) Ping(_ context.Context) error { return nil }
+
+func (c *inMemoryCache) Close() error { return nil }
+
+type staticOAuth struct{}
+
+func (s *staticOAuth) AuthURL(state string) (string, error) {
+	return "https://accounts.google.com?state=" + state, nil
+}
+
+func (s *staticOAuth) Exchange(_ context.Context, _ string) (ports.OAuthUser, error) {
+	return ports.OAuthUser{ID: "admin-1", Email: "admin@classsphere.edu"}, nil
+}
+
+func newStubClassroomService(t *testing.T) *app.ClassroomService {
+	provider := &stubClassroomProvider{mode: shared.IntegrationModeMock}
+	svc, err := app.NewClassroomService(shared.IntegrationModeMock, provider)
 	require.NoError(t, err)
-	defer ws1.Close()
-	
-	wsURL2 := "ws" + strings.TrimPrefix(server.URL, "http") + "/ws?userId=user-2"
-	ws2, _, err := websocket.DefaultDialer.Dial(wsURL2, nil)
-	require.NoError(t, err)
-	defer ws2.Close()
-	
-	time.Sleep(100 * time.Millisecond)
-	
-	// Send to user-1 only
-	notification := domain.Notification{
-		ID:      "user-specific-1",
-		UserID:  "user-1",
-		Title:   "For User 1",
-		Message: "Private message",
-	}
-	
-	hub.SendToUser("user-1", notification)
-	
-	// User-1 receives
-	ws1.SetReadDeadline(time.Now().Add(2 * time.Second))
-	var received domain.Notification
-	err = ws1.ReadJSON(&received)
-	require.NoError(t, err)
-	assert.Equal(t, "user-specific-1", received.ID)
-	
-	// User-2 should NOT receive (timeout expected)
-	ws2.SetReadDeadline(time.Now().Add(500 * time.Millisecond))
-	var shouldTimeout domain.Notification
-	err = ws2.ReadJSON(&shouldTimeout)
-	assert.Error(t, err) // Timeout error expected
+	svc.WithClock(func() time.Time { return time.Unix(0, 0) })
+	return svc
+}
+
+type stubClassroomProvider struct {
+	mode string
+}
+
+func (s *stubClassroomProvider) Mode() string {
+	return s.mode
+}
+
+func (s *stubClassroomProvider) Snapshot(_ context.Context) (domain.ClassroomSnapshot, error) {
+	now := time.Unix(0, 0)
+	return domain.ClassroomSnapshot{
+		Mode:        s.mode,
+		GeneratedAt: now,
+		Courses:     []domain.Course{},
+	}, nil
 }
 

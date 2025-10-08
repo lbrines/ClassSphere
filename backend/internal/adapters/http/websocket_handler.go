@@ -28,23 +28,33 @@ const (
 )
 
 // handleWebSocket upgrades HTTP connection to WebSocket and handles messages.
+// Requires JWT authentication via AuthMiddleware to extract authenticated user.
 func (h *Handler) handleWebSocket(c echo.Context) error {
-	// Get userID from query params (in production, use JWT from token)
-	userID := c.QueryParam("userId")
-	if userID == "" {
-		userID = "anonymous" // Fallback for testing
+	// Extract authenticated user from context (set by AuthMiddleware)
+	user := CurrentUser(c)
+	if user.ID == "" {
+		slog.Warn("WebSocket connection attempt without authenticated user")
+		return echo.NewHTTPError(http.StatusUnauthorized, "unauthorized: missing user context")
 	}
 
 	// Upgrade connection
 	ws, err := upgrader.Upgrade(c.Response(), c.Request(), nil)
 	if err != nil {
-		slog.Error("WebSocket upgrade failed", "error", err)
+		slog.Error("WebSocket upgrade failed", 
+			"error", err,
+			"userID", user.ID,
+			"role", user.Role)
 		return err
 	}
 	defer ws.Close()
 
-	// Register client
-	clientID := h.notificationHub.RegisterClient(userID)
+	slog.Info("WebSocket client connecting",
+		"userID", user.ID,
+		"role", user.Role,
+		"email", user.Email)
+
+	// Register client with authenticated user ID
+	clientID := h.notificationHub.RegisterClient(user.ID)
 	defer h.notificationHub.UnregisterClient(clientID)
 
 	// Create message channel
@@ -67,6 +77,10 @@ func (h *Handler) handleWebSocket(c echo.Context) error {
 
 	// Wait for connection to close
 	<-done
+
+	slog.Info("WebSocket client disconnected",
+		"userID", user.ID,
+		"clientID", clientID)
 
 	return nil
 }

@@ -60,8 +60,8 @@ func New(authService *app.AuthService, userService *app.UserService, classroomSe
 	protected.GET("/dashboard/teacher", h.dashboardFor(domain.RoleTeacher), RequireRole(domain.RoleTeacher))
 	protected.GET("/dashboard/student", h.dashboardFor(domain.RoleStudent), RequireRole(domain.RoleStudent))
 
-	// WebSocket endpoint
-	e.GET("/api/v1/ws/notifications", h.handleWebSocket)
+	// WebSocket endpoint (protected - requires JWT authentication)
+	protected.GET("/ws/notifications", h.handleWebSocket)
 
 	// Search endpoint
 	if h.searchService != nil {
@@ -111,8 +111,8 @@ func NewWithSearch(authService *app.AuthService, userService *app.UserService, c
 	protected.GET("/dashboard/teacher", h.dashboardFor(domain.RoleTeacher), RequireRole(domain.RoleTeacher))
 	protected.GET("/dashboard/student", h.dashboardFor(domain.RoleStudent), RequireRole(domain.RoleStudent))
 
-	// WebSocket endpoint
-	e.GET("/api/v1/ws/notifications", h.handleWebSocket)
+	// WebSocket endpoint (protected - requires JWT authentication)
+	protected.GET("/ws/notifications", h.handleWebSocket)
 
 	// Search endpoint
 	protected.GET("/search", h.handleSearch)
