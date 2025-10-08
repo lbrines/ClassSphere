@@ -40,7 +40,7 @@ func (h *Handler) handleSearch(c echo.Context) error {
 	}
 	
 	// Get user from context (set by AuthMiddleware)
-	user, ok := c.Get("user").(domain.User)
+	user, ok := c.Get("current_user").(domain.User)
 	if !ok {
 		return c.JSON(http.StatusUnauthorized, map[string]string{
 			"error": "unauthorized",
