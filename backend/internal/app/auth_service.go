@@ -60,10 +60,12 @@ type AuthTokens struct {
 func (a *AuthService) LoginWithPassword(ctx context.Context, email, password string) (AuthTokens, error) {
 	user, err := a.users.FindByEmail(ctx, email)
 	if err != nil {
+		RecordAuthAttemptFunc("password", false)
 		return AuthTokens{}, shared.ErrInvalidCredentials
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(user.HashedPassword), []byte(password)); err != nil {
+		RecordAuthAttemptFunc("password", false)
 		return AuthTokens{}, shared.ErrInvalidCredentials
 	}
 
@@ -72,11 +74,19 @@ func (a *AuthService) LoginWithPassword(ctx context.Context, email, password str
 		return AuthTokens{}, err
 	}
 
+	RecordAuthAttemptFunc("password", true)
+
 	return AuthTokens{
 		AccessToken: token,
 		ExpiresAt:   expiresAt,
 		User:        user,
 	}, nil
+}
+
+// RecordAuthAttemptFunc is a function variable that can be overridden for testing
+var RecordAuthAttemptFunc = func(method string, success bool) {
+	// Default: no-op (metrics are optional)
+	// Will be overridden by HTTP adapter when metrics are enabled
 }
 
 // StartOAuth generates a state parameter, persists it, and returns the authorization URL.
