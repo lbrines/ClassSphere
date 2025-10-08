@@ -39,12 +39,13 @@ func New(authService *app.AuthService, userService *app.UserService, classroomSe
 	e.Use(middleware.RequestID())        // Generate request ID for tracing
 	e.Use(ErrorHandlerMiddleware())      // Centralized error handling
 	ConfigureCORS(e, cfg)                // CORS headers (restricted origins)
+	ConfigureRateLimiting(e)             // Rate limiting (DoS protection)
 	e.Use(middleware.Secure())           // Security headers
 
 	e.GET("/health", h.health)
 
 	api := e.Group("/api/v1")
-	api.POST("/auth/login", h.login)
+	api.POST("/auth/login", h.login, ApplyLoginRateLimit()) // Stricter rate limit for auth
 	api.GET("/auth/oauth/google", h.oauthStart)
 	api.GET("/auth/oauth/callback", h.oauthCallback)
 
@@ -93,12 +94,13 @@ func NewWithSSE(authService *app.AuthService, userService *app.UserService, clas
 	e.Use(middleware.RequestID())        // Generate request ID for tracing
 	e.Use(ErrorHandlerMiddleware())      // Centralized error handling
 	ConfigureCORS(e, cfg)                // CORS headers (restricted origins)
+	ConfigureRateLimiting(e)             // Rate limiting (DoS protection)
 	e.Use(middleware.Secure())           // Security headers
 
 	e.GET("/health", h.health)
 
 	api := e.Group("/api/v1")
-	api.POST("/auth/login", h.login)
+	api.POST("/auth/login", h.login, ApplyLoginRateLimit()) // Stricter rate limit for auth
 	api.GET("/auth/oauth/google", h.oauthStart)
 	api.GET("/auth/oauth/callback", h.oauthCallback)
 
@@ -146,12 +148,13 @@ func NewWithSearch(authService *app.AuthService, userService *app.UserService, c
 	e.Use(middleware.RequestID())        // Generate request ID for tracing
 	e.Use(ErrorHandlerMiddleware())      // Centralized error handling
 	ConfigureCORS(e, cfg)                // CORS headers (restricted origins)
+	ConfigureRateLimiting(e)             // Rate limiting (DoS protection)
 	e.Use(middleware.Secure())           // Security headers
 
 	e.GET("/health", h.health)
 
 	api := e.Group("/api/v1")
-	api.POST("/auth/login", h.login)
+	api.POST("/auth/login", h.login, ApplyLoginRateLimit()) // Stricter rate limit for auth
 	api.GET("/auth/oauth/google", h.oauthStart)
 	api.GET("/auth/oauth/callback", h.oauthCallback)
 
