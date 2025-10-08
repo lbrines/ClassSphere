@@ -1,0 +1,116 @@
+# ========================================
+# ClassSphere - Production Docker Compose
+# Uses published images from Docker Hub
+# ========================================
+
+version: '3.8'
+
+services:
+  # ============================================
+  # Backend (Go 1.24 + Echo v4)
+  # ============================================
+  backend:
+    image: lbrines/classsphere-backend:latest
+    container_name: classsphere-backend
+    ports:
+      - "${BACKEND_PORT:-8080}:8080"
+    environment:
+      # Required - Set in .env file
+      - JWT_SECRET=${JWT_SECRET}
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+      - GOOGLE_REDIRECT_URL=${GOOGLE_REDIRECT_URL}
+      
+      # Optional - Defaults provided
+      - APP_ENV=${APP_ENV:-production}
+      - SERVER_PORT=8080
+      - JWT_ISSUER=${JWT_ISSUER:-classsphere}
+      - JWT_EXPIRY_MINUTES=${JWT_EXPIRY_MINUTES:-60}
+      - REDIS_ADDR=redis:6379
+      - CLASSROOM_MODE=${CLASSROOM_MODE:-google}
+    depends_on:
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - classsphere-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # ============================================
+  # Frontend (Angular 19 + Nginx)
+  # ============================================
+  frontend:
+    image: lbrines/classsphere-frontend:latest
+    container_name: classsphere-frontend
+    ports:
+      - "${FRONTEND_PORT:-80}:80"
+    environment:
+      - API_URL=http://backend:8080/api/v1
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:80"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 30s
+    networks:
+      - classsphere-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # ============================================
+  # Redis (Cache)
+  # ============================================
+  redis:
+    image: redis:7.2.3-alpine
+    container_name: classsphere-redis
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+    networks:
+      - classsphere-network
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "2"
+
+# ============================================
+# Volumes
+# ============================================
+volumes:
+  redis-data:
+    driver: local
+
+# ============================================
+# Networks
+# ============================================
+networks:
+  classsphere-network:
+    driver: bridge
+    name: classsphere-network
+
