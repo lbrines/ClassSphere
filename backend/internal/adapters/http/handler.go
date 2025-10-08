@@ -37,6 +37,7 @@ func New(authService *app.AuthService, userService *app.UserService, classroomSe
 	// Middleware stack (order matters)
 	e.Use(middleware.Recover())          // Recover from panics
 	e.Use(middleware.RequestID())        // Generate request ID for tracing
+	ConfigureMetrics(e)                  // Prometheus metrics (includes /metrics endpoint)
 	e.Use(ErrorHandlerMiddleware())      // Centralized error handling
 	ConfigureCORS(e, cfg)                // CORS headers (restricted origins)
 	ConfigureRateLimiting(e)             // Rate limiting (DoS protection)
@@ -92,6 +93,7 @@ func NewWithSSE(authService *app.AuthService, userService *app.UserService, clas
 	// Middleware stack (order matters)
 	e.Use(middleware.Recover())          // Recover from panics
 	e.Use(middleware.RequestID())        // Generate request ID for tracing
+	ConfigureMetrics(e)                  // Prometheus metrics (includes /metrics endpoint)
 	e.Use(ErrorHandlerMiddleware())      // Centralized error handling
 	ConfigureCORS(e, cfg)                // CORS headers (restricted origins)
 	ConfigureRateLimiting(e)             // Rate limiting (DoS protection)
@@ -146,6 +148,7 @@ func NewWithSearch(authService *app.AuthService, userService *app.UserService, c
 	// Middleware stack (order matters)
 	e.Use(middleware.Recover())          // Recover from panics
 	e.Use(middleware.RequestID())        // Generate request ID for tracing
+	ConfigureMetrics(e)                  // Prometheus metrics (includes /metrics endpoint)
 	e.Use(ErrorHandlerMiddleware())      // Centralized error handling
 	ConfigureCORS(e, cfg)                // CORS headers (restricted origins)
 	ConfigureRateLimiting(e)             // Rate limiting (DoS protection)
