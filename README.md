@@ -13,6 +13,19 @@
 
 ClassSphere is a comprehensive educational platform that integrates with Google Classroom to provide role-based dashboards, real-time analytics, and advanced search capabilities for administrators, coordinators, teachers, and students.
 
+### 📊 Dashboard Preview
+
+![ClassSphere Administration Dashboard](docs/images/admin-dashboard-preview.png)
+
+*Administration Dashboard showing key metrics, submission trends, course completion rates, and comprehensive course overview with mock data integration.*
+
+#### Dashboard Features Shown:
+- **Real-time Metrics**: Total courses, active students, completion rates, and submission statistics
+- **Interactive Charts**: Weekly submission trends and course completion comparisons
+- **Course Management**: Comprehensive table with enrollment, completion, and activity tracking
+- **Mock Data Integration**: Seamless switching between mock and real Google Classroom data
+- **Dark Mode UI**: Modern, accessible interface with Ocean Blue Serenity branding
+
 ### Key Features
 
 - ✅ **Multi-Role Dashboards**: Customized views for Admin, Coordinator, Teacher, and Student

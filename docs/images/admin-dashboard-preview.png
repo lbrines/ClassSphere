@@ -1,0 +1,17 @@
+# This is a placeholder for the ClassSphere Administration Dashboard image
+# 
+# The actual image should be:
+# - High resolution (1920x1080 or higher)
+# - PNG format for transparency support
+# - Optimized for web (compressed but clear)
+# - Shows the dark mode dashboard with:
+#   - ClassSphere logo and navigation
+#   - Key metrics cards (Total Courses, Active Students, etc.)
+#   - Charts (Weekly Submissions, Course Completion Rate)
+#   - Course overview table
+#   - Mock data indicators
+#
+# To add the actual image:
+# 1. Save the dashboard screenshot as admin-dashboard-preview.png
+# 2. Place it in this directory
+# 3. Ensure it's under 1MB for GitHub compatibility
