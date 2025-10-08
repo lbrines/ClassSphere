@@ -250,8 +250,8 @@ func setupTestServerWithCORS(t *testing.T) *echo.Echo {
 	e := echo.New()
 	e.HideBanner = true
 	
-	// Apply CORS middleware (this will be implemented)
-	applyCORSMiddleware(e, cfg)
+	// Apply CORS middleware
+	ConfigureCORS(e, cfg)
 	
 	// Add a simple health endpoint for testing
 	e.GET("/health", func(c echo.Context) error {
@@ -265,12 +265,5 @@ func setupTestServerWithCORS(t *testing.T) *echo.Echo {
 	})
 	
 	return e
-}
-
-// applyCORSMiddleware applies CORS configuration to Echo server
-// This function will be implemented to make tests pass
-func applyCORSMiddleware(e *echo.Echo, cfg shared.Config) {
-	// TODO: Implement CORS middleware configuration
-	// This is intentionally empty to make tests fail first (TDD RED phase)
 }
 
