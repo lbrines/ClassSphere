@@ -1,0 +1,21 @@
+# Backend .dockerignore
+*.out
+*.test
+coverage*.html
+coverage*.out
+*.log
+.git/
+.vscode/
+.idea/
+node_modules/
+frontend/
+workspace/
+.devcontainer/
+*.md
+tests/integration/
+tests/e2e/
+.env*
+*.swp
+*.swo
+*~
+

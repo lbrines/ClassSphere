@@ -1,0 +1,143 @@
+version: '3.8'
+
+services:
+  # ============================================
+  # Workspace (Development Tools)
+  # ============================================
+  workspace:
+    build:
+      context: ./workspace
+      dockerfile: Dockerfile
+    container_name: classsphere-workspace
+    command: sleep infinity
+    volumes:
+      - ../:/workspace:cached
+      - go-modules:/go/pkg/mod
+      - node-modules-cache:/workspace/frontend/node_modules
+    environment:
+      - GOPATH=/go
+      - PATH=/go/bin:/usr/local/go/bin:$PATH
+    depends_on:
+      backend:
+        condition: service_healthy
+      frontend:
+        condition: service_started
+      redis:
+        condition: service_healthy
+    networks:
+      - classsphere-network
+
+  # ============================================
+  # Backend (Go 1.24.7 + Echo v4)
+  # ============================================
+  backend:
+    build:
+      context: ../
+      dockerfile: .devcontainer/backend/Dockerfile
+    container_name: classsphere-backend
+    ports:
+      - "8080:8080"
+    volumes:
+      - ../backend:/app:cached
+      - go-modules:/go/pkg/mod
+    environment:
+      - APP_ENV=development
+      - SERVER_PORT=8080
+      - JWT_SECRET=development-secret-key-change-in-production-123456789
+      - JWT_ISSUER=classsphere
+      - JWT_EXPIRY_MINUTES=60
+      - REDIS_ADDR=redis:6379
+      - CLASSROOM_MODE=mock
+      - GOOGLE_CLIENT_ID=dummy-client-id-for-development
+      - GOOGLE_CLIENT_SECRET=dummy-client-secret-for-development
+      - GOOGLE_REDIRECT_URL=http://localhost:4200/auth/callback
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - classsphere-network
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+
+  # ============================================
+  # Frontend (Angular 19 + TailwindCSS)
+  # ============================================
+  frontend:
+    build:
+      context: ../
+      dockerfile: .devcontainer/frontend/Dockerfile
+    container_name: classsphere-frontend
+    command: sh -c "npm ci && npm start"
+    ports:
+      - "4200:4200"
+    volumes:
+      - ../frontend:/app:cached
+      - node-modules-cache:/app/node_modules
+      - /app/.angular
+    environment:
+      - API_URL=http://backend:8080/api/v1
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4200"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    networks:
+      - classsphere-network
+    working_dir: /app
+    deploy:
+      resources:
+        limits:
+          cpus: '1.5'
+          memory: 1G
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+
+  # ============================================
+  # Redis (Cache)
+  # ============================================
+  redis:
+    image: redis:7.2.3-alpine
+    container_name: classsphere-redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+    networks:
+      - classsphere-network
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+
+# ============================================
+# Volumes (Performance Optimization)
+# ============================================
+volumes:
+  go-modules:          # Persistent Go modules cache
+  node-modules-cache:  # Persistent npm cache
+
+# ============================================
+# Networks
+# ============================================
+networks:
+  classsphere-network:
+    driver: bridge
+

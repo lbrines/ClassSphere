@@ -4,7 +4,7 @@ version: "2.0"
 type: "prompt_index"
 date: "2025-10-07"
 author: "Sistema de Gestión ClassSphere"
-total_prompts: 4
+total_prompts: 5
 structure: "modular_optimized"
 ---
 
@@ -58,7 +58,17 @@ Ejecuta: 8 análisis completos
 Output: Resumen ejecutivo con métricas
 ```
 
-#### **4. Limpiar repositorio (⚠️ DESTRUCTIVO)**
+#### **4. Limpiar artifacts y cachés (⚠️ Parcial)**
+```
+📁 USE: 03_repo/05_cleanup_artifacts.md
+
+Elimina: Cachés, coverage, logs, binarios (regenerables)
+Preserva: Código fuente, documentación, Git history
+Impacto: 9.1 GB → ~800 MB (-91%)
+Output: Repo optimizado
+```
+
+#### **5. Limpiar repositorio completo (⚠️ DESTRUCTIVO)**
 ```
 📁 USE: 03_repo/04_clean_repo.md
 
@@ -110,11 +120,41 @@ Output: Repo limpio con solo documentación
 
 ---
 
-### **03_repo/** - Gestión de Repositorio (1 prompt)
+### **03_repo/** - Gestión de Repositorio (2 prompts)
 
 | ID | Archivo | Función | Preserva | Prioridad |
 |----|---------|---------|----------|-----------|
-| **04** | `04_clean_repo.md` | Limpieza destructiva | `workspace/`, `CLAUDE.md`, Git | SPECIAL |
+| **04** | `04_clean_repo.md` | Limpieza destructiva completa | `workspace/`, `CLAUDE.md`, Git | SPECIAL |
+| **05** | `05_cleanup_artifacts.md` | Limpieza de artifacts y cache | Todo el código + docs | HIGH |
+
+#### Prompt 05: Cleanup Artifacts ✅ (NUEVO)
+
+**Tipo**: Limpieza parcial y segura
+**Impacto**: Reduce 91% del tamaño del repo
+
+**Elimina (Regenerables)**:
+- ✅ Angular cache (`.angular/cache/`) - 7.8 GB
+- ✅ Coverage duplicados (24 archivos backend)
+- ✅ Test artifacts (playwright-report/, etc.)
+- ✅ Logs (*.log)
+- ✅ Binarios compilados
+
+**Preserva (Todo lo importante)**:
+- ✅ Código fuente completo (backend/, frontend/)
+- ✅ Documentación completa (workspace/)
+- ✅ Dev Containers (.devcontainer/)
+- ✅ Git history (.git/)
+- ✅ node_modules/ (necesario)
+
+**Cuándo usar**:
+- Después de fase de desarrollo intenso
+- Antes de push a remoto
+- Periódicamente para mantener repo limpio
+- Sin riesgo (todo regenerable)
+
+---
+
+#### Prompt 04: Clean Repo ⚠️ (DESTRUCTIVO)
 
 **⚠️ ADVERTENCIA CRÍTICA**: Operación **DESTRUCTIVA** e **IRREVERSIBLE**
 
@@ -122,14 +162,12 @@ Output: Repo limpio con solo documentación
 - ✅ `workspace/` completo (contracts/, plan/, prompt/, extra/)
 - ✅ `CLAUDE.md` (notas de desarrollo)
 - ✅ `.git/` (historial completo)
-- ✅ `.gitignore` (configuración Git)
-- ✅ `.gitmessage` (template commits)
+- ✅ `.gitignore`, `.gitmessage`
 
 **Elimina**:
 - ❌ `backend/` (Go + Echo code)
 - ❌ `frontend/` (Angular 19 code)
 - ❌ `scripts/` (automation)
-- ❌ `classsphere-backend/` (binaries)
 - ❌ Todos los archivos raíz excepto preservados
 
 **Cuándo usar**:
@@ -373,8 +411,15 @@ git diff --name-only HEAD workspace/contracts/
 ### Prompt 04: Clean Repo ⚠️
 - **Ubicación**: `03_repo/04_clean_repo.md`
 - **Estado**: Actualizado (preserva workspace/)
-- **Acción**: Limpieza destructiva
+- **Acción**: Limpieza destructiva completa
 - **Requiere**: Backup obligatorio
+
+### Prompt 05: Cleanup Artifacts ✅ (NUEVO)
+- **Ubicación**: `03_repo/05_cleanup_artifacts.md`
+- **Estado**: ✅ Validated (executed 2025-10-07)
+- **Acción**: Limpieza parcial de cachés y artifacts
+- **Impacto**: 9.1 GB → 782 MB (-91%)
+- **Requiere**: Backup recomendado (no crítico)
 
 ---
 
