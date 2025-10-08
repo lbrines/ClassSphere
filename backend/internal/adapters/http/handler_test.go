@@ -24,7 +24,7 @@ import (
 func TestLoginHandler(t *testing.T) {
 	authService, userService, _, classroomService := newTestServices(t)
 	notificationHub := app.NewNotificationHub()
-	router := httpadapter.New(authService, userService, classroomService, notificationHub)
+	router := httpadapter.New(authService, userService, classroomService, notificationHub, newTestConfig())
 
 	payload := map[string]string{
 		"email":    "admin@classsphere.edu",
@@ -77,7 +77,7 @@ func TestRequireRole(t *testing.T) {
 	rec := httptest.NewRecorder()
 
 	notificationHub := app.NewNotificationHub()
-	e := httpadapter.New(authService, userService, classroomService, notificationHub)
+	e := httpadapter.New(authService, userService, classroomService, notificationHub, newTestConfig())
 	e.ServeHTTP(rec, req)
 
 	require.Equal(t, http.StatusOK, rec.Code)
@@ -86,7 +86,7 @@ func TestRequireRole(t *testing.T) {
 func TestHealthEndpoint(t *testing.T) {
 	authService, userService, _, classroomService := newTestServices(t)
 	notificationHub := app.NewNotificationHub()
-	router := httpadapter.New(authService, userService, classroomService, notificationHub)
+	router := httpadapter.New(authService, userService, classroomService, notificationHub, newTestConfig())
 
 	req := httptest.NewRequest(http.MethodGet, "/health", nil)
 	rec := httptest.NewRecorder()
@@ -98,7 +98,7 @@ func TestHealthEndpoint(t *testing.T) {
 func TestOAuthEndpoints(t *testing.T) {
 	authService, userService, cache, classroomService := newTestServices(t)
 	notificationHub := app.NewNotificationHub()
-	router := httpadapter.New(authService, userService, classroomService, notificationHub)
+	router := httpadapter.New(authService, userService, classroomService, notificationHub, newTestConfig())
 
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/auth/oauth/google", nil)
 	rec := httptest.NewRecorder()
@@ -120,7 +120,7 @@ func TestOAuthEndpoints(t *testing.T) {
 func TestMeEndpoint(t *testing.T) {
 	authService, userService, _, classroomService := newTestServices(t)
 	notificationHub := app.NewNotificationHub()
-	router := httpadapter.New(authService, userService, classroomService, notificationHub)
+	router := httpadapter.New(authService, userService, classroomService, notificationHub, newTestConfig())
 
 	loginPayload := map[string]string{
 		"email":    "admin@classsphere.edu",
@@ -150,7 +150,7 @@ func TestMeEndpoint(t *testing.T) {
 func TestCoursesEndpoint(t *testing.T) {
 	authService, userService, _, classroomService := newTestServices(t)
 	notificationHub := app.NewNotificationHub()
-	router := httpadapter.New(authService, userService, classroomService, notificationHub)
+	router := httpadapter.New(authService, userService, classroomService, notificationHub, newTestConfig())
 
 	ctx := context.Background()
 	tokens, err := authService.LoginWithPassword(ctx, "admin@classsphere.edu", "admin123")
@@ -177,7 +177,7 @@ func TestCoursesEndpoint(t *testing.T) {
 func TestAdminDashboardEndpoint(t *testing.T) {
 	authService, userService, _, classroomService := newTestServices(t)
 	notificationHub := app.NewNotificationHub()
-	router := httpadapter.New(authService, userService, classroomService, notificationHub)
+	router := httpadapter.New(authService, userService, classroomService, notificationHub, newTestConfig())
 
 	ctx := context.Background()
 	tokens, err := authService.LoginWithPassword(ctx, "admin@classsphere.edu", "admin123")
@@ -197,6 +197,20 @@ func TestAdminDashboardEndpoint(t *testing.T) {
 
 // Helpers
 
+// newTestConfig returns a test configuration with default values
+func newTestConfig() shared.Config {
+	return shared.Config{
+		JWTSecret:          "test-secret",
+		JWTIssuer:          "classsphere",
+		JWTExpiryMinutes:   60,
+		GoogleClientID:     "client",
+		GoogleClientSecret: "secret",
+		GoogleRedirectURL:  "http://localhost/callback",
+		FrontendURL:        "http://localhost:4200",
+		AllowedOrigins:     []string{"http://localhost:4200"},
+	}
+}
+
 func newTestServices(t *testing.T) (*app.AuthService, *app.UserService, *inMemoryCache, *app.ClassroomService) {
 	t.Helper()
 
@@ -215,14 +229,7 @@ func newTestServices(t *testing.T) (*app.AuthService, *app.UserService, *inMemor
 	cache := &inMemoryCache{store: make(map[string][]byte)}
 	oauth := &staticOAuth{}
 
-	cfg := shared.Config{
-		JWTSecret:          "test-secret",
-		JWTIssuer:          "classsphere",
-		JWTExpiryMinutes:   60,
-		GoogleClientID:     "client",
-		GoogleClientSecret: "secret",
-		GoogleRedirectURL:  "http://localhost/callback",
-	}
+	cfg := newTestConfig()
 
 	authService, err := app.NewAuthService(repository, cache, oauth, cfg)
 	require.NoError(t, err)
@@ -318,7 +325,7 @@ func (s *stubClassroomProvider) Snapshot(_ context.Context) (domain.ClassroomSna
 func TestLoginHandler_Errors(t *testing.T) {
 	authService, userService, _, classroomService := newTestServices(t)
 	notificationHub := app.NewNotificationHub()
-	router := httpadapter.New(authService, userService, classroomService, notificationHub)
+	router := httpadapter.New(authService, userService, classroomService, notificationHub, newTestConfig())
 
 	t.Run("invalid json", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodPost, "/api/v1/auth/login", bytes.NewReader([]byte("invalid-json")))
@@ -362,7 +369,7 @@ func TestAuthMiddleware_Errors(t *testing.T) {
 	t.Run("missing authorization header", func(t *testing.T) {
 		authService, userService, _, classroomService := newTestServices(t)
 		notificationHub := app.NewNotificationHub()
-	router := httpadapter.New(authService, userService, classroomService, notificationHub)
+	router := httpadapter.New(authService, userService, classroomService, notificationHub, newTestConfig())
 
 		req := httptest.NewRequest(http.MethodGet, "/api/v1/users/me", nil)
 		rec := httptest.NewRecorder()
@@ -374,7 +381,7 @@ func TestAuthMiddleware_Errors(t *testing.T) {
 	t.Run("invalid token format", func(t *testing.T) {
 		authService, userService, _, classroomService := newTestServices(t)
 		notificationHub := app.NewNotificationHub()
-	router := httpadapter.New(authService, userService, classroomService, notificationHub)
+	router := httpadapter.New(authService, userService, classroomService, notificationHub, newTestConfig())
 
 		req := httptest.NewRequest(http.MethodGet, "/api/v1/users/me", nil)
 		req.Header.Set("Authorization", "InvalidFormat")
@@ -387,7 +394,7 @@ func TestAuthMiddleware_Errors(t *testing.T) {
 	t.Run("invalid token", func(t *testing.T) {
 		authService, userService, _, classroomService := newTestServices(t)
 		notificationHub := app.NewNotificationHub()
-	router := httpadapter.New(authService, userService, classroomService, notificationHub)
+	router := httpadapter.New(authService, userService, classroomService, notificationHub, newTestConfig())
 
 		req := httptest.NewRequest(http.MethodGet, "/api/v1/users/me", nil)
 		req.Header.Set("Authorization", "Bearer invalid-token")
@@ -457,7 +464,7 @@ func TestRequireRole_Unauthorized(t *testing.T) {
 	rec := httptest.NewRecorder()
 
 	notificationHub := app.NewNotificationHub()
-	e := httpadapter.New(sharedAuthService, sharedUserService, classroomService, notificationHub)
+	e := httpadapter.New(sharedAuthService, sharedUserService, classroomService, notificationHub, newTestConfig())
 	e.ServeHTTP(rec, req)
 
 	require.Equal(t, http.StatusForbidden, rec.Code)
@@ -466,7 +473,7 @@ func TestRequireRole_Unauthorized(t *testing.T) {
 func TestOAuthCallback_Errors(t *testing.T) {
 	authService, userService, _, classroomService := newTestServices(t)
 	notificationHub := app.NewNotificationHub()
-	router := httpadapter.New(authService, userService, classroomService, notificationHub)
+	router := httpadapter.New(authService, userService, classroomService, notificationHub, newTestConfig())
 
 	t.Run("missing state", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/api/v1/auth/oauth/callback?code=test", nil)

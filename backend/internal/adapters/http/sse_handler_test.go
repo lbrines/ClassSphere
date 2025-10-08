@@ -30,14 +30,7 @@ func TestSSEHandler_Unauthorized_NoToken(t *testing.T) {
 	hub := app.NewNotificationHub()
 	authService, userService, _, classroomService := newTestServicesSSE(t)
 	
-	handler := &httpadapter.Handler{
-		AuthService:      authService,
-		UserService:      userService,
-		ClassroomService: classroomService,
-		NotificationHub:  hub,
-	}
-	
-	e := httpadapter.NewWithSSE(authService, userService, classroomService, hub, nil)
+	e := httpadapter.NewWithSSE(authService, userService, classroomService, hub, nil, newTestConfig())
 	server := httptest.NewServer(e)
 	defer server.Close()
 	
@@ -55,7 +48,7 @@ func TestSSEHandler_Unauthorized_InvalidToken(t *testing.T) {
 	hub := app.NewNotificationHub()
 	authService, userService, _, classroomService := newTestServicesSSE(t)
 	
-	e := httpadapter.NewWithSSE(authService, userService, classroomService, hub, nil)
+	e := httpadapter.NewWithSSE(authService, userService, classroomService, hub, nil, newTestConfig())
 	server := httptest.NewServer(e)
 	defer server.Close()
 	
@@ -81,7 +74,7 @@ func TestSSEHandler_Authorized_ValidToken(t *testing.T) {
 	loginResult, err := authService.LoginWithPassword(ctx, "student@classsphere.edu", "student123")
 	require.NoError(t, err)
 	
-	e := httpadapter.NewWithSSE(authService, userService, classroomService, hub, nil)
+	e := httpadapter.NewWithSSE(authService, userService, classroomService, hub, nil, newTestConfig())
 	server := httptest.NewServer(e)
 	defer server.Close()
 	
@@ -113,7 +106,7 @@ func TestSSEHandler_ReceivesNotifications(t *testing.T) {
 	loginResult, err := authService.LoginWithPassword(ctx, "student@classsphere.edu", "student123")
 	require.NoError(t, err)
 	
-	e := httpadapter.NewWithSSE(authService, userService, classroomService, hub, nil)
+	e := httpadapter.NewWithSSE(authService, userService, classroomService, hub, nil, newTestConfig())
 	server := httptest.NewServer(e)
 	defer server.Close()
 	
@@ -184,7 +177,7 @@ func TestSSEHandler_KeepAliveMessages(t *testing.T) {
 	loginResult, err := authService.LoginWithPassword(ctx, "student@classsphere.edu", "student123")
 	require.NoError(t, err)
 	
-	e := httpadapter.NewWithSSE(authService, userService, classroomService, hub, nil)
+	e := httpadapter.NewWithSSE(authService, userService, classroomService, hub, nil, newTestConfig())
 	server := httptest.NewServer(e)
 	defer server.Close()
 	
@@ -238,7 +231,7 @@ func TestSSEHandler_ClientDisconnect(t *testing.T) {
 	loginResult, err := authService.LoginWithPassword(context.Background(), "student@classsphere.edu", "student123")
 	require.NoError(t, err)
 	
-	e := httpadapter.NewWithSSE(authService, userService, classroomService, hub, nil)
+	e := httpadapter.NewWithSSE(authService, userService, classroomService, hub, nil, newTestConfig())
 	server := httptest.NewServer(e)
 	defer server.Close()
 	
@@ -273,7 +266,7 @@ func TestSSEHandler_MultipleClients(t *testing.T) {
 	hub := app.NewNotificationHub()
 	authService, userService, _, classroomService := newTestServicesSSE(t)
 	
-	e := httpadapter.NewWithSSE(authService, userService, classroomService, hub, nil)
+	e := httpadapter.NewWithSSE(authService, userService, classroomService, hub, nil, newTestConfig())
 	server := httptest.NewServer(e)
 	defer server.Close()
 	

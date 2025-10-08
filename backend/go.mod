@@ -1,13 +1,12 @@
 module github.com/lbrines/classsphere
 
-go 1.22
+go 1.24.0
 
 require (
 	github.com/alicebob/miniredis/v2 v2.35.0
 	github.com/go-resty/resty/v2 v2.16.5
 	github.com/golang-jwt/jwt/v5 v5.3.0
 	github.com/google/uuid v1.6.0
-	github.com/gorilla/websocket v1.5.3
 	github.com/labstack/echo/v4 v4.9.1
 	github.com/redis/go-redis/v9 v9.14.0
 	github.com/stretchr/testify v1.10.0

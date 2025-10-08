@@ -28,7 +28,7 @@ func TestSearchHandler_SingleEntity(t *testing.T) {
 	searchService := app.NewSearchService()
 	notificationHub := app.NewNotificationHub()
 	
-	router := httpadapter.NewWithSearch(authService, userService, classroomService, notificationHub, searchService)
+	router := httpadapter.NewWithSearch(authService, userService, classroomService, notificationHub, searchService, newTestConfig())
 	
 	// Login to get token
 	tokens, err := authService.LoginWithPassword(ctx, "student@classsphere.edu", "student123")
@@ -58,7 +58,7 @@ func TestSearchHandler_MultipleEntities(t *testing.T) {
 	searchService := app.NewSearchService()
 	notificationHub := app.NewNotificationHub()
 	
-	router := httpadapter.NewWithSearch(authService, userService, classroomService, notificationHub, searchService)
+	router := httpadapter.NewWithSearch(authService, userService, classroomService, notificationHub, searchService, newTestConfig())
 	
 	// Login
 	tokens, err := authService.LoginWithPassword(ctx, "teacher@classsphere.edu", "teacher123")
@@ -87,7 +87,7 @@ func TestSearchHandler_Unauthorized(t *testing.T) {
 	searchService := app.NewSearchService()
 	notificationHub := app.NewNotificationHub()
 	
-	router := httpadapter.NewWithSearch(authService, userService, classroomService, notificationHub, searchService)
+	router := httpadapter.NewWithSearch(authService, userService, classroomService, notificationHub, searchService, newTestConfig())
 	
 	// Test without token
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/search?q=Math&entities=courses", nil)
@@ -105,7 +105,7 @@ func TestSearchHandler_MissingQuery(t *testing.T) {
 	searchService := app.NewSearchService()
 	notificationHub := app.NewNotificationHub()
 	
-	router := httpadapter.NewWithSearch(authService, userService, classroomService, notificationHub, searchService)
+	router := httpadapter.NewWithSearch(authService, userService, classroomService, notificationHub, searchService, newTestConfig())
 	
 	// Login
 	tokens, err := authService.LoginWithPassword(ctx, "student@classsphere.edu", "student123")
@@ -134,7 +134,7 @@ func TestSearchHandler_MissingEntities(t *testing.T) {
 	searchService := app.NewSearchService()
 	notificationHub := app.NewNotificationHub()
 	
-	router := httpadapter.NewWithSearch(authService, userService, classroomService, notificationHub, searchService)
+	router := httpadapter.NewWithSearch(authService, userService, classroomService, notificationHub, searchService, newTestConfig())
 	
 	// Login
 	tokens, err := authService.LoginWithPassword(ctx, "student@classsphere.edu", "student123")
@@ -157,7 +157,7 @@ func TestSearchHandler_InvalidLimit(t *testing.T) {
 	searchService := app.NewSearchService()
 	notificationHub := app.NewNotificationHub()
 	
-	router := httpadapter.NewWithSearch(authService, userService, classroomService, notificationHub, searchService)
+	router := httpadapter.NewWithSearch(authService, userService, classroomService, notificationHub, searchService, newTestConfig())
 	
 	// Login
 	tokens, err := authService.LoginWithPassword(ctx, "student@classsphere.edu", "student123")
@@ -212,7 +212,7 @@ func TestSearchHandler_RoleBasedFiltering(t *testing.T) {
 			searchService := app.NewSearchService()
 			notificationHub := app.NewNotificationHub()
 			
-			router := httpadapter.NewWithSearch(authService, userService, classroomService, notificationHub, searchService)
+			router := httpadapter.NewWithSearch(authService, userService, classroomService, notificationHub, searchService, newTestConfig())
 			
 			// Login
 			tokens, err := authService.LoginWithPassword(ctx, tt.email, tt.password)
@@ -240,7 +240,7 @@ func TestSearchHandler_Pagination_FirstPage(t *testing.T) {
 	searchService := app.NewSearchService()
 	notificationHub := app.NewNotificationHub()
 	
-	router := httpadapter.NewWithSearch(authService, userService, classroomService, notificationHub, searchService)
+	router := httpadapter.NewWithSearch(authService, userService, classroomService, notificationHub, searchService, newTestConfig())
 	
 	// Login as admin
 	tokens, err := authService.LoginWithPassword(ctx, "admin@classsphere.edu", "admin123")
@@ -271,7 +271,7 @@ func TestSearchHandler_Pagination_SecondPage(t *testing.T) {
 	searchService := app.NewSearchService()
 	notificationHub := app.NewNotificationHub()
 	
-	router := httpadapter.NewWithSearch(authService, userService, classroomService, notificationHub, searchService)
+	router := httpadapter.NewWithSearch(authService, userService, classroomService, notificationHub, searchService, newTestConfig())
 	
 	// Login as admin
 	tokens, err := authService.LoginWithPassword(ctx, "admin@classsphere.edu", "admin123")
@@ -301,7 +301,7 @@ func TestSearchHandler_Pagination_DefaultValues(t *testing.T) {
 	searchService := app.NewSearchService()
 	notificationHub := app.NewNotificationHub()
 	
-	router := httpadapter.NewWithSearch(authService, userService, classroomService, notificationHub, searchService)
+	router := httpadapter.NewWithSearch(authService, userService, classroomService, notificationHub, searchService, newTestConfig())
 	
 	// Login as admin
 	tokens, err := authService.LoginWithPassword(ctx, "admin@classsphere.edu", "admin123")
@@ -331,7 +331,7 @@ func TestSearchHandler_Pagination_InvalidPage(t *testing.T) {
 	searchService := app.NewSearchService()
 	notificationHub := app.NewNotificationHub()
 	
-	router := httpadapter.NewWithSearch(authService, userService, classroomService, notificationHub, searchService)
+	router := httpadapter.NewWithSearch(authService, userService, classroomService, notificationHub, searchService, newTestConfig())
 	
 	// Login as admin
 	tokens, err := authService.LoginWithPassword(ctx, "admin@classsphere.edu", "admin123")
@@ -360,7 +360,7 @@ func TestSearchHandler_Pagination_ZeroPage(t *testing.T) {
 	searchService := app.NewSearchService()
 	notificationHub := app.NewNotificationHub()
 	
-	router := httpadapter.NewWithSearch(authService, userService, classroomService, notificationHub, searchService)
+	router := httpadapter.NewWithSearch(authService, userService, classroomService, notificationHub, searchService, newTestConfig())
 	
 	// Login as admin
 	tokens, err := authService.LoginWithPassword(ctx, "admin@classsphere.edu", "admin123")
@@ -384,6 +384,7 @@ func TestSearchHandler_Pagination_ZeroPage(t *testing.T) {
 }
 
 // Test helper
+
 func newTestServicesSearch(t *testing.T) (*app.AuthService, *app.UserService, *inMemoryCacheSearch, *app.ClassroomService) {
 	t.Helper()
 
@@ -410,15 +411,8 @@ func newTestServicesSearch(t *testing.T) (*app.AuthService, *app.UserService, *i
 	cache := &inMemoryCacheSearch{store: make(map[string][]byte)}
 	oauth := &staticOAuthSearch{}
 
-	authService, err := app.NewAuthService(userRepo, cache, oauth, shared.Config{
-		JWTSecret:          "test-secret",
-		JWTIssuer:          "classsphere",
-		JWTExpiryMinutes:   60,
-		GoogleClientID:     "client",
-		GoogleClientSecret: "secret",
-		GoogleRedirectURL:  "http://localhost/callback",
-		ClassroomMode:      "mock",
-	})
+	cfg := newTestConfig()
+	authService, err := app.NewAuthService(userRepo, cache, oauth, cfg)
 	require.NoError(t, err)
 
 	userService, err := app.NewUserService(userRepo)
