@@ -1,0 +1,21 @@
+# Frontend .dockerignore
+node_modules/
+dist/
+coverage/
+.angular/
+*.log
+.git/
+.vscode/
+.idea/
+backend/
+workspace/
+.devcontainer/
+*.md
+e2e/
+test-results/
+playwright-report/
+.env*
+*.swp
+*.swo
+*~
+
