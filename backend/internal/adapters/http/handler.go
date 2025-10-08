@@ -18,14 +18,17 @@ type Handler struct {
 	authService      *app.AuthService
 	userService      *app.UserService
 	classroomService *app.ClassroomService
+	notificationHub  *app.NotificationHub
+	searchService    *app.SearchService
 }
 
 // New creates an Echo engine configured with routes and middleware.
-func New(authService *app.AuthService, userService *app.UserService, classroomService *app.ClassroomService) *echo.Echo {
+func New(authService *app.AuthService, userService *app.UserService, classroomService *app.ClassroomService, notificationHub *app.NotificationHub) *echo.Echo {
 	h := &Handler{
 		authService:      authService,
 		userService:      userService,
 		classroomService: classroomService,
+		notificationHub:  notificationHub,
 	}
 
 	e := echo.New()
@@ -56,6 +59,63 @@ func New(authService *app.AuthService, userService *app.UserService, classroomSe
 	protected.GET("/dashboard/coordinator", h.dashboardFor(domain.RoleCoordinator), RequireRole(domain.RoleCoordinator))
 	protected.GET("/dashboard/teacher", h.dashboardFor(domain.RoleTeacher), RequireRole(domain.RoleTeacher))
 	protected.GET("/dashboard/student", h.dashboardFor(domain.RoleStudent), RequireRole(domain.RoleStudent))
+
+	// WebSocket endpoint
+	e.GET("/api/v1/ws/notifications", h.handleWebSocket)
+
+	// Search endpoint
+	if h.searchService != nil {
+		protected.GET("/search", h.handleSearch)
+	}
+
+	return e
+}
+
+// NewWithSearch creates an Echo engine with search service.
+// This is a helper for testing that includes SearchService.
+func NewWithSearch(authService *app.AuthService, userService *app.UserService, classroomService *app.ClassroomService, notificationHub *app.NotificationHub, searchService *app.SearchService) *echo.Echo {
+	h := &Handler{
+		authService:      authService,
+		userService:      userService,
+		classroomService: classroomService,
+		notificationHub:  notificationHub,
+		searchService:    searchService,
+	}
+
+	e := echo.New()
+	e.HideBanner = true
+
+	e.Use(middleware.Recover())
+	e.Use(middleware.CORS())
+	e.Use(middleware.RequestID())
+	e.Use(middleware.Secure())
+
+	e.GET("/health", h.health)
+
+	api := e.Group("/api/v1")
+	api.POST("/auth/login", h.login)
+	api.GET("/auth/oauth/google", h.oauthStart)
+	api.GET("/auth/oauth/callback", h.oauthCallback)
+
+	protected := api.Group("")
+	protected.Use(AuthMiddleware(authService))
+
+	protected.GET("/users/me", h.me)
+	protected.GET("/admin/ping", h.adminPing, RequireRole(domain.RoleAdmin))
+
+	protected.GET("/google/courses", h.listCourses)
+	protected.GET("/classroom/courses", h.listCourses)
+
+	protected.GET("/dashboard/admin", h.dashboardFor(domain.RoleAdmin), RequireRole(domain.RoleAdmin))
+	protected.GET("/dashboard/coordinator", h.dashboardFor(domain.RoleCoordinator), RequireRole(domain.RoleCoordinator))
+	protected.GET("/dashboard/teacher", h.dashboardFor(domain.RoleTeacher), RequireRole(domain.RoleTeacher))
+	protected.GET("/dashboard/student", h.dashboardFor(domain.RoleStudent), RequireRole(domain.RoleStudent))
+
+	// WebSocket endpoint
+	e.GET("/api/v1/ws/notifications", h.handleWebSocket)
+
+	// Search endpoint
+	protected.GET("/search", h.handleSearch)
 
 	return e
 }

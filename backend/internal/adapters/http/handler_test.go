@@ -23,7 +23,8 @@ import (
 
 func TestLoginHandler(t *testing.T) {
 	authService, userService, _, classroomService := newTestServices(t)
-	router := httpadapter.New(authService, userService, classroomService)
+	notificationHub := app.NewNotificationHub()
+	router := httpadapter.New(authService, userService, classroomService, notificationHub)
 
 	payload := map[string]string{
 		"email":    "admin@classsphere.edu",
@@ -75,7 +76,8 @@ func TestRequireRole(t *testing.T) {
 	req.Header.Set("Authorization", "Bearer "+tokens.AccessToken)
 	rec := httptest.NewRecorder()
 
-	e := httpadapter.New(authService, userService, classroomService)
+	notificationHub := app.NewNotificationHub()
+	e := httpadapter.New(authService, userService, classroomService, notificationHub)
 	e.ServeHTTP(rec, req)
 
 	require.Equal(t, http.StatusOK, rec.Code)
@@ -83,7 +85,8 @@ func TestRequireRole(t *testing.T) {
 
 func TestHealthEndpoint(t *testing.T) {
 	authService, userService, _, classroomService := newTestServices(t)
-	router := httpadapter.New(authService, userService, classroomService)
+	notificationHub := app.NewNotificationHub()
+	router := httpadapter.New(authService, userService, classroomService, notificationHub)
 
 	req := httptest.NewRequest(http.MethodGet, "/health", nil)
 	rec := httptest.NewRecorder()
@@ -94,7 +97,8 @@ func TestHealthEndpoint(t *testing.T) {
 
 func TestOAuthEndpoints(t *testing.T) {
 	authService, userService, cache, classroomService := newTestServices(t)
-	router := httpadapter.New(authService, userService, classroomService)
+	notificationHub := app.NewNotificationHub()
+	router := httpadapter.New(authService, userService, classroomService, notificationHub)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/auth/oauth/google", nil)
 	rec := httptest.NewRecorder()
@@ -115,7 +119,8 @@ func TestOAuthEndpoints(t *testing.T) {
 
 func TestMeEndpoint(t *testing.T) {
 	authService, userService, _, classroomService := newTestServices(t)
-	router := httpadapter.New(authService, userService, classroomService)
+	notificationHub := app.NewNotificationHub()
+	router := httpadapter.New(authService, userService, classroomService, notificationHub)
 
 	loginPayload := map[string]string{
 		"email":    "admin@classsphere.edu",
@@ -144,7 +149,8 @@ func TestMeEndpoint(t *testing.T) {
 
 func TestCoursesEndpoint(t *testing.T) {
 	authService, userService, _, classroomService := newTestServices(t)
-	router := httpadapter.New(authService, userService, classroomService)
+	notificationHub := app.NewNotificationHub()
+	router := httpadapter.New(authService, userService, classroomService, notificationHub)
 
 	ctx := context.Background()
 	tokens, err := authService.LoginWithPassword(ctx, "admin@classsphere.edu", "admin123")
@@ -170,7 +176,8 @@ func TestCoursesEndpoint(t *testing.T) {
 
 func TestAdminDashboardEndpoint(t *testing.T) {
 	authService, userService, _, classroomService := newTestServices(t)
-	router := httpadapter.New(authService, userService, classroomService)
+	notificationHub := app.NewNotificationHub()
+	router := httpadapter.New(authService, userService, classroomService, notificationHub)
 
 	ctx := context.Background()
 	tokens, err := authService.LoginWithPassword(ctx, "admin@classsphere.edu", "admin123")
@@ -310,7 +317,8 @@ func (s *stubClassroomProvider) Snapshot(_ context.Context) (domain.ClassroomSna
 
 func TestLoginHandler_Errors(t *testing.T) {
 	authService, userService, _, classroomService := newTestServices(t)
-	router := httpadapter.New(authService, userService, classroomService)
+	notificationHub := app.NewNotificationHub()
+	router := httpadapter.New(authService, userService, classroomService, notificationHub)
 
 	t.Run("invalid json", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodPost, "/api/v1/auth/login", bytes.NewReader([]byte("invalid-json")))
@@ -353,7 +361,8 @@ func TestLoginHandler_Errors(t *testing.T) {
 func TestAuthMiddleware_Errors(t *testing.T) {
 	t.Run("missing authorization header", func(t *testing.T) {
 		authService, userService, _, classroomService := newTestServices(t)
-		router := httpadapter.New(authService, userService, classroomService)
+		notificationHub := app.NewNotificationHub()
+	router := httpadapter.New(authService, userService, classroomService, notificationHub)
 
 		req := httptest.NewRequest(http.MethodGet, "/api/v1/users/me", nil)
 		rec := httptest.NewRecorder()
@@ -364,7 +373,8 @@ func TestAuthMiddleware_Errors(t *testing.T) {
 
 	t.Run("invalid token format", func(t *testing.T) {
 		authService, userService, _, classroomService := newTestServices(t)
-		router := httpadapter.New(authService, userService, classroomService)
+		notificationHub := app.NewNotificationHub()
+	router := httpadapter.New(authService, userService, classroomService, notificationHub)
 
 		req := httptest.NewRequest(http.MethodGet, "/api/v1/users/me", nil)
 		req.Header.Set("Authorization", "InvalidFormat")
@@ -376,7 +386,8 @@ func TestAuthMiddleware_Errors(t *testing.T) {
 
 	t.Run("invalid token", func(t *testing.T) {
 		authService, userService, _, classroomService := newTestServices(t)
-		router := httpadapter.New(authService, userService, classroomService)
+		notificationHub := app.NewNotificationHub()
+	router := httpadapter.New(authService, userService, classroomService, notificationHub)
 
 		req := httptest.NewRequest(http.MethodGet, "/api/v1/users/me", nil)
 		req.Header.Set("Authorization", "Bearer invalid-token")
@@ -445,7 +456,8 @@ func TestRequireRole_Unauthorized(t *testing.T) {
 	req.Header.Set("Authorization", "Bearer "+tokens.AccessToken)
 	rec := httptest.NewRecorder()
 
-	e := httpadapter.New(sharedAuthService, sharedUserService, classroomService)
+	notificationHub := app.NewNotificationHub()
+	e := httpadapter.New(sharedAuthService, sharedUserService, classroomService, notificationHub)
 	e.ServeHTTP(rec, req)
 
 	require.Equal(t, http.StatusForbidden, rec.Code)
@@ -453,7 +465,8 @@ func TestRequireRole_Unauthorized(t *testing.T) {
 
 func TestOAuthCallback_Errors(t *testing.T) {
 	authService, userService, _, classroomService := newTestServices(t)
-	router := httpadapter.New(authService, userService, classroomService)
+	notificationHub := app.NewNotificationHub()
+	router := httpadapter.New(authService, userService, classroomService, notificationHub)
 
 	t.Run("missing state", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/api/v1/auth/oauth/callback?code=test", nil)
