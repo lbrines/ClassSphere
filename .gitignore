@@ -59,3 +59,59 @@ coverage/
 frontend/test-results/
 frontend/playwright-report/
 workspace/tools/
+
+# ========================================
+# Test Coverage & Reports
+# ========================================
+coverage/
+coverage.html
+coverage.out
+*.coverage
+htmlcov/
+playwright-report/
+test-results/
+.nyc_output/
+
+# ========================================
+# Build Artifacts & Binaries
+# ========================================
+backend/classsphere-backend
+backend/tmp/
+dist/
+*.exe
+*.dll
+*.so
+*.dylib
+
+# ========================================
+# Logs
+# ========================================
+*.log
+logs/
+
+# ========================================
+# Angular Specific
+# ========================================
+.angular/
+
+# ========================================
+# IDE & Editors
+# ========================================
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ========================================
+# OS
+# ========================================
+.DS_Store
+Thumbs.db
+
+# ========================================
+# Temporary
+# ========================================
+tmp/
+temp/
+*.tmp
+*.bak
