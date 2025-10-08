@@ -246,10 +246,11 @@ func newTestServicesSearch(t *testing.T) (*app.AuthService, *app.UserService, *i
 	require.NoError(t, err)
 	studentHash := string(hash)
 
+	now := time.Now()
 	users := []domain.User{
-		{ID: "admin-1", Email: "admin@classsphere.edu", HashedPassword: adminHash, Role: domain.RoleAdmin},
-		{ID: "teacher-1", Email: "teacher@classsphere.edu", HashedPassword: teacherHash, Role: domain.RoleTeacher},
-		{ID: "student-1", Email: "student@classsphere.edu", HashedPassword: studentHash, Role: domain.RoleStudent},
+		{ID: "admin-1", Email: "admin@classsphere.edu", HashedPassword: adminHash, Role: domain.RoleAdmin, CreatedAt: now, UpdatedAt: now},
+		{ID: "teacher-1", Email: "teacher@classsphere.edu", HashedPassword: teacherHash, Role: domain.RoleTeacher, CreatedAt: now, UpdatedAt: now},
+		{ID: "student-1", Email: "student@classsphere.edu", HashedPassword: studentHash, Role: domain.RoleStudent, CreatedAt: now, UpdatedAt: now},
 	}
 
 	userRepo := repo.NewMemoryUserRepository(users)
