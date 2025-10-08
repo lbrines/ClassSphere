@@ -1,29 +1,21 @@
 package shared
 
 import (
-	"context"
-	"log/slog"
+	"log"
 	"os"
 	"sync"
 )
 
 var (
-	logger     *slog.Logger
+	logger     *log.Logger
 	loggerOnce sync.Once
 )
 
-// Logger returns a shared structured logger configured for the current environment.
-func Logger() *slog.Logger {
+// Logger returns a shared logger configured for the current environment.
+// TODO: Upgrade to log/slog when Go 1.21+ is available
+func Logger() *log.Logger {
 	loggerOnce.Do(func() {
-		handler := slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
-			Level: slog.LevelInfo,
-		})
-		logger = slog.New(handler)
+		logger = log.New(os.Stdout, "classsphere: ", log.LstdFlags|log.Lshortfile)
 	})
 	return logger
-}
-
-// WithContext enriches a logger with the provided context.
-func WithContext(ctx context.Context) *slog.Logger {
-	return Logger().With(slog.Any("context", ctx.Value("request_id")))
 }

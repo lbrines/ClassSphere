@@ -1,6 +1,6 @@
 module github.com/lbrines/classsphere
 
-go 1.18
+go 1.22
 
 require (
 	github.com/alicebob/miniredis/v2 v2.35.0
