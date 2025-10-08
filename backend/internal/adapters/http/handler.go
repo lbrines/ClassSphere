@@ -10,6 +10,7 @@ import (
 
 	"github.com/lbrines/classsphere/internal/app"
 	"github.com/lbrines/classsphere/internal/domain"
+	"github.com/lbrines/classsphere/internal/ports"
 	"github.com/lbrines/classsphere/internal/shared"
 )
 
@@ -20,15 +21,17 @@ type Handler struct {
 	classroomService *app.ClassroomService
 	notificationHub  *app.NotificationHub
 	searchService    *app.SearchService
+	cache            ports.Cache
 }
 
 // New creates an Echo engine configured with routes and middleware.
-func New(authService *app.AuthService, userService *app.UserService, classroomService *app.ClassroomService, notificationHub *app.NotificationHub, cfg shared.Config) *echo.Echo {
+func New(authService *app.AuthService, userService *app.UserService, classroomService *app.ClassroomService, notificationHub *app.NotificationHub, cache ports.Cache, cfg shared.Config) *echo.Echo {
 	h := &Handler{
 		authService:      authService,
 		userService:      userService,
 		classroomService: classroomService,
 		notificationHub:  notificationHub,
+		cache:            cache,
 	}
 
 	e := echo.New()
@@ -43,7 +46,7 @@ func New(authService *app.AuthService, userService *app.UserService, classroomSe
 	ConfigureRateLimiting(e)             // Rate limiting (DoS protection)
 	e.Use(middleware.Secure())           // Security headers
 
-	e.GET("/health", h.health)
+	e.GET("/health", h.healthDetailed)
 
 	api := e.Group("/api/v1")
 	api.POST("/auth/login", h.login, ApplyLoginRateLimit()) // Stricter rate limit for auth
@@ -78,13 +81,14 @@ func New(authService *app.AuthService, userService *app.UserService, classroomSe
 
 // NewWithSSE creates an Echo engine with SSE for notifications.
 // This is a helper for testing that uses SSE instead of WebSocket.
-func NewWithSSE(authService *app.AuthService, userService *app.UserService, classroomService *app.ClassroomService, notificationHub *app.NotificationHub, searchService *app.SearchService, cfg shared.Config) *echo.Echo {
+func NewWithSSE(authService *app.AuthService, userService *app.UserService, classroomService *app.ClassroomService, notificationHub *app.NotificationHub, searchService *app.SearchService, cache ports.Cache, cfg shared.Config) *echo.Echo {
 	h := &Handler{
 		authService:      authService,
 		userService:      userService,
 		classroomService: classroomService,
 		notificationHub:  notificationHub,
 		searchService:    searchService,
+		cache:            cache,
 	}
 
 	e := echo.New()
@@ -99,7 +103,7 @@ func NewWithSSE(authService *app.AuthService, userService *app.UserService, clas
 	ConfigureRateLimiting(e)             // Rate limiting (DoS protection)
 	e.Use(middleware.Secure())           // Security headers
 
-	e.GET("/health", h.health)
+	e.GET("/health", h.healthDetailed)
 
 	api := e.Group("/api/v1")
 	api.POST("/auth/login", h.login, ApplyLoginRateLimit()) // Stricter rate limit for auth
@@ -133,13 +137,14 @@ func NewWithSSE(authService *app.AuthService, userService *app.UserService, clas
 
 // NewWithSearch creates an Echo engine with search service.
 // This is a helper for testing that includes SearchService.
-func NewWithSearch(authService *app.AuthService, userService *app.UserService, classroomService *app.ClassroomService, notificationHub *app.NotificationHub, searchService *app.SearchService, cfg shared.Config) *echo.Echo {
+func NewWithSearch(authService *app.AuthService, userService *app.UserService, classroomService *app.ClassroomService, notificationHub *app.NotificationHub, searchService *app.SearchService, cache ports.Cache, cfg shared.Config) *echo.Echo {
 	h := &Handler{
 		authService:      authService,
 		userService:      userService,
 		classroomService: classroomService,
 		notificationHub:  notificationHub,
 		searchService:    searchService,
+		cache:            cache,
 	}
 
 	e := echo.New()
@@ -154,7 +159,7 @@ func NewWithSearch(authService *app.AuthService, userService *app.UserService, c
 	ConfigureRateLimiting(e)             // Rate limiting (DoS protection)
 	e.Use(middleware.Secure())           // Security headers
 
-	e.GET("/health", h.health)
+	e.GET("/health", h.healthDetailed)
 
 	api := e.Group("/api/v1")
 	api.POST("/auth/login", h.login, ApplyLoginRateLimit()) // Stricter rate limit for auth

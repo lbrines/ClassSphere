@@ -1,6 +1,9 @@
 package ports
 
-import "context"
+import (
+	"context"
+	"errors"
+)
 
 // Cache outlines simple cache operations required by the application.
 type Cache interface {
@@ -10,3 +13,8 @@ type Cache interface {
 	Ping(ctx context.Context) error
 	Close() error
 }
+
+// Cache errors
+var (
+	ErrCacheUnavailable = errors.New("cache unavailable")
+)

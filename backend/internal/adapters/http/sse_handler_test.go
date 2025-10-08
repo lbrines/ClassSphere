@@ -28,9 +28,9 @@ import (
 func TestSSEHandler_Unauthorized_NoToken(t *testing.T) {
 	// GIVEN: SSE endpoint requiring JWT authentication
 	hub := app.NewNotificationHub()
-	authService, userService, _, classroomService := newTestServicesSSE(t)
+	authService, userService, cache, classroomService := newTestServicesSSE(t)
 	
-	e := httpadapter.NewWithSSE(authService, userService, classroomService, hub, nil, newTestConfig())
+	e := httpadapter.NewWithSSE(authService, userService, classroomService, hub, nil, cache, newTestConfig())
 	server := httptest.NewServer(e)
 	defer server.Close()
 	
@@ -46,9 +46,9 @@ func TestSSEHandler_Unauthorized_NoToken(t *testing.T) {
 func TestSSEHandler_Unauthorized_InvalidToken(t *testing.T) {
 	// GIVEN: SSE endpoint with invalid JWT
 	hub := app.NewNotificationHub()
-	authService, userService, _, classroomService := newTestServicesSSE(t)
+	authService, userService, cache, classroomService := newTestServicesSSE(t)
 	
-	e := httpadapter.NewWithSSE(authService, userService, classroomService, hub, nil, newTestConfig())
+	e := httpadapter.NewWithSSE(authService, userService, classroomService, hub, nil, cache, newTestConfig())
 	server := httptest.NewServer(e)
 	defer server.Close()
 	
@@ -67,14 +67,14 @@ func TestSSEHandler_Unauthorized_InvalidToken(t *testing.T) {
 func TestSSEHandler_Authorized_ValidToken(t *testing.T) {
 	// GIVEN: SSE endpoint with valid JWT
 	hub := app.NewNotificationHub()
-	authService, userService, _, classroomService := newTestServicesSSE(t)
+	authService, userService, cache, classroomService := newTestServicesSSE(t)
 	
 	// Create valid token for test user
 	ctx := context.Background()
 	loginResult, err := authService.LoginWithPassword(ctx, "student@classsphere.edu", "student123")
 	require.NoError(t, err)
 	
-	e := httpadapter.NewWithSSE(authService, userService, classroomService, hub, nil, newTestConfig())
+	e := httpadapter.NewWithSSE(authService, userService, classroomService, hub, nil, cache, newTestConfig())
 	server := httptest.NewServer(e)
 	defer server.Close()
 	
@@ -99,14 +99,14 @@ func TestSSEHandler_Authorized_ValidToken(t *testing.T) {
 func TestSSEHandler_ReceivesNotifications(t *testing.T) {
 	// GIVEN: SSE connection established
 	hub := app.NewNotificationHub()
-	authService, userService, _, classroomService := newTestServicesSSE(t)
+	authService, userService, cache, classroomService := newTestServicesSSE(t)
 	
 	// Login to get token
 	ctx := context.Background()
 	loginResult, err := authService.LoginWithPassword(ctx, "student@classsphere.edu", "student123")
 	require.NoError(t, err)
 	
-	e := httpadapter.NewWithSSE(authService, userService, classroomService, hub, nil, newTestConfig())
+	e := httpadapter.NewWithSSE(authService, userService, classroomService, hub, nil, cache, newTestConfig())
 	server := httptest.NewServer(e)
 	defer server.Close()
 	
@@ -170,14 +170,14 @@ func TestSSEHandler_ReceivesNotifications(t *testing.T) {
 func TestSSEHandler_KeepAliveMessages(t *testing.T) {
 	// GIVEN: SSE connection established
 	hub := app.NewNotificationHub()
-	authService, userService, _, classroomService := newTestServicesSSE(t)
+	authService, userService, cache, classroomService := newTestServicesSSE(t)
 	
 	// Login
 	ctx := context.Background()
 	loginResult, err := authService.LoginWithPassword(ctx, "student@classsphere.edu", "student123")
 	require.NoError(t, err)
 	
-	e := httpadapter.NewWithSSE(authService, userService, classroomService, hub, nil, newTestConfig())
+	e := httpadapter.NewWithSSE(authService, userService, classroomService, hub, nil, cache, newTestConfig())
 	server := httptest.NewServer(e)
 	defer server.Close()
 	
@@ -226,12 +226,12 @@ func TestSSEHandler_KeepAliveMessages(t *testing.T) {
 func TestSSEHandler_ClientDisconnect(t *testing.T) {
 	// GIVEN: SSE connection established
 	hub := app.NewNotificationHub()
-	authService, userService, _, classroomService := newTestServicesSSE(t)
+	authService, userService, cache, classroomService := newTestServicesSSE(t)
 	
 	loginResult, err := authService.LoginWithPassword(context.Background(), "student@classsphere.edu", "student123")
 	require.NoError(t, err)
 	
-	e := httpadapter.NewWithSSE(authService, userService, classroomService, hub, nil, newTestConfig())
+	e := httpadapter.NewWithSSE(authService, userService, classroomService, hub, nil, cache, newTestConfig())
 	server := httptest.NewServer(e)
 	defer server.Close()
 	
@@ -264,9 +264,9 @@ func TestSSEHandler_ClientDisconnect(t *testing.T) {
 func TestSSEHandler_MultipleClients(t *testing.T) {
 	// GIVEN: Multiple users connected via SSE
 	hub := app.NewNotificationHub()
-	authService, userService, _, classroomService := newTestServicesSSE(t)
+	authService, userService, cache, classroomService := newTestServicesSSE(t)
 	
-	e := httpadapter.NewWithSSE(authService, userService, classroomService, hub, nil, newTestConfig())
+	e := httpadapter.NewWithSSE(authService, userService, classroomService, hub, nil, cache, newTestConfig())
 	server := httptest.NewServer(e)
 	defer server.Close()
 	
