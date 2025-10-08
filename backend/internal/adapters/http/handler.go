@@ -23,7 +23,7 @@ type Handler struct {
 }
 
 // New creates an Echo engine configured with routes and middleware.
-func New(authService *app.AuthService, userService *app.UserService, classroomService *app.ClassroomService, notificationHub *app.NotificationHub) *echo.Echo {
+func New(authService *app.AuthService, userService *app.UserService, classroomService *app.ClassroomService, notificationHub *app.NotificationHub, cfg shared.Config) *echo.Echo {
 	h := &Handler{
 		authService:      authService,
 		userService:      userService,
@@ -38,7 +38,7 @@ func New(authService *app.AuthService, userService *app.UserService, classroomSe
 	e.Use(middleware.Recover())          // Recover from panics
 	e.Use(middleware.RequestID())        // Generate request ID for tracing
 	e.Use(ErrorHandlerMiddleware())      // Centralized error handling
-	e.Use(middleware.CORS())             // CORS headers
+	ConfigureCORS(e, cfg)                // CORS headers (restricted origins)
 	e.Use(middleware.Secure())           // Security headers
 
 	e.GET("/health", h.health)
@@ -76,7 +76,7 @@ func New(authService *app.AuthService, userService *app.UserService, classroomSe
 
 // NewWithSSE creates an Echo engine with SSE for notifications.
 // This is a helper for testing that uses SSE instead of WebSocket.
-func NewWithSSE(authService *app.AuthService, userService *app.UserService, classroomService *app.ClassroomService, notificationHub *app.NotificationHub, searchService *app.SearchService) *echo.Echo {
+func NewWithSSE(authService *app.AuthService, userService *app.UserService, classroomService *app.ClassroomService, notificationHub *app.NotificationHub, searchService *app.SearchService, cfg shared.Config) *echo.Echo {
 	h := &Handler{
 		authService:      authService,
 		userService:      userService,
@@ -92,7 +92,7 @@ func NewWithSSE(authService *app.AuthService, userService *app.UserService, clas
 	e.Use(middleware.Recover())          // Recover from panics
 	e.Use(middleware.RequestID())        // Generate request ID for tracing
 	e.Use(ErrorHandlerMiddleware())      // Centralized error handling
-	e.Use(middleware.CORS())             // CORS headers
+	ConfigureCORS(e, cfg)                // CORS headers (restricted origins)
 	e.Use(middleware.Secure())           // Security headers
 
 	e.GET("/health", h.health)
@@ -129,7 +129,7 @@ func NewWithSSE(authService *app.AuthService, userService *app.UserService, clas
 
 // NewWithSearch creates an Echo engine with search service.
 // This is a helper for testing that includes SearchService.
-func NewWithSearch(authService *app.AuthService, userService *app.UserService, classroomService *app.ClassroomService, notificationHub *app.NotificationHub, searchService *app.SearchService) *echo.Echo {
+func NewWithSearch(authService *app.AuthService, userService *app.UserService, classroomService *app.ClassroomService, notificationHub *app.NotificationHub, searchService *app.SearchService, cfg shared.Config) *echo.Echo {
 	h := &Handler{
 		authService:      authService,
 		userService:      userService,
@@ -145,7 +145,7 @@ func NewWithSearch(authService *app.AuthService, userService *app.UserService, c
 	e.Use(middleware.Recover())          // Recover from panics
 	e.Use(middleware.RequestID())        // Generate request ID for tracing
 	e.Use(ErrorHandlerMiddleware())      // Centralized error handling
-	e.Use(middleware.CORS())             // CORS headers
+	ConfigureCORS(e, cfg)                // CORS headers (restricted origins)
 	e.Use(middleware.Secure())           // Security headers
 
 	e.GET("/health", h.health)

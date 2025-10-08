@@ -111,7 +111,7 @@ func initialize(ctx context.Context) (application, func(), error) {
 	// Initialize search service with Google Classroom repository if available
 	searchService := initializeSearchService(classroomProviders, cacheAdapter, cfg, logger)
 
-	server := httpadapter.NewWithSearch(authService, userService, classroomService, notificationHub, searchService)
+	server := httpadapter.NewWithSearch(authService, userService, classroomService, notificationHub, searchService, cfg)
 
 	cleanup := func() {
 		_ = cacheAdapter.Close()
