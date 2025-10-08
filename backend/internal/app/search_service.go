@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"log/slog"
 	"strings"
 
 	"github.com/lbrines/classsphere/internal/domain"
@@ -285,12 +286,87 @@ func (s *SearchService) searchAnnouncements(query domain.SearchQuery) []domain.S
 	return sortByRelevance(results)
 }
 
+// RBAC Permission Matrix for Search
+// Defines which roles can see which entity types in search results
+var searchPermissions = map[domain.Role]map[domain.SearchEntity]bool{
+	domain.RoleAdmin: {
+		domain.SearchEntityStudent:      true,  // Admins see everything
+		domain.SearchEntityTeacher:      true,
+		domain.SearchEntityCourse:       true,
+		domain.SearchEntityAssignment:   true,
+		domain.SearchEntityAnnouncement: true,
+	},
+	domain.RoleCoordinator: {
+		domain.SearchEntityStudent:      false, // Privacy: coordinators don't see student details
+		domain.SearchEntityTeacher:      true,  // Can see faculty
+		domain.SearchEntityCourse:       true,  // Can see courses
+		domain.SearchEntityAssignment:   true,  // Can see assignments
+		domain.SearchEntityAnnouncement: true,  // Can see announcements
+	},
+	domain.RoleTeacher: {
+		domain.SearchEntityStudent:      true,  // Teachers see their students
+		domain.SearchEntityTeacher:      true,  // Can see colleagues
+		domain.SearchEntityCourse:       true,  // Can see courses
+		domain.SearchEntityAssignment:   true,  // Can see assignments
+		domain.SearchEntityAnnouncement: true,  // Can see announcements
+	},
+	domain.RoleStudent: {
+		domain.SearchEntityStudent:      false, // Privacy: students don't see other students
+		domain.SearchEntityTeacher:      false, // Privacy: students don't see teacher directory
+		domain.SearchEntityCourse:       true,  // Can see available courses
+		domain.SearchEntityAssignment:   true,  // Can see their assignments
+		domain.SearchEntityAnnouncement: true,  // Can see announcements
+	},
+}
+
 // filterByRole filters results based on user role permissions.
+// Implements RBAC (Role-Based Access Control) to prevent information disclosure.
 func (s *SearchService) filterByRole(results []domain.SearchResult, role domain.Role) []domain.SearchResult {
-	// Role-based access control
-	// For now, all roles can see all results
-	// In production, implement proper RBAC filtering
-	return results
+	// Check if role exists in permission matrix
+	_, exists := searchPermissions[role]
+	if !exists {
+		// If role not found in matrix, deny all (secure by default)
+		slog.Warn("search RBAC: unknown role denied access",
+			"role", role,
+			"results_count", len(results))
+		return []domain.SearchResult{}
+	}
+
+	// Filter results based on permissions
+	filtered := make([]domain.SearchResult, 0, len(results))
+	deniedCount := 0
+	
+	for _, result := range results {
+		// Check if this role can see this entity type
+		if s.canAccess(result.Type, role) {
+			filtered = append(filtered, result)
+		} else {
+			deniedCount++
+		}
+	}
+
+	// Log if any results were filtered for security audit
+	if deniedCount > 0 {
+		slog.Debug("search RBAC: results filtered by role",
+			"role", role,
+			"original_count", len(results),
+			"filtered_count", len(filtered),
+			"denied_count", deniedCount)
+	}
+
+	return filtered
+}
+
+// canAccess checks if a role can access a specific entity type in search.
+// Returns false if the role or entity type is not found (secure by default).
+func (s *SearchService) canAccess(entityType domain.SearchEntity, role domain.Role) bool {
+	permissions, roleExists := searchPermissions[role]
+	if !roleExists {
+		return false
+	}
+	
+	allowed, entityExists := permissions[entityType]
+	return entityExists && allowed
 }
 
 // sortByRelevance sorts results by relevance score (descending).
