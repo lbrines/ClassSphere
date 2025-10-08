@@ -124,7 +124,7 @@ func TestLoadConfig_Defaults(t *testing.T) {
 	require.NoError(t, err)
 	
 	// Verify defaults
-	require.Equal(t, "development", cfg.AppEnv)
+	require.Equal(t, "development", cfg.Environment)
 	require.Equal(t, "localhost:6379", cfg.RedisAddr)
 	require.Equal(t, "classsphere", cfg.JWTIssuer)
 	require.Equal(t, 8080, cfg.ServerPort)
