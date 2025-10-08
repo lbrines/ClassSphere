@@ -1,21 +1,124 @@
+# ========================================
 # Backend .dockerignore
-*.out
-*.test
-coverage*.html
-coverage*.out
-*.log
+# Following CONTAINERS_BEST_PRACTICES.md
+# ========================================
+
+# ========================================
+# Dependencies
+# ========================================
+node_modules/
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+env/
+
+# ========================================
+# Git
+# ========================================
 .git/
+.gitignore
+.gitattributes
+.github/
+
+# ========================================
+# IDE & Editors
+# ========================================
 .vscode/
 .idea/
-node_modules/
-frontend/
-workspace/
-.devcontainer/
-*.md
-tests/integration/
-tests/e2e/
-.env*
 *.swp
 *.swo
 *~
+.DS_Store
 
+# ========================================
+# Testing
+# ========================================
+.pytest_cache/
+.coverage
+coverage/
+htmlcov/
+.tox/
+*.test
+test-results/
+playwright-report/
+*.out
+coverage*.html
+coverage*.out
+app-coverage.out
+cmd-coverage*.out
+coverage-*.out
+google-coverage.out
+
+# ========================================
+# Build Artifacts
+# ========================================
+dist/
+build/
+*.egg-info/
+.next/
+.angular/
+out/
+tmp/
+classsphere-backend
+
+# ========================================
+# Documentation
+# ========================================
+*.md
+!README.md
+docs/
+LICENSE
+workspace/
+
+# ========================================
+# Logs
+# ========================================
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+backend.log
+frontend.log
+
+# ========================================
+# Environment & Secrets
+# ========================================
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+secrets/
+
+# ========================================
+# CI/CD
+# ========================================
+.gitlab-ci.yml
+.travis.yml
+Jenkinsfile
+
+# ========================================
+# Docker
+# ========================================
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+
+# ========================================
+# Other Services
+# ========================================
+frontend/
+.devcontainer/frontend/
+.devcontainer/workspace/
+.devcontainer/docker-compose.yml
+.devcontainer/devcontainer.json
+.devcontainer/scripts/
+tests/integration/
+tests/e2e/
+
+# ========================================
+# Exception: Keep backend entrypoint
+# ========================================
+!.devcontainer/backend/entrypoint.sh

@@ -1,15 +1,109 @@
+# ========================================
 # Workspace .dockerignore
-.git/
+# Following CONTAINERS_BEST_PRACTICES.md
+# ========================================
+
+# ========================================
+# Dependencies
+# ========================================
 node_modules/
-dist/
-coverage/
-*.log
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+env/
+vendor/
+
+# ========================================
+# Git
+# ========================================
+.git/
+.gitignore
+.gitattributes
+.github/
+
+# ========================================
+# IDE & Editors
+# ========================================
 .vscode/
 .idea/
-*.out
-*.test
-.env*
 *.swp
 *.swo
 *~
+.DS_Store
 
+# ========================================
+# Testing
+# ========================================
+.pytest_cache/
+.coverage
+coverage/
+htmlcov/
+.tox/
+*.test
+test-results/
+playwright-report/
+*.out
+coverage*.html
+
+# ========================================
+# Build Artifacts
+# ========================================
+dist/
+build/
+*.egg-info/
+.next/
+.angular/
+out/
+tmp/
+backend/classsphere-backend
+frontend/dist/
+
+# ========================================
+# Documentation (Keep only essential)
+# ========================================
+*.md
+!README.md
+!.devcontainer/*.md
+LICENSE
+
+# ========================================
+# Logs
+# ========================================
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+
+# ========================================
+# Environment & Secrets
+# ========================================
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+secrets/
+
+# ========================================
+# CI/CD
+# ========================================
+.gitlab-ci.yml
+.travis.yml
+Jenkinsfile
+
+# ========================================
+# Docker
+# ========================================
+Dockerfile*
+docker-compose*.yml
+
+# ========================================
+# Large Files (Keep only Go tarball)
+# ========================================
+!workspace/tools/go1.24.7.linux-amd64.tar.gz
+workspace/tools/*.tar.gz
+!workspace/tools/go1.24.7.linux-amd64.tar.gz
+workspace/tools/go1.*/
+!workspace/tools/go1.24.7/

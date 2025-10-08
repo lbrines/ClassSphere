@@ -1,21 +1,106 @@
+# ========================================
 # Frontend .dockerignore
+# Following CONTAINERS_BEST_PRACTICES.md
+# ========================================
+
+# ========================================
+# Dependencies
+# ========================================
 node_modules/
-dist/
-coverage/
-.angular/
-*.log
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+env/
+
+# ========================================
+# Git
+# ========================================
 .git/
+.gitignore
+.gitattributes
+.github/
+
+# ========================================
+# IDE & Editors
+# ========================================
 .vscode/
 .idea/
-backend/
-workspace/
-.devcontainer/
-*.md
-e2e/
-test-results/
-playwright-report/
-.env*
 *.swp
 *.swo
 *~
+.DS_Store
 
+# ========================================
+# Testing
+# ========================================
+.pytest_cache/
+.coverage
+coverage/
+htmlcov/
+.tox/
+*.test
+test-results/
+playwright-report/
+e2e/
+karma.conf.js
+
+# ========================================
+# Build Artifacts
+# ========================================
+dist/
+build/
+*.egg-info/
+.next/
+.angular/
+out/
+tmp/
+
+# ========================================
+# Documentation
+# ========================================
+*.md
+!README.md
+docs/
+LICENSE
+
+# ========================================
+# Logs
+# ========================================
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+frontend.log
+
+# ========================================
+# Environment & Secrets
+# ========================================
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+secrets/
+
+# ========================================
+# CI/CD
+# ========================================
+.gitlab-ci.yml
+.travis.yml
+Jenkinsfile
+
+# ========================================
+# Docker
+# ========================================
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+
+# ========================================
+# Other Services
+# ========================================
+backend/
+workspace/
+.devcontainer/
