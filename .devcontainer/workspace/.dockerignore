@@ -1,0 +1,15 @@
+# Workspace .dockerignore
+.git/
+node_modules/
+dist/
+coverage/
+*.log
+.vscode/
+.idea/
+*.out
+*.test
+.env*
+*.swp
+*.swo
+*~
+
