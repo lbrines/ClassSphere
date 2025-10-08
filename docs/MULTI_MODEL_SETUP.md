@@ -1,51 +1,54 @@
-# Multi-Model Contributor Setup
+# Multi-Tool Contributor Setup
 
-**ClassSphere - Configuración para múltiples modelos contribuidores**
+**ClassSphere - Configuración para múltiples herramientas contribuidoras**
 
 ## 🎯 Objetivo
 
-Configurar Git para que cada modelo de IA aparezca como un contribuidor separado en el dashboard de GitHub/GitLab.
+Configurar Git para que cada herramienta de desarrollo aparezca como un contribuidor separado en el dashboard de GitHub/GitLab.
 
 ## 🔧 Scripts Disponibles
 
-### 1. Cambio entre modelos
+### 1. Cambio entre herramientas
 ```bash
-./scripts/switch-model.sh <modelo>
+./scripts/switch-model.sh <herramienta>
 ```
 
-**Modelos disponibles:**
+**Herramientas disponibles:**
 - `claude` - Claude (claude@classsphere.ai)
-- `gpt4` - GPT-4 (gpt4@classsphere.ai)  
-- `gemini` - Gemini (gemini@classsphere.ai)
+- `codex` - Codex (codex@classsphere.ai)  
+- `cursor` - Cursor (cursor@classsphere.ai)
+- `windsurf` - Windsurf (windsurf@classsphere.ai)
 - `ibrines` - Leopoldo Brines (leopoldo.brines@leobrines.com)
 
-### 2. Commit con modelo específico
+### 2. Commit con herramienta específica
 ```bash
-./scripts/commit-as-model.sh <modelo> <mensaje>
+./scripts/commit-as-model.sh <herramienta> <mensaje>
 ```
 
 **Ejemplos:**
 ```bash
 ./scripts/commit-as-model.sh claude "feat: add authentication system"
-./scripts/commit-as-model.sh gpt4 "fix: resolve dashboard bug"
-./scripts/commit-as-model.sh gemini "test: add integration tests"
+./scripts/commit-as-model.sh codex "fix: resolve dashboard bug"
+./scripts/commit-as-model.sh cursor "test: add integration tests"
+./scripts/commit-as-model.sh windsurf "docs: update API documentation"
 ```
 
 ## 📊 Resultado en Dashboard
 
-Cada modelo aparecerá como contribuidor separado:
-- **Commits individuales** por modelo
+Cada herramienta aparecerá como contribuidor separado:
+- **Commits individuales** por herramienta
 - **Líneas de código** atribuidas correctamente  
 - **Historial de contribuciones** separado
 - **Estadísticas** independientes
 
 ## 🎯 Asignación de Responsabilidades
 
-| Modelo | Responsabilidad | Ejemplo de Commits |
-|--------|----------------|-------------------|
+| Herramienta | Responsabilidad | Ejemplo de Commits |
+|-------------|----------------|-------------------|
 | **Claude** | Análisis y arquitectura | `feat(arch): design hexagonal architecture` |
-| **GPT-4** | Implementación de features | `feat(auth): implement JWT authentication` |
-| **Gemini** | Testing y documentación | `test(api): add integration tests` |
+| **Codex** | Generación de código | `feat(auth): implement JWT authentication` |
+| **Cursor** | IDE inteligente | `fix(ui): resolve component issues` |
+| **Windsurf** | Desarrollo colaborativo | `docs: update API documentation` |
 | **Ibrines** | Code review y management | `chore: update dependencies` |
 
 ## ✅ Verificación

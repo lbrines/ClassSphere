@@ -7,10 +7,11 @@ MODEL="$1"
 if [ -z "$MODEL" ]; then
     echo "❌ Uso: $0 <modelo>"
     echo ""
-    echo "Modelos disponibles:"
+    echo "Herramientas disponibles:"
     echo "   claude  - Claude (claude@classsphere.ai)"
-    echo "   gpt4    - GPT-4 (gpt4@classsphere.ai)"
-    echo "   gemini  - Gemini (gemini@classsphere.ai)"
+    echo "   codex   - Codex (codex@classsphere.ai)"
+    echo "   cursor  - Cursor (cursor@classsphere.ai)"
+    echo "   windsurf - Windsurf (windsurf@classsphere.ai)"
     echo "   ibrines - Leopoldo Brines (leopoldo.brines@leobrines.com)"
     echo ""
     echo "Ejemplo: $0 claude"
@@ -23,15 +24,20 @@ case $MODEL in
         git config user.email "claude@classsphere.ai"
         echo "🤖 Cambiado a Claude (claude@classsphere.ai)"
         ;;
-    "gpt4")
-        git config user.name "GPT-4"
-        git config user.email "gpt4@classsphere.ai"
-        echo "🤖 Cambiado a GPT-4 (gpt4@classsphere.ai)"
+    "codex")
+        git config user.name "Codex"
+        git config user.email "codex@classsphere.ai"
+        echo "🤖 Cambiado a Codex (codex@classsphere.ai)"
         ;;
-    "gemini")
-        git config user.name "Gemini"
-        git config user.email "gemini@classsphere.ai"
-        echo "🤖 Cambiado a Gemini (gemini@classsphere.ai)"
+    "cursor")
+        git config user.name "Cursor"
+        git config user.email "cursor@classsphere.ai"
+        echo "🤖 Cambiado a Cursor (cursor@classsphere.ai)"
+        ;;
+    "windsurf")
+        git config user.name "Windsurf"
+        git config user.email "windsurf@classsphere.ai"
+        echo "🤖 Cambiado a Windsurf (windsurf@classsphere.ai)"
         ;;
     "ibrines")
         git config user.name "Leopoldo Brines"
@@ -39,8 +45,8 @@ case $MODEL in
         echo "👨‍💻 Cambiado a Leopoldo Brines (leopoldo.brines@leobrines.com)"
         ;;
     *)
-        echo "❌ Modelo no reconocido: $MODEL"
-        echo "Modelos disponibles: claude, gpt4, gemini, ibrines"
+        echo "❌ Herramienta no reconocida: $MODEL"
+        echo "Herramientas disponibles: claude, codex, cursor, windsurf, ibrines"
         exit 1
         ;;
 esac
