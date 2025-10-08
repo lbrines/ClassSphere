@@ -34,10 +34,12 @@ func New(authService *app.AuthService, userService *app.UserService, classroomSe
 	e := echo.New()
 	e.HideBanner = true
 
-	e.Use(middleware.Recover())
-	e.Use(middleware.CORS())
-	e.Use(middleware.RequestID())
-	e.Use(middleware.Secure())
+	// Middleware stack (order matters)
+	e.Use(middleware.Recover())          // Recover from panics
+	e.Use(middleware.RequestID())        // Generate request ID for tracing
+	e.Use(ErrorHandlerMiddleware())      // Centralized error handling
+	e.Use(middleware.CORS())             // CORS headers
+	e.Use(middleware.Secure())           // Security headers
 
 	e.GET("/health", h.health)
 
@@ -60,11 +62,65 @@ func New(authService *app.AuthService, userService *app.UserService, classroomSe
 	protected.GET("/dashboard/teacher", h.dashboardFor(domain.RoleTeacher), RequireRole(domain.RoleTeacher))
 	protected.GET("/dashboard/student", h.dashboardFor(domain.RoleStudent), RequireRole(domain.RoleStudent))
 
-	// WebSocket endpoint (protected - requires JWT authentication)
-	protected.GET("/ws/notifications", h.handleWebSocket)
+	// Server-Sent Events endpoint for notifications (protected - requires JWT authentication)
+	// Replaces WebSocket with simpler SSE for unidirectional server-to-client communication
+	protected.GET("/notifications/stream", h.handleSSE)
 
 	// Search endpoint
 	if h.searchService != nil {
+		protected.GET("/search", h.handleSearch)
+	}
+
+	return e
+}
+
+// NewWithSSE creates an Echo engine with SSE for notifications.
+// This is a helper for testing that uses SSE instead of WebSocket.
+func NewWithSSE(authService *app.AuthService, userService *app.UserService, classroomService *app.ClassroomService, notificationHub *app.NotificationHub, searchService *app.SearchService) *echo.Echo {
+	h := &Handler{
+		authService:      authService,
+		userService:      userService,
+		classroomService: classroomService,
+		notificationHub:  notificationHub,
+		searchService:    searchService,
+	}
+
+	e := echo.New()
+	e.HideBanner = true
+
+	// Middleware stack (order matters)
+	e.Use(middleware.Recover())          // Recover from panics
+	e.Use(middleware.RequestID())        // Generate request ID for tracing
+	e.Use(ErrorHandlerMiddleware())      // Centralized error handling
+	e.Use(middleware.CORS())             // CORS headers
+	e.Use(middleware.Secure())           // Security headers
+
+	e.GET("/health", h.health)
+
+	api := e.Group("/api/v1")
+	api.POST("/auth/login", h.login)
+	api.GET("/auth/oauth/google", h.oauthStart)
+	api.GET("/auth/oauth/callback", h.oauthCallback)
+
+	protected := api.Group("")
+	protected.Use(AuthMiddleware(authService))
+
+	protected.GET("/users/me", h.me)
+	protected.GET("/admin/ping", h.adminPing, RequireRole(domain.RoleAdmin))
+
+	protected.GET("/google/courses", h.listCourses)
+	protected.GET("/classroom/courses", h.listCourses)
+
+	protected.GET("/dashboard/admin", h.dashboardFor(domain.RoleAdmin), RequireRole(domain.RoleAdmin))
+	protected.GET("/dashboard/coordinator", h.dashboardFor(domain.RoleCoordinator), RequireRole(domain.RoleCoordinator))
+	protected.GET("/dashboard/teacher", h.dashboardFor(domain.RoleTeacher), RequireRole(domain.RoleTeacher))
+	protected.GET("/dashboard/student", h.dashboardFor(domain.RoleStudent), RequireRole(domain.RoleStudent))
+
+	// Server-Sent Events endpoint for notifications (protected)
+	protected.GET("/notifications/stream", h.handleSSE)
+
+	// Search endpoint
+	if searchService != nil {
 		protected.GET("/search", h.handleSearch)
 	}
 
@@ -85,10 +141,12 @@ func NewWithSearch(authService *app.AuthService, userService *app.UserService, c
 	e := echo.New()
 	e.HideBanner = true
 
-	e.Use(middleware.Recover())
-	e.Use(middleware.CORS())
-	e.Use(middleware.RequestID())
-	e.Use(middleware.Secure())
+	// Middleware stack (order matters)
+	e.Use(middleware.Recover())          // Recover from panics
+	e.Use(middleware.RequestID())        // Generate request ID for tracing
+	e.Use(ErrorHandlerMiddleware())      // Centralized error handling
+	e.Use(middleware.CORS())             // CORS headers
+	e.Use(middleware.Secure())           // Security headers
 
 	e.GET("/health", h.health)
 
@@ -111,8 +169,9 @@ func NewWithSearch(authService *app.AuthService, userService *app.UserService, c
 	protected.GET("/dashboard/teacher", h.dashboardFor(domain.RoleTeacher), RequireRole(domain.RoleTeacher))
 	protected.GET("/dashboard/student", h.dashboardFor(domain.RoleStudent), RequireRole(domain.RoleStudent))
 
-	// WebSocket endpoint (protected - requires JWT authentication)
-	protected.GET("/ws/notifications", h.handleWebSocket)
+	// Server-Sent Events endpoint for notifications (protected - requires JWT authentication)
+	// Replaces WebSocket with simpler SSE for unidirectional server-to-client communication
+	protected.GET("/notifications/stream", h.handleSSE)
 
 	// Search endpoint
 	protected.GET("/search", h.handleSearch)
@@ -129,12 +188,13 @@ func (h *Handler) health(c echo.Context) error {
 func (h *Handler) login(c echo.Context) error {
 	var req loginRequest
 	if err := c.Bind(&req); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "invalid request payload")
+		return ErrBadRequest("invalid request payload")
 	}
 	ctx := c.Request().Context()
 	result, err := h.authService.LoginWithPassword(ctx, req.Email, req.Password)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusUnauthorized, err.Error())
+		// Domain errors are handled by middleware
+		return err
 	}
 	return c.JSON(http.StatusOK, authResponse{
 		AccessToken: result.AccessToken,
@@ -147,7 +207,7 @@ func (h *Handler) oauthStart(c echo.Context) error {
 	ctx := c.Request().Context()
 	state, url, err := h.authService.StartOAuth(ctx)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		return ErrInternal("failed to start OAuth flow", err)
 	}
 	return c.JSON(http.StatusOK, map[string]string{
 		"state": state,
@@ -161,10 +221,8 @@ func (h *Handler) oauthCallback(c echo.Context) error {
 	ctx := c.Request().Context()
 	result, err := h.authService.CompleteOAuth(ctx, code, state)
 	if err != nil {
-		if err == shared.ErrUnauthorized {
-			return echo.NewHTTPError(http.StatusUnauthorized, err.Error())
-		}
-		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+		// Domain errors are handled by middleware
+		return err
 	}
 	return c.JSON(http.StatusOK, authResponse{
 		AccessToken: result.AccessToken,

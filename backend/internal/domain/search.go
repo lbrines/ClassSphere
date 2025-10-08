@@ -38,13 +38,18 @@ type SearchQuery struct {
 	Entities []SearchEntity // Which entities to search
 	Role     Role           // User role for filtering
 	UserID   string         // User ID for personalized results
-	Limit    int            // Max results per entity
+	Limit    int            // Max results per entity (page size)
+	Page     int            // Page number (1-indexed)
+	Offset   int            // Offset for pagination (calculated from Page and Limit)
 }
 
 // SearchResponse contains search results grouped by entity type.
 type SearchResponse struct {
-	Query   string                   `json:"query"`
-	Total   int                      `json:"total"`
-	Results map[SearchEntity][]SearchResult `json:"results"`
+	Query      string                           `json:"query"`
+	Total      int                              `json:"total"`       // Total results across all entities
+	TotalPages int                              `json:"totalPages"`  // Total pages based on limit
+	Page       int                              `json:"page"`        // Current page (1-indexed)
+	PageSize   int                              `json:"pageSize"`    // Results per page
+	Results    map[SearchEntity][]SearchResult `json:"results"`
 }
 

@@ -1,7 +1,7 @@
 import { inject, Injectable, OnDestroy } from '@angular/core';
 import { BehaviorSubject, Observable, Subject, takeUntil } from 'rxjs';
 
-import { WebSocketService } from './websocket.service';
+import { SSEWithAuthService } from './sse-with-auth.service';
 import { AppNotification, NotificationState, WebSocketMessage } from '../models/notification.model';
 import { environment } from '../../../environments/environment';
 
@@ -9,16 +9,18 @@ import { environment } from '../../../environments/environment';
  * NotificationService - Phase 3 Real-time Notifications
  * 
  * Features:
- * - Real-time notification reception via WebSocket
+ * - Real-time notification reception via Server-Sent Events (SSE)
  * - Notification state management
  * - Read/unread tracking
  * - Desktop notifications for high priority
  * - Sound alerts
  * - Filtering and search
+ * 
+ * Updated to use SSE with Authorization header support for secure authentication.
  */
 @Injectable({ providedIn: 'root' })
 export class NotificationService implements OnDestroy {
-  private readonly webSocketService = inject(WebSocketService);
+  private readonly sseService = inject(SSEWithAuthService);
   private readonly destroy$ = new Subject<void>();
 
   private readonly notificationsSubject = new BehaviorSubject<AppNotification[]>([]);
@@ -30,22 +32,30 @@ export class NotificationService implements OnDestroy {
   readonly connectionStatus$ = this.connectionStatusSubject.asObservable();
 
   /**
-   * Initialize notification service and WebSocket connection
+   * Initialize notification service and SSE connection
+   * @param token JWT token for authentication (required)
    */
-  initialize(): void {
-    // Use ws:// protocol for WebSocket (convert http to ws)
-    const wsUrl = environment.apiUrl.replace('http://', 'ws://').replace('https://', 'wss://') + '/ws/notifications';
-    this.webSocketService.connect(wsUrl);
+  async initialize(token: string): Promise<void> {
+    if (!token) {
+      console.error('SSE requires authentication token');
+      return;
+    }
 
-    // Subscribe to WebSocket messages
-    this.webSocketService.messages$
+    // Use SSE endpoint for notifications
+    const sseUrl = environment.apiUrl + '/notifications/stream';
+    
+    // Connect with Authorization header
+    await this.sseService.connect(sseUrl, token);
+
+    // Subscribe to SSE messages
+    this.sseService.messages$
       .pipe(takeUntil(this.destroy$))
       .subscribe((message: WebSocketMessage) => {
-        this.handleWebSocketMessage(message);
+        this.handleSSEMessage(message);
       });
 
     // Subscribe to connection status
-    this.webSocketService.connectionStatus$
+    this.sseService.connectionStatus$
       .pipe(takeUntil(this.destroy$))
       .subscribe((connected) => {
         this.connectionStatusSubject.next(connected);
@@ -142,15 +152,17 @@ export class NotificationService implements OnDestroy {
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
-    this.webSocketService.disconnect();
+    this.sseService.disconnect();
   }
 
   /**
-   * Handle incoming WebSocket messages
+   * Handle incoming SSE messages
    */
-  private handleWebSocketMessage(message: WebSocketMessage): void {
+  private handleSSEMessage(message: WebSocketMessage): void {
     if (message.type === 'notification' && message.data) {
       this.addNotification(message.data);
+    } else if (message.type === 'connected') {
+      console.log('SSE connection established:', message.data);
     }
   }
 

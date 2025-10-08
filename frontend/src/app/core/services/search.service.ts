@@ -35,20 +35,24 @@ export class SearchService {
   readonly searchState$ = this.searchStateSubject.asObservable();
 
   /**
-   * Perform multi-entity search with filters
+   * Perform multi-entity search with filters and pagination
    * 
    * @param query - Search query string
    * @param filters - Search filters (entityType, course, date range, etc.)
+   * @param page - Page number (1-indexed, default: 1)
+   * @param pageSize - Results per page (default: 10)
    * @returns Observable of SearchResponse
    */
-  search(query: string, filters: SearchFilters): Observable<SearchResponse> {
+  search(query: string, filters: SearchFilters, page: number = 1, pageSize: number = 10): Observable<SearchResponse> {
     // Update loading state
     this.updateState({ loading: true, query, filters, error: null });
 
-    // Build query parameters
+    // Build query parameters for backend API
     let params = new HttpParams()
       .set('q', query.trim())
-      .set('type', filters.entityType);
+      .set('entities', this.mapEntityTypeToEntities(filters.entityType))
+      .set('limit', pageSize.toString())
+      .set('page', page.toString());
 
     // Add optional filters
     if (filters.course) {
@@ -92,6 +96,25 @@ export class SearchService {
           }
         })
       );
+  }
+
+  /**
+   * Map frontend entity type to backend entities parameter
+   * Backend expects comma-separated entity types (e.g., "courses", "students,teachers")
+   */
+  private mapEntityTypeToEntities(entityType: string): string {
+    switch (entityType) {
+      case 'student':
+        return 'students';
+      case 'course':
+        return 'courses';
+      case 'assignment':
+        return 'assignments';
+      case 'all':
+        return 'students,teachers,courses,assignments,announcements';
+      default:
+        return 'courses'; // Safe default
+    }
   }
 
   /**

@@ -81,6 +81,12 @@ func (c *ClassroomService) Mode() string {
 	return c.mode
 }
 
+// Service returns the underlying Google Classroom service.
+// Returns nil if not in Google mode or service not initialized.
+func (c *ClassroomService) Service() *classroom.Service {
+	return c.service
+}
+
 // Snapshot returns an aggregated snapshot of classroom data for dashboards. It
 // falls back to curated datasets when the Google API is unavailable to keep the
 // experience consistent in local development.

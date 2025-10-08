@@ -107,7 +107,9 @@ func initialize(ctx context.Context) (application, func(), error) {
 	}
 
 	notificationHub := app.NewNotificationHub()
-	searchService := app.NewSearchService()
+	
+	// Initialize search service with Google Classroom repository if available
+	searchService := initializeSearchService(classroomProviders, cacheAdapter, cfg, logger)
 
 	server := httpadapter.NewWithSearch(authService, userService, classroomService, notificationHub, searchService)
 
@@ -239,4 +241,32 @@ func createSeedUsers() ([]domain.User, error) {
 			UpdatedAt:      time.Now(),
 		},
 	}, nil
+}
+
+// initializeSearchService creates the search service with Google Classroom repository if available.
+func initializeSearchService(providers []ports.ClassroomProvider, cache ports.Cache, cfg shared.Config, logger *slog.Logger) *app.SearchService {
+	// Try to get Google Classroom service from providers
+	var classroomService *googleadapter.ClassroomService
+	
+	for _, provider := range providers {
+		if gcs, ok := provider.(*googleadapter.ClassroomService); ok && gcs.Mode() == shared.IntegrationModeGoogle {
+			classroomService = gcs
+			break
+		}
+	}
+
+	// If Google Classroom is configured and available, use real repository
+	if classroomService != nil && cfg.ClassroomMode == shared.IntegrationModeGoogle {
+		logger.Info("initializing search service with Google Classroom repository",
+			slog.String("mode", shared.IntegrationModeGoogle))
+		
+		// Create classroom search repository
+		searchRepo := repo.NewClassroomSearchRepository(classroomService.Service(), cache)
+		return app.NewSearchServiceWithRepository(searchRepo, cache)
+	}
+
+	// Otherwise, use mock data
+	logger.Info("initializing search service with mock data",
+		slog.String("mode", cfg.ClassroomMode))
+	return app.NewSearchService()
 }

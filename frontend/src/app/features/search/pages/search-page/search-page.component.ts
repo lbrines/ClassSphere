@@ -103,6 +103,16 @@ export class SearchPageComponent implements OnInit, OnDestroy {
   onSearchTriggered(event: { query: string; filters: SearchFilters }): void {
     this.currentPage = 1; // Reset pagination on new search
     console.log('Search triggered:', event);
+    
+    // Execute search with pagination
+    this.searchService
+      .search(event.query, event.filters, this.currentPage, this.pageSize)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        error: (error) => {
+          console.error('Search failed:', error);
+        },
+      });
   }
 
   onSearchCleared(): void {
@@ -141,10 +151,10 @@ export class SearchPageComponent implements OnInit, OnDestroy {
     
     this.currentPage = page;
 
-    // Re-execute search with new page
+    // Re-execute search with new page and pagination params
     if (this.searchState.query) {
       this.searchService
-        .search(this.searchState.query, this.searchState.filters)
+        .search(this.searchState.query, this.searchState.filters, this.currentPage, this.pageSize)
         .pipe(takeUntil(this.destroy$))
         .subscribe({
           error: (error) => {

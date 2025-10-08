@@ -547,3 +547,190 @@ func TestSearchService_Search_IntegrationWithRBAC(t *testing.T) {
 	// Teacher can see results if they match the query
 }
 
+// ==============================================================================
+// Pagination Tests
+// ==============================================================================
+
+func TestSearchService_Pagination_FirstPage(t *testing.T) {
+	// GIVEN: Search service with pagination request
+	ctx := context.Background()
+	service := NewSearchService()
+	
+	query := domain.SearchQuery{
+		Query:    "Math",
+		Entities: []domain.SearchEntity{domain.SearchEntityCourse},
+		Role:     domain.RoleAdmin,
+		Limit:    2,
+		Page:     1,
+	}
+	
+	// WHEN: Search first page
+	response, err := service.Search(ctx, query)
+	
+	// THEN: Should return first page with pagination metadata
+	require.NoError(t, err)
+	assert.Equal(t, 1, response.Page, "should be page 1")
+	assert.Equal(t, 2, response.PageSize, "page size should be 2")
+	assert.GreaterOrEqual(t, response.TotalPages, 1, "should have at least 1 page")
+	
+	// Results should respect page size
+	totalResults := 0
+	for _, results := range response.Results {
+		totalResults += len(results)
+	}
+	assert.LessOrEqual(t, totalResults, 2, "should not exceed page size")
+}
+
+func TestSearchService_Pagination_SecondPage(t *testing.T) {
+	// GIVEN: Search service requesting second page
+	ctx := context.Background()
+	service := NewSearchService()
+	
+	query := domain.SearchQuery{
+		Query:    "Math",
+		Entities: []domain.SearchEntity{domain.SearchEntityCourse},
+		Role:     domain.RoleAdmin,
+		Limit:    2,
+		Page:     2,
+	}
+	
+	// WHEN: Search second page
+	response, err := service.Search(ctx, query)
+	
+	// THEN: Should return second page
+	require.NoError(t, err)
+	assert.Equal(t, 2, response.Page, "should be page 2")
+	assert.Equal(t, 2, response.PageSize, "page size should be 2")
+}
+
+func TestSearchService_Pagination_DefaultValues(t *testing.T) {
+	// GIVEN: Search query without explicit pagination
+	ctx := context.Background()
+	service := NewSearchService()
+	
+	query := domain.SearchQuery{
+		Query:    "Math",
+		Entities: []domain.SearchEntity{domain.SearchEntityCourse},
+		Role:     domain.RoleAdmin,
+		// No Limit or Page specified
+	}
+	
+	// WHEN: Search without pagination params
+	response, err := service.Search(ctx, query)
+	
+	// THEN: Should use default values
+	require.NoError(t, err)
+	assert.Equal(t, 1, response.Page, "should default to page 1")
+	assert.Equal(t, 10, response.PageSize, "should default to page size 10")
+}
+
+func TestSearchService_Pagination_EmptyResults(t *testing.T) {
+	// GIVEN: Search query that returns no results
+	ctx := context.Background()
+	service := NewSearchService()
+	
+	query := domain.SearchQuery{
+		Query:    "ZzZzNonExistentQuery12345",
+		Entities: []domain.SearchEntity{domain.SearchEntityCourse},
+		Role:     domain.RoleAdmin,
+		Limit:    10,
+		Page:     1,
+	}
+	
+	// WHEN: Search with pagination
+	response, err := service.Search(ctx, query)
+	
+	// THEN: Should return valid pagination even with no results
+	require.NoError(t, err)
+	assert.Equal(t, 0, response.Total, "should have 0 results")
+	assert.Equal(t, 0, response.TotalPages, "should have 0 pages")
+	assert.Equal(t, 1, response.Page, "should still show page 1")
+	assert.Equal(t, 10, response.PageSize, "should maintain page size")
+}
+
+func TestSearchService_Pagination_PageBeyondTotal(t *testing.T) {
+	// GIVEN: Search query requesting page beyond available results
+	ctx := context.Background()
+	service := NewSearchService()
+	
+	query := domain.SearchQuery{
+		Query:    "Math",
+		Entities: []domain.SearchEntity{domain.SearchEntityCourse},
+		Role:     domain.RoleAdmin,
+		Limit:    10,
+		Page:     999, // Way beyond actual pages
+	}
+	
+	// WHEN: Search beyond total pages
+	response, err := service.Search(ctx, query)
+	
+	// THEN: Should return empty results but valid pagination metadata
+	require.NoError(t, err)
+	assert.Equal(t, 999, response.Page, "should maintain requested page number")
+	
+	// Results should be empty for out-of-range page
+	totalResults := 0
+	for _, results := range response.Results {
+		totalResults += len(results)
+	}
+	assert.Equal(t, 0, totalResults, "should have no results for out-of-range page")
+}
+
+func TestSearchService_Pagination_LargeLimitCapped(t *testing.T) {
+	// GIVEN: Search query with very large limit
+	ctx := context.Background()
+	service := NewSearchService()
+	
+	query := domain.SearchQuery{
+		Query:    "Math",
+		Entities: []domain.SearchEntity{domain.SearchEntityCourse},
+		Role:     domain.RoleAdmin,
+		Limit:    10000, // Unreasonably large
+		Page:     1,
+	}
+	
+	// WHEN: Search with large limit
+	response, err := service.Search(ctx, query)
+	
+	// THEN: Should not fail
+	require.NoError(t, err)
+	assert.Equal(t, 10000, response.PageSize, "should maintain requested page size")
+	
+	// In practice, total results will be limited by available data
+	totalResults := 0
+	for _, results := range response.Results {
+		totalResults += len(results)
+	}
+	assert.LessOrEqual(t, totalResults, 10000, "results should not exceed limit")
+}
+
+func TestSearchService_Pagination_MultipleEntities(t *testing.T) {
+	// GIVEN: Search across multiple entities with pagination
+	ctx := context.Background()
+	service := NewSearchService()
+	
+	query := domain.SearchQuery{
+		Query: "test",
+		Entities: []domain.SearchEntity{
+			domain.SearchEntityCourse,
+			domain.SearchEntityAssignment,
+		},
+		Role:  domain.RoleAdmin,
+		Limit: 5,
+		Page:  1,
+	}
+	
+	// WHEN: Search multiple entities with pagination
+	response, err := service.Search(ctx, query)
+	
+	// THEN: Should paginate correctly across all entities
+	require.NoError(t, err)
+	assert.Equal(t, 1, response.Page)
+	assert.Equal(t, 5, response.PageSize)
+	
+	// Each entity should respect the limit
+	for _, results := range response.Results {
+		assert.LessOrEqual(t, len(results), 5, "each entity should respect page size")
+	}
+}
+

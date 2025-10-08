@@ -6,40 +6,68 @@ import (
 	"strings"
 
 	"github.com/lbrines/classsphere/internal/domain"
+	"github.com/lbrines/classsphere/internal/ports"
 )
 
 // SearchService handles multi-entity search operations.
+// It can use a real repository (e.g., Google Classroom API) or fallback to mock data.
 type SearchService struct {
-	// In real implementation, this would use repositories
-	// For now, we use mock data for testing
+	repository ports.SearchRepository // Optional: Google Classroom repository
+	cache      ports.Cache             // Optional: Cache for performance
 }
 
-// NewSearchService creates a new search service.
+// NewSearchService creates a new search service with mock data.
 func NewSearchService() *SearchService {
-	return &SearchService{}
+	return &SearchService{
+		repository: nil, // No repository = uses mock data
+		cache:      nil,
+	}
 }
 
-// Search performs multi-entity search based on query parameters.
+// NewSearchServiceWithRepository creates a search service using a real repository.
+func NewSearchServiceWithRepository(repository ports.SearchRepository, cache ports.Cache) *SearchService {
+	return &SearchService{
+		repository: repository,
+		cache:      cache,
+	}
+}
+
+// Search performs multi-entity search based on query parameters with pagination support.
 func (s *SearchService) Search(ctx context.Context, query domain.SearchQuery) (*domain.SearchResponse, error) {
 	// Validate query
 	if query.Query == "" {
 		return &domain.SearchResponse{
-			Query:   query.Query,
-			Total:   0,
-			Results: make(map[domain.SearchEntity][]domain.SearchResult),
+			Query:      query.Query,
+			Total:      0,
+			TotalPages: 0,
+			Page:       1,
+			PageSize:   query.Limit,
+			Results:    make(map[domain.SearchEntity][]domain.SearchResult),
 		}, nil
 	}
 
-	// Set default limit if not specified
+	// Set default pagination values
 	if query.Limit == 0 {
 		query.Limit = 10
 	}
+	if query.Page == 0 {
+		query.Page = 1
+	}
+
+	// Calculate offset for pagination (Page is 1-indexed)
+	query.Offset = (query.Page - 1) * query.Limit
 
 	response := &domain.SearchResponse{
-		Query:   query.Query,
-		Total:   0,
-		Results: make(map[domain.SearchEntity][]domain.SearchResult),
+		Query:    query.Query,
+		Total:    0,
+		Page:     query.Page,
+		PageSize: query.Limit,
+		Results:  make(map[domain.SearchEntity][]domain.SearchResult),
 	}
+
+	// Collect all results to determine total count
+	allResults := make(map[domain.SearchEntity][]domain.SearchResult)
+	totalResultsCount := 0
 
 	// Search each requested entity type
 	for _, entity := range query.Entities {
@@ -49,38 +77,99 @@ func (s *SearchService) Search(ctx context.Context, query domain.SearchQuery) (*
 
 		var results []domain.SearchResult
 
+		var err error
+
 		switch entity {
 		case domain.SearchEntityCourse:
-			results = s.searchCourses(query)
+			results, err = s.searchCoursesWithRepo(ctx, query)
 		case domain.SearchEntityStudent:
-			results = s.searchStudents(query)
+			results, err = s.searchStudentsWithRepo(ctx, query)
 		case domain.SearchEntityTeacher:
-			results = s.searchTeachers(query)
+			results, err = s.searchTeachersWithRepo(ctx, query)
 		case domain.SearchEntityAssignment:
-			results = s.searchAssignments(query)
+			results, err = s.searchAssignmentsWithRepo(ctx, query)
 		case domain.SearchEntityAnnouncement:
-			results = s.searchAnnouncements(query)
+			results, err = s.searchAnnouncementsWithRepo(ctx, query)
+		}
+
+		if err != nil {
+			slog.Warn("search failed for entity, skipping",
+				"entity", entity,
+				"error", err)
+			continue
 		}
 
 		// Apply role-based filtering
 		results = s.filterByRole(results, query.Role)
 
-		// Apply limit
-		if len(results) > query.Limit {
-			results = results[:query.Limit]
+		if len(results) > 0 {
+			allResults[entity] = results
+			totalResultsCount += len(results)
+		}
+	}
+
+	// Calculate total pages
+	if totalResultsCount > 0 {
+		response.TotalPages = (totalResultsCount + query.Limit - 1) / query.Limit
+	} else {
+		response.TotalPages = 0
+	}
+
+	// Apply pagination to results
+	currentOffset := 0
+	remainingToSkip := query.Offset
+	remainingToTake := query.Limit
+
+	for entity, results := range allResults {
+		if remainingToTake <= 0 {
+			break
 		}
 
-		if len(results) > 0 {
-			response.Results[entity] = results
-			response.Total += len(results)
+		// Skip results until we reach the desired offset
+		if remainingToSkip > 0 {
+			if remainingToSkip >= len(results) {
+				// Skip entire entity results
+				remainingToSkip -= len(results)
+				continue
+			} else {
+				// Skip partial results from this entity
+				results = results[remainingToSkip:]
+				remainingToSkip = 0
+			}
 		}
+
+		// Take up to the limit
+		if len(results) > remainingToTake {
+			results = results[:remainingToTake]
+		}
+
+		response.Results[entity] = results
+		response.Total += len(results)
+		remainingToTake -= len(results)
+		currentOffset += len(results)
 	}
 
 	return response, nil
 }
 
-// searchCourses searches for courses matching the query.
-func (s *SearchService) searchCourses(query domain.SearchQuery) []domain.SearchResult {
+// searchCoursesWithRepo searches for courses using repository or mock data.
+func (s *SearchService) searchCoursesWithRepo(ctx context.Context, query domain.SearchQuery) ([]domain.SearchResult, error) {
+	// Use repository if available
+	if s.repository != nil {
+		results, _, err := s.repository.SearchCourses(ctx, query.Query, query.Limit*10, 0) // Get more for filtering
+		if err != nil {
+			slog.Warn("repository search failed, falling back to mock", "error", err)
+		} else {
+			return results, nil
+		}
+	}
+
+	// Fallback to mock data
+	return s.searchCoursesMock(query), nil
+}
+
+// searchCoursesMock searches for courses using mock data.
+func (s *SearchService) searchCoursesMock(query domain.SearchQuery) []domain.SearchResult {
 	// Mock course data
 	mockCourses := []struct {
 		ID          string
@@ -125,8 +214,24 @@ func (s *SearchService) searchCourses(query domain.SearchQuery) []domain.SearchR
 	return sortByRelevance(results)
 }
 
-// searchStudents searches for students matching the query.
-func (s *SearchService) searchStudents(query domain.SearchQuery) []domain.SearchResult {
+// searchStudentsWithRepo searches for students using repository or mock data.
+func (s *SearchService) searchStudentsWithRepo(ctx context.Context, query domain.SearchQuery) ([]domain.SearchResult, error) {
+	// Use repository if available
+	if s.repository != nil {
+		results, _, err := s.repository.SearchStudents(ctx, query.Query, query.Limit*10, 0)
+		if err != nil {
+			slog.Warn("repository search failed, falling back to mock", "error", err)
+		} else {
+			return results, nil
+		}
+	}
+
+	// Fallback to mock data
+	return s.searchStudentsMock(query), nil
+}
+
+// searchStudentsMock searches for students using mock data.
+func (s *SearchService) searchStudentsMock(query domain.SearchQuery) []domain.SearchResult {
 	// Mock student data
 	mockStudents := []struct {
 		ID    string
@@ -165,8 +270,24 @@ func (s *SearchService) searchStudents(query domain.SearchQuery) []domain.Search
 	return sortByRelevance(results)
 }
 
-// searchTeachers searches for teachers matching the query.
-func (s *SearchService) searchTeachers(query domain.SearchQuery) []domain.SearchResult {
+// searchTeachersWithRepo searches for teachers using repository or mock data.
+func (s *SearchService) searchTeachersWithRepo(ctx context.Context, query domain.SearchQuery) ([]domain.SearchResult, error) {
+	// Use repository if available
+	if s.repository != nil {
+		results, _, err := s.repository.SearchTeachers(ctx, query.Query, query.Limit*10, 0)
+		if err != nil {
+			slog.Warn("repository search failed, falling back to mock", "error", err)
+		} else {
+			return results, nil
+		}
+	}
+
+	// Fallback to mock data
+	return s.searchTeachersMock(query), nil
+}
+
+// searchTeachersMock searches for teachers using mock data.
+func (s *SearchService) searchTeachersMock(query domain.SearchQuery) []domain.SearchResult {
 	// Mock teacher data
 	mockTeachers := []struct {
 		ID    string
@@ -204,8 +325,24 @@ func (s *SearchService) searchTeachers(query domain.SearchQuery) []domain.Search
 	return sortByRelevance(results)
 }
 
-// searchAssignments searches for assignments matching the query.
-func (s *SearchService) searchAssignments(query domain.SearchQuery) []domain.SearchResult {
+// searchAssignmentsWithRepo searches for assignments using repository or mock data.
+func (s *SearchService) searchAssignmentsWithRepo(ctx context.Context, query domain.SearchQuery) ([]domain.SearchResult, error) {
+	// Use repository if available
+	if s.repository != nil {
+		results, _, err := s.repository.SearchAssignments(ctx, query.Query, query.Limit*10, 0)
+		if err != nil {
+			slog.Warn("repository search failed, falling back to mock", "error", err)
+		} else {
+			return results, nil
+		}
+	}
+
+	// Fallback to mock data
+	return s.searchAssignmentsMock(query), nil
+}
+
+// searchAssignmentsMock searches for assignments using mock data.
+func (s *SearchService) searchAssignmentsMock(query domain.SearchQuery) []domain.SearchResult {
 	// Mock assignment data
 	mockAssignments := []struct {
 		ID          string
@@ -247,8 +384,24 @@ func (s *SearchService) searchAssignments(query domain.SearchQuery) []domain.Sea
 	return sortByRelevance(results)
 }
 
-// searchAnnouncements searches for announcements matching the query.
-func (s *SearchService) searchAnnouncements(query domain.SearchQuery) []domain.SearchResult {
+// searchAnnouncementsWithRepo searches for announcements using repository or mock data.
+func (s *SearchService) searchAnnouncementsWithRepo(ctx context.Context, query domain.SearchQuery) ([]domain.SearchResult, error) {
+	// Use repository if available
+	if s.repository != nil {
+		results, _, err := s.repository.SearchAnnouncements(ctx, query.Query, query.Limit*10, 0)
+		if err != nil {
+			slog.Warn("repository search failed, falling back to mock", "error", err)
+		} else {
+			return results, nil
+		}
+	}
+
+	// Fallback to mock data
+	return s.searchAnnouncementsMock(query), nil
+}
+
+// searchAnnouncementsMock searches for announcements using mock data.
+func (s *SearchService) searchAnnouncementsMock(query domain.SearchQuery) []domain.SearchResult {
 	// Mock announcement data
 	mockAnnouncements := []struct {
 		ID      string

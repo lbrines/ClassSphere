@@ -39,5 +39,8 @@ export interface SearchState {
   results: SearchResult[];
   total: number;
   error: string | null;
+  page?: number;
+  pageSize?: number;
+  totalPages?: number;
 }
 

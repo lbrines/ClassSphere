@@ -38,10 +38,18 @@ if [ -z "$(git status --porcelain)" ]; then
     exit 1
 fi
 
-# Hacer commit
-echo "📝 Haciendo commit como $MODEL..."
+# Hacer commit con co-authored-by
+echo "📝 Haciendo commit como $MODEL con co-authored-by..."
 git add .
-git commit -m "$MESSAGE"
+
+# Crear mensaje con co-authored-by
+COMMIT_MESSAGE="$MESSAGE
+
+Co-authored-by: Claude <claude@anthropic.com>
+Co-authored-by: Cursor <cursor@cursor.com>
+Co-authored-by: OpenAI <openai@openai.com>"
+
+git commit -m "$COMMIT_MESSAGE"
 
 echo ""
 echo "✅ Commit realizado por $MODEL"

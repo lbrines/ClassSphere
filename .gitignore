@@ -115,3 +115,5 @@ tmp/
 temp/
 *.tmp
 *.bak
+credentials.json
+*.json

@@ -1,634 +1,438 @@
 # ClassSphere API Documentation
 
-**Version**: 1.0  
-**Base URL**: `http://localhost:8080/api/v1`  
-**Authentication**: JWT Bearer Token
+## Base URL
 
----
+```
+http://localhost:8080/api/v1
+```
 
-## 📋 Table of Contents
+## Authentication
 
-1. [Authentication](#authentication)
-2. [User Management](#user-management)
-3. [Google Classroom](#google-classroom)
-4. [Dashboards](#dashboards)
-5. [Error Responses](#error-responses)
-6. [Rate Limiting](#rate-limiting)
+Most endpoints require JWT authentication via Bearer token in the Authorization header:
 
----
+```
+Authorization: Bearer <jwt-token>
+```
 
-## 🔐 Authentication
+## Endpoints
 
-### POST /auth/login
+### Health Check
 
-Email/password authentication returning JWT token.
+**GET** `/health`
 
-**Request**:
-```http
-POST /api/v1/auth/login
-Content-Type: application/json
+Returns server health status.
 
+**Response:**
+```json
 {
-  "email": "admin@classsphere.edu",
-  "password": "admin123"
+  "status": "ok"
 }
 ```
 
-**Response** (200 OK):
+---
+
+### Authentication
+
+#### Login
+
+**POST** `/auth/login`
+
+Authenticate with email and password.
+
+**Request:**
 ```json
 {
-  "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-  "expiresAt": "2025-10-08T11:00:00Z",
-  "user": {
-    "id": "1",
-    "name": "Admin User",
-    "email": "admin@classsphere.edu",
-    "role": "admin"
-  }
+  "email": "user@example.com",
+  "password": "password123"
 }
 ```
 
-**Errors**:
-- `400 Bad Request` - Invalid request body
-- `401 Unauthorized` - Invalid credentials
-
----
-
-### GET /auth/oauth/google
-
-Initiate Google OAuth 2.0 flow with PKCE and State.
-
-**Request**:
-```http
-GET /api/v1/auth/oauth/google
-```
-
-**Response** (302 Redirect):
-```
-Location: https://accounts.google.com/o/oauth2/v2/auth?
-  client_id=...
-  &redirect_uri=http://localhost:4200/auth/callback
-  &response_type=code
-  &scope=openid+email+profile
-  &state=<csrf-token>
-  &code_challenge=<pkce-challenge>
-  &code_challenge_method=S256
-```
-
-**PKCE Implementation**: Uses SHA256 code challenge for enhanced security.
-
----
-
-### GET /auth/oauth/callback
-
-OAuth callback handler that exchanges code for JWT.
-
-**Request**:
-```http
-GET /api/v1/auth/oauth/callback?code=<auth-code>&state=<state-token>
-```
-
-**Response** (200 OK):
+**Response:**
 ```json
 {
-  "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-  "expiresAt": "2025-10-08T11:00:00Z",
+  "accessToken": "eyJhbGciOiJIUzI1NiIs...",
+  "expiresAt": "2025-10-09T12:00:00Z",
   "user": {
-    "id": "google-123456",
-    "name": "John Doe",
-    "email": "john.doe@gmail.com",
+    "id": "user-123",
+    "email": "user@example.com",
+    "displayName": "John Doe",
     "role": "student"
   }
 }
 ```
 
-**Errors**:
-- `400 Bad Request` - Missing code or state
-- `401 Unauthorized` - Invalid state (CSRF)
-- `500 Internal Server Error` - OAuth exchange failed
+#### OAuth Start
 
----
+**GET** `/auth/oauth/google`
 
-## 👤 User Management
+Initiates Google OAuth flow.
 
-### GET /users/me
-
-Get current authenticated user profile.
-
-**Authentication**: Required (JWT Bearer Token)
-
-**Request**:
-```http
-GET /api/v1/users/me
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-```
-
-**Response** (200 OK):
+**Response:**
 ```json
 {
-  "id": "1",
-  "name": "Admin User",
-  "email": "admin@classsphere.edu",
-  "role": "admin"
+  "state": "random-state-token",
+  "url": "https://accounts.google.com/o/oauth2/v2/auth?..."
 }
 ```
 
-**Errors**:
-- `401 Unauthorized` - Missing or invalid token
-- `404 Not Found` - User not found
+#### OAuth Callback
+
+**GET** `/auth/oauth/callback?code=...&state=...`
+
+Completes OAuth flow.
+
+**Response:** Same as login.
 
 ---
 
-### GET /admin/ping
+### User Management
 
-Admin-only test endpoint for RBAC verification.
+#### Get Current User
 
-**Authentication**: Required (JWT Bearer Token)  
-**Authorization**: Admin role only
+**GET** `/users/me`
 
-**Request**:
-```http
-GET /api/v1/admin/ping
-Authorization: Bearer <admin-jwt-token>
-```
+**Auth:** Required
 
-**Response** (200 OK):
+Returns the authenticated user's profile.
+
+**Response:**
 ```json
 {
-  "message": "pong (admin access granted)"
+  "id": "user-123",
+  "email": "user@example.com",
+  "displayName": "John Doe",
+  "role": "student",
+  "createdAt": "2025-01-01T00:00:00Z",
+  "updatedAt": "2025-10-08T12:00:00Z"
 }
 ```
 
-**Errors**:
-- `401 Unauthorized` - Missing token
-- `403 Forbidden` - Non-admin user
-
 ---
 
-## 🎓 Google Classroom
+### Dashboards
 
-### GET /google/courses
+#### Admin Dashboard
 
-List Google Classroom courses with analytics.
+**GET** `/dashboard/admin`
 
-**Authentication**: Required  
-**Modes**: Mock or Google (configurable)
+**Auth:** Required (Admin only)
 
-**Request**:
-```http
-GET /api/v1/google/courses?mode=mock
-Authorization: Bearer <jwt-token>
-```
-
-**Query Parameters**:
-- `mode` (optional) - Force mode: `mock` or `google` (default: config)
-
-**Response** (200 OK):
-```json
-{
-  "mode": "mock",
-  "generatedAt": "2025-10-08T10:00:00Z",
-  "courses": [
-    {
-      "id": "course-001",
-      "name": "Introduction to Programming",
-      "section": "CS-101-A",
-      "program": "Computer Science",
-      "primaryTeacher": "Dr. Smith",
-      "enrollment": 30,
-      "completionRate": 85.5,
-      "upcomingAssignments": 3,
-      "lastActivity": "2025-10-07T15:30:00Z"
-    }
-  ],
-  "availableModes": ["mock", "google"]
-}
-```
-
-**Errors**:
-- `401 Unauthorized` - Missing token
-- `503 Service Unavailable` - Classroom integration not configured
-
----
-
-## 📊 Dashboards
-
-### GET /dashboard/admin
-
-Admin dashboard with system-wide metrics.
-
-**Authentication**: Required  
-**Authorization**: Admin role only
-
-**Request**:
-```http
-GET /api/v1/dashboard/admin?mode=mock
-Authorization: Bearer <admin-jwt-token>
-```
-
-**Query Parameters**:
-- `mode` (optional) - Data source: `mock` or `google`
-
-**Response** (200 OK):
+**Response:**
 ```json
 {
   "role": "admin",
-  "generatedAt": "2025-10-08T10:00:00Z",
-  "mode": "mock",
-  "summary": [
-    {
-      "label": "Total Courses",
-      "value": 45,
-      "format": "number",
-      "trend": "up",
-      "delta": 5
-    },
-    {
-      "label": "Total Students",
-      "value": 1250,
-      "format": "number",
-      "trend": "up",
-      "delta": 50
-    },
-    {
-      "label": "Avg Completion Rate",
-      "value": 78.5,
-      "format": "percentage",
-      "trend": "up",
-      "delta": 3.2
-    }
-  ],
-  "charts": [
-    {
-      "id": "enrollment-trend",
-      "title": "Enrollment Trend",
-      "type": "line",
-      "series": [...],
-      "categories": [...]
-    }
-  ],
-  "highlights": [...],
-  "alerts": [...],
-  "courses": [...]
+  "stats": {},
+  "message": "Admin dashboard data"
 }
 ```
 
-**Errors**:
-- `401 Unauthorized` - Missing token
-- `403 Forbidden` - Non-admin user
-- `503 Service Unavailable` - Classroom service not available
+#### Coordinator Dashboard
+
+**GET** `/dashboard/coordinator`
+
+**Auth:** Required (Coordinator only)
+
+#### Teacher Dashboard
+
+**GET** `/dashboard/teacher`
+
+**Auth:** Required (Teacher only)
+
+#### Student Dashboard
+
+**GET** `/dashboard/student`
+
+**Auth:** Required (Student only)
 
 ---
 
-### GET /dashboard/coordinator
+### Google Classroom Integration
 
-Coordinator dashboard with program-level metrics.
+#### List Courses
 
-**Authentication**: Required  
-**Authorization**: Coordinator or Admin
+**GET** `/google/courses`
 
-**Request**:
-```http
-GET /api/v1/dashboard/coordinator?mode=mock
-Authorization: Bearer <coordinator-jwt-token>
-```
+**Auth:** Required
 
-**Response**: Similar structure to admin dashboard, filtered by coordinator's programs.
+Returns list of Google Classroom courses.
 
----
-
-### GET /dashboard/teacher
-
-Teacher dashboard with course-specific metrics.
-
-**Authentication**: Required  
-**Authorization**: Teacher, Coordinator, or Admin
-
-**Request**:
-```http
-GET /api/v1/dashboard/teacher?mode=mock
-Authorization: Bearer <teacher-jwt-token>
-```
-
-**Response**: Courses and students for the specific teacher.
-
----
-
-### GET /dashboard/student
-
-Student dashboard with personal progress.
-
-**Authentication**: Required  
-**Authorization**: Any authenticated user
-
-**Request**:
-```http
-GET /api/v1/dashboard/student?mode=mock
-Authorization: Bearer <student-jwt-token>
-```
-
-**Response**:
+**Response:**
 ```json
 {
-  "role": "student",
-  "generatedAt": "2025-10-08T10:00:00Z",
-  "mode": "mock",
-  "summary": [
+  "courses": [
     {
-      "label": "Enrolled Courses",
-      "value": 5,
-      "format": "number"
-    },
-    {
-      "label": "Completion Rate",
-      "value": 92.3,
-      "format": "percentage",
-      "trend": "up",
-      "delta": 5.1
-    },
-    {
-      "label": "Pending Assignments",
-      "value": 3,
-      "format": "number"
-    }
-  ],
-  "timeline": [
-    {
-      "id": "assignment-001",
-      "title": "Final Project",
-      "courseId": "CS-101-A",
-      "dueDate": "2025-10-15T23:59:59Z",
-      "status": "upcoming"
+      "id": "course-123",
+      "name": "Mathematics 101",
+      "section": "A",
+      "enrollmentCode": "abc123"
     }
   ]
 }
 ```
 
+**GET** `/classroom/courses` (alias)
+
 ---
 
-## ⚠️ Error Responses
+### Search (Phase 3)
 
-### Standard Error Format
+#### Multi-Entity Search with Pagination
 
+**GET** `/search?q={query}&entities={entities}&page={page}&limit={limit}`
+
+**Auth:** Required
+
+**Query Parameters:**
+- `q` (string, required): Search query
+- `entities` (string, required): Comma-separated entity types
+  - Valid: `students`, `teachers`, `courses`, `assignments`, `announcements`
+- `page` (int, optional, default=1): Page number (1-indexed)
+- `limit` (int, optional, default=10): Results per page
+
+**Example:**
+```
+GET /search?q=mathematics&entities=courses,assignments&page=1&limit=10
+```
+
+**Response:**
 ```json
 {
-  "message": "Error description",
-  "code": "ERROR_CODE"
+  "query": "mathematics",
+  "total": 25,
+  "totalPages": 3,
+  "page": 1,
+  "pageSize": 10,
+  "results": {
+    "courses": [
+      {
+        "type": "courses",
+        "id": "course-1",
+        "title": "Mathematics 101",
+        "description": "Introduction to Algebra",
+        "relevance": 0.95
+      }
+    ],
+    "assignments": [
+      {
+        "type": "assignments",
+        "id": "assign-1",
+        "title": "Math Homework 1",
+        "description": "Solve problems 1-10",
+        "relevance": 0.87,
+        "meta": {
+          "courseId": "course-1"
+        }
+      }
+    ]
+  }
 }
 ```
 
-### HTTP Status Codes
-
-| Code | Meaning | Usage |
-|------|---------|-------|
-| `200` | OK | Successful request |
-| `400` | Bad Request | Invalid request body or parameters |
-| `401` | Unauthorized | Missing or invalid JWT token |
-| `403` | Forbidden | Valid token but insufficient permissions |
-| `404` | Not Found | Resource not found |
-| `500` | Internal Server Error | Server-side error |
-| `503` | Service Unavailable | Service not configured or down |
+**Role-Based Access Control:**
+- Students: Can search courses, assignments, announcements (NOT students or teachers)
+- Teachers: Can search all except announcements
+- Coordinators: Can search teachers, courses, assignments, announcements (NOT students)
+- Admins: Can search everything
 
 ---
 
-## ⏱️ Rate Limiting
+### Real-time Notifications (Phase 3) - SSE
 
-### Limits per User
+#### Notification Stream
 
-- **Authenticated endpoints**: 100 requests / 100 seconds
-- **Public endpoints**: 20 requests / 60 seconds
+**GET** `/notifications/stream`
 
-### Headers
+**Auth:** Required (JWT via Authorization header)
 
-**Response headers**:
+**Protocol:** Server-Sent Events (SSE)
+
+**Headers:**
 ```
-X-RateLimit-Limit: 100
-X-RateLimit-Remaining: 95
-X-RateLimit-Reset: 1696770000
-```
-
-**Rate limit exceeded** (429):
-```json
-{
-  "message": "Rate limit exceeded. Try again in 45 seconds."
-}
-```
-
----
-
-## 🔑 Authentication Headers
-
-### Required Format
-
-```http
 Authorization: Bearer <jwt-token>
+Accept: text/event-stream
 ```
 
-### Example
+**Response Stream:**
+```
+Content-Type: text/event-stream
+Cache-Control: no-cache
+Connection: keep-alive
 
-```bash
-curl http://localhost:8080/api/v1/users/me \
-  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+event: connected
+data: {"clientId":"abc-123","userId":"user-1"}
+
+event: notification
+data: {"id":"notif-1","title":"New Message","message":"You have a new message","type":"info","priority":"medium","timestamp":"2025-10-08T12:00:00Z"}
+
+: keep-alive 2025-10-08T12:00:05Z
 ```
 
-### JWT Token Structure
+**Event Types:**
+- `connected`: Initial connection confirmation
+- `notification`: New notification for the user
+- `: keep-alive`: Comment line to keep connection alive (every 15 seconds)
+
+**Client Example (JavaScript):**
+```javascript
+const token = 'your-jwt-token';
+const eventSource = new EventSource(`/api/v1/notifications/stream`, {
+  headers: {
+    'Authorization': `Bearer ${token}`
+  }
+});
+
+// Note: Native EventSource doesn't support custom headers
+// Use fetch + ReadableStream polyfill (see frontend implementation)
+
+eventSource.addEventListener('connected', (event) => {
+  const data = JSON.parse(event.data);
+  console.log('Connected:', data);
+});
+
+eventSource.addEventListener('notification', (event) => {
+  const notification = JSON.parse(event.data);
+  console.log('New notification:', notification);
+});
+
+eventSource.onerror = (error) => {
+  console.error('SSE error:', error);
+  // Browser will automatically attempt reconnection
+};
+```
+
+**Client Example (Fetch + ReadableStream):**
+```javascript
+const response = await fetch('/api/v1/notifications/stream', {
+  headers: {
+    'Authorization': `Bearer ${token}`,
+    'Accept': 'text/event-stream'
+  }
+});
+
+const reader = response.body.getReader();
+const decoder = new TextDecoder();
+
+while (true) {
+  const { done, value } = await reader.read();
+  if (done) break;
+  
+  const text = decoder.decode(value);
+  // Parse SSE format: event: type\ndata: json\n\n
+  console.log('Received:', text);
+}
+```
+
+**Features:**
+- Automatic reconnection (handled by browser)
+- Keep-alive messages every 15 seconds
+- JWT authentication via Authorization header
+- Connection status monitoring
+- Multiple simultaneous clients per user
+
+**Advantages over WebSocket:**
+- Simpler unidirectional server→client communication
+- Better proxy/firewall compatibility (standard HTTP)
+- Automatic reconnection (no manual implementation needed)
+- Easier debugging (visible in browser Network tab)
+- No ping/pong mechanism required
+
+---
+
+## Error Responses
+
+All errors follow a standardized format:
 
 ```json
 {
-  "sub": "user-id",
-  "email": "user@example.com",
-  "role": "admin",
-  "iss": "classsphere",
-  "exp": 1696770000,
-  "iat": 1696766400
+  "error": "Human readable error message",
+  "code": "ERROR_CODE",
+  "details": "Optional additional context",
+  "requestId": "trace-id-123"
+}
+```
+
+**Common Error Codes:**
+- `BAD_REQUEST` (400): Invalid request parameters
+- `UNAUTHORIZED` (401): Missing or invalid authentication
+- `FORBIDDEN` (403): Insufficient permissions
+- `NOT_FOUND` (404): Resource not found
+- `INTERNAL_ERROR` (500): Server error
+
+**Examples:**
+```json
+{
+  "error": "entities parameter is required",
+  "code": "BAD_REQUEST",
+  "requestId": "req-456"
+}
+```
+
+```json
+{
+  "error": "authentication required",
+  "code": "UNAUTHORIZED",
+  "requestId": "req-789"
 }
 ```
 
 ---
 
-## 📝 Request Examples
+## Rate Limiting
 
-### Complete Authentication Flow
-
-```bash
-# 1. Login
-TOKEN=$(curl -s -X POST http://localhost:8080/api/v1/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"email":"admin@classsphere.edu","password":"admin123"}' \
-  | jq -r '.accessToken')
-
-# 2. Get user profile
-curl http://localhost:8080/api/v1/users/me \
-  -H "Authorization: Bearer $TOKEN"
-
-# 3. Get courses
-curl "http://localhost:8080/api/v1/google/courses?mode=mock" \
-  -H "Authorization: Bearer $TOKEN"
-
-# 4. Get dashboard
-curl "http://localhost:8080/api/v1/dashboard/admin?mode=mock" \
-  -H "Authorization: Bearer $TOKEN"
-```
+Currently not implemented. Future versions may include rate limiting per user/IP.
 
 ---
 
-## 🧪 Testing Endpoints
+## Pagination
 
-### Health Check (No Auth)
+Endpoints that support pagination use the following pattern:
 
-```bash
-curl http://localhost:8080/health
-# Response: {"status":"ok"}
-```
+**Parameters:**
+- `page` (int, optional, default=1): Page number (1-indexed)
+- `limit` (int, optional, default=10): Results per page
 
-### Login Test
-
-```bash
-curl -X POST http://localhost:8080/api/v1/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{
-    "email": "teacher@classsphere.edu",
-    "password": "teach123"
-  }' | jq
-```
-
-### Protected Endpoint Test
-
-```bash
-# Get token first
-TOKEN=$(curl -s -X POST http://localhost:8080/api/v1/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"email":"admin@classsphere.edu","password":"admin123"}' \
-  | jq -r '.accessToken')
-
-# Use token
-curl http://localhost:8080/api/v1/admin/ping \
-  -H "Authorization: Bearer $TOKEN"
-```
+**Response includes:**
+- `page`: Current page number
+- `pageSize`: Results per page
+- `totalPages`: Total number of pages
+- `total`: Total number of results
 
 ---
 
-## 🎨 Mode Selection
+## Versioning
 
-### Available Modes
+Current API version: `v1`
 
-| Mode | Description | Requirements |
-|------|-------------|--------------|
-| `mock` | Mock data generator | None (always available) |
-| `google` | Real Google Classroom API | `GOOGLE_CREDENTIALS_FILE` configured |
-
-### Query Parameter
-
-All Google Classroom and Dashboard endpoints accept `?mode=` parameter:
-
-```bash
-# Force mock mode
-curl "http://localhost:8080/api/v1/google/courses?mode=mock" \
-  -H "Authorization: Bearer $TOKEN"
-
-# Force google mode (if available)
-curl "http://localhost:8080/api/v1/google/courses?mode=google" \
-  -H "Authorization: Bearer $TOKEN"
-
-# Use default (from CLASSROOM_MODE env var)
-curl http://localhost:8080/api/v1/google/courses \
-  -H "Authorization: Bearer $TOKEN"
-```
+All endpoints are prefixed with `/api/v1/`
 
 ---
 
-## 📦 Response Models
+## Changelog
 
-### User Model
+### Version 1.0 (Current)
 
-```typescript
-interface User {
-  id: string;
-  name: string;
-  email: string;
-  role: "admin" | "coordinator" | "teacher" | "student";
-}
-```
+**Phase 3 Updates:**
+- ✅ Added: Multi-entity search with pagination (`/search`)
+- ✅ Added: SSE for real-time notifications (`/notifications/stream`)
+- ✅ Added: Centralized error handling with standardized responses
+- ✅ Added: Request ID tracing in error responses
+- ⚠️ Deprecated: WebSocket endpoint (`/ws/notifications`) - Removed
+- ✅ Improved: RBAC for search (role-based filtering)
 
-### Course Overview Model
+**Security Improvements:**
+- Environment-based user seeding (production-safe)
+- JWT authentication for SSE
+- Centralized error handler with audit logging
+- Request ID for error tracing
 
-```typescript
-interface CourseOverview {
-  id: string;
-  name: string;
-  section: string;
-  program: string;
-  primaryTeacher: string;
-  enrollment: number;
-  completionRate: number;
-  upcomingAssignments: number;
-  lastActivity: string; // ISO 8601 datetime
-}
-```
-
-### Dashboard Data Model
-
-```typescript
-interface DashboardData {
-  role: string;
-  generatedAt: string; // ISO 8601
-  mode: string;
-  summary: MetricSummary[];
-  charts?: ChartConfig[];
-  highlights?: Highlight[];
-  alerts?: string[];
-  courses?: CourseOverview[];
-  timeline?: TimelineItem[];
-}
-
-interface MetricSummary {
-  label: string;
-  value: number;
-  format: "number" | "percentage" | "currency";
-  trend?: "up" | "down" | "stable";
-  delta?: number;
-}
-```
+**Technical Improvements:**
+- Error handler middleware with structured logging
+- Pagination support in search
+- SSE for simpler real-time communication
+- Better proxy/firewall compatibility
 
 ---
 
-## 🔒 Security
+## Support
 
-### CORS Configuration
-
-**Allowed Origins**:
-- `http://localhost:4200` (development)
-- Production origins (configured via env)
-
-**Allowed Methods**: GET, POST, PUT, DELETE, OPTIONS  
-**Allowed Headers**: Authorization, Content-Type  
-**Credentials**: Supported
-
-### JWT Configuration
-
-- **Algorithm**: HS256
-- **Expiry**: 60 minutes (configurable)
-- **Issuer**: classsphere
-- **Secret**: Environment variable `JWT_SECRET` (min 32 chars)
-
-### OAuth 2.0 Security
-
-- **PKCE**: SHA256 code challenge
-- **State Parameter**: CSRF protection
-- **Scopes**: openid, email, profile
-
----
-
-## 📚 Additional Resources
-
-- **[Backend README](backend/README.md)** - Backend setup and development
-- **[Architecture](ARCHITECTURE.md)** - System design and patterns
-- **[Security](SECURITY.md)** - Detailed security protocols
-- **[Testing](backend/TESTING.md)** - Testing strategy and examples
-
----
-
-**Last Updated**: 2025-10-08  
-**API Version**: 1.0  
-**OpenAPI Spec**: (TODO: Generate from code)
-
+For issues or questions, please refer to the project documentation or create an issue in the repository.

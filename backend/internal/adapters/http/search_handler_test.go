@@ -230,6 +230,159 @@ func TestSearchHandler_RoleBasedFiltering(t *testing.T) {
 	}
 }
 
+// ==============================================================================
+// Pagination Tests
+// ==============================================================================
+
+func TestSearchHandler_Pagination_FirstPage(t *testing.T) {
+	// Setup
+	authService, userService, _, classroomService := newTestServicesSearch(t)
+	searchService := app.NewSearchService()
+	notificationHub := app.NewNotificationHub()
+	
+	router := httpadapter.NewWithSearch(authService, userService, classroomService, notificationHub, searchService)
+	
+	// Login as admin
+	tokens, err := authService.LoginWithPassword(ctx, "admin@classsphere.edu", "admin123")
+	require.NoError(t, err)
+	
+	// Test first page with page size 2
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/search?q=Math&entities=courses&limit=2&page=1", nil)
+	req.Header.Set("Authorization", "Bearer "+tokens.AccessToken)
+	rec := httptest.NewRecorder()
+	
+	router.ServeHTTP(rec, req)
+	
+	// Assert
+	require.Equal(t, http.StatusOK, rec.Code)
+	
+	var response domain.SearchResponse
+	err = json.NewDecoder(rec.Body).Decode(&response)
+	require.NoError(t, err)
+	
+	assert.Equal(t, 1, response.Page, "should be page 1")
+	assert.Equal(t, 2, response.PageSize, "page size should be 2")
+	assert.GreaterOrEqual(t, response.TotalPages, 1, "should have at least 1 page")
+}
+
+func TestSearchHandler_Pagination_SecondPage(t *testing.T) {
+	// Setup
+	authService, userService, _, classroomService := newTestServicesSearch(t)
+	searchService := app.NewSearchService()
+	notificationHub := app.NewNotificationHub()
+	
+	router := httpadapter.NewWithSearch(authService, userService, classroomService, notificationHub, searchService)
+	
+	// Login as admin
+	tokens, err := authService.LoginWithPassword(ctx, "admin@classsphere.edu", "admin123")
+	require.NoError(t, err)
+	
+	// Test second page
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/search?q=Math&entities=courses&limit=2&page=2", nil)
+	req.Header.Set("Authorization", "Bearer "+tokens.AccessToken)
+	rec := httptest.NewRecorder()
+	
+	router.ServeHTTP(rec, req)
+	
+	// Assert
+	require.Equal(t, http.StatusOK, rec.Code)
+	
+	var response domain.SearchResponse
+	err = json.NewDecoder(rec.Body).Decode(&response)
+	require.NoError(t, err)
+	
+	assert.Equal(t, 2, response.Page, "should be page 2")
+	assert.Equal(t, 2, response.PageSize, "page size should be 2")
+}
+
+func TestSearchHandler_Pagination_DefaultValues(t *testing.T) {
+	// Setup
+	authService, userService, _, classroomService := newTestServicesSearch(t)
+	searchService := app.NewSearchService()
+	notificationHub := app.NewNotificationHub()
+	
+	router := httpadapter.NewWithSearch(authService, userService, classroomService, notificationHub, searchService)
+	
+	// Login as admin
+	tokens, err := authService.LoginWithPassword(ctx, "admin@classsphere.edu", "admin123")
+	require.NoError(t, err)
+	
+	// Test without pagination params (should use defaults)
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/search?q=Math&entities=courses", nil)
+	req.Header.Set("Authorization", "Bearer "+tokens.AccessToken)
+	rec := httptest.NewRecorder()
+	
+	router.ServeHTTP(rec, req)
+	
+	// Assert
+	require.Equal(t, http.StatusOK, rec.Code)
+	
+	var response domain.SearchResponse
+	err = json.NewDecoder(rec.Body).Decode(&response)
+	require.NoError(t, err)
+	
+	assert.Equal(t, 1, response.Page, "should default to page 1")
+	assert.Equal(t, 10, response.PageSize, "should default to page size 10")
+}
+
+func TestSearchHandler_Pagination_InvalidPage(t *testing.T) {
+	// Setup
+	authService, userService, _, classroomService := newTestServicesSearch(t)
+	searchService := app.NewSearchService()
+	notificationHub := app.NewNotificationHub()
+	
+	router := httpadapter.NewWithSearch(authService, userService, classroomService, notificationHub, searchService)
+	
+	// Login as admin
+	tokens, err := authService.LoginWithPassword(ctx, "admin@classsphere.edu", "admin123")
+	require.NoError(t, err)
+	
+	// Test with invalid page (should default to 1)
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/search?q=Math&entities=courses&page=invalid", nil)
+	req.Header.Set("Authorization", "Bearer "+tokens.AccessToken)
+	rec := httptest.NewRecorder()
+	
+	router.ServeHTTP(rec, req)
+	
+	// Assert
+	require.Equal(t, http.StatusOK, rec.Code)
+	
+	var response domain.SearchResponse
+	err = json.NewDecoder(rec.Body).Decode(&response)
+	require.NoError(t, err)
+	
+	assert.Equal(t, 1, response.Page, "invalid page should default to 1")
+}
+
+func TestSearchHandler_Pagination_ZeroPage(t *testing.T) {
+	// Setup
+	authService, userService, _, classroomService := newTestServicesSearch(t)
+	searchService := app.NewSearchService()
+	notificationHub := app.NewNotificationHub()
+	
+	router := httpadapter.NewWithSearch(authService, userService, classroomService, notificationHub, searchService)
+	
+	// Login as admin
+	tokens, err := authService.LoginWithPassword(ctx, "admin@classsphere.edu", "admin123")
+	require.NoError(t, err)
+	
+	// Test with page=0 (should default to 1)
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/search?q=Math&entities=courses&page=0", nil)
+	req.Header.Set("Authorization", "Bearer "+tokens.AccessToken)
+	rec := httptest.NewRecorder()
+	
+	router.ServeHTTP(rec, req)
+	
+	// Assert
+	require.Equal(t, http.StatusOK, rec.Code)
+	
+	var response domain.SearchResponse
+	err = json.NewDecoder(rec.Body).Decode(&response)
+	require.NoError(t, err)
+	
+	assert.Equal(t, 1, response.Page, "page 0 should default to 1")
+}
+
 // Test helper
 func newTestServicesSearch(t *testing.T) (*app.AuthService, *app.UserService, *inMemoryCacheSearch, *app.ClassroomService) {
 	t.Helper()

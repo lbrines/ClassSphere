@@ -10,18 +10,17 @@ import (
 	"github.com/lbrines/classsphere/internal/domain"
 )
 
-// handleSearch performs multi-entity search.
+// handleSearch performs multi-entity search with pagination support.
 func (h *Handler) handleSearch(c echo.Context) error {
 	// Get query parameters
 	query := c.QueryParam("q")
 	entitiesParam := c.QueryParam("entities")
 	limitParam := c.QueryParam("limit")
+	pageParam := c.QueryParam("page")
 	
 	// Validate required parameters
 	if entitiesParam == "" {
-		return c.JSON(http.StatusBadRequest, map[string]string{
-			"error": "entities parameter is required",
-		})
+		return ErrBadRequest("entities parameter is required")
 	}
 	
 	// Parse entities
@@ -31,7 +30,7 @@ func (h *Handler) handleSearch(c echo.Context) error {
 		entities = append(entities, domain.SearchEntity(strings.TrimSpace(e)))
 	}
 	
-	// Parse limit
+	// Parse limit (page size)
 	limit := 10 // default
 	if limitParam != "" {
 		if parsedLimit, err := strconv.Atoi(limitParam); err == nil && parsedLimit > 0 {
@@ -39,29 +38,34 @@ func (h *Handler) handleSearch(c echo.Context) error {
 		}
 	}
 	
+	// Parse page (1-indexed)
+	page := 1 // default
+	if pageParam != "" {
+		if parsedPage, err := strconv.Atoi(pageParam); err == nil && parsedPage > 0 {
+			page = parsedPage
+		}
+	}
+	
 	// Get user from context (set by AuthMiddleware)
 	user, ok := c.Get("current_user").(domain.User)
 	if !ok {
-		return c.JSON(http.StatusUnauthorized, map[string]string{
-			"error": "unauthorized",
-		})
+		return ErrUnauthorized("authentication required")
 	}
 	
-	// Create search query
+	// Create search query with pagination
 	searchQuery := domain.SearchQuery{
 		Query:    query,
 		Entities: entities,
 		Role:     user.Role,
 		UserID:   user.ID,
 		Limit:    limit,
+		Page:     page,
 	}
 	
 	// Perform search
 	response, err := h.searchService.Search(c.Request().Context(), searchQuery)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{
-			"error": "search failed",
-		})
+		return ErrInternal("search failed", err)
 	}
 	
 	return c.JSON(http.StatusOK, response)
