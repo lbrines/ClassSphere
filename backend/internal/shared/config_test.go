@@ -115,6 +115,8 @@ func TestConfigValidate_MissingFields(t *testing.T) {
 }
 
 func TestLoadConfig_Defaults(t *testing.T) {
+	// Clear environment to test defaults
+	t.Setenv("REDIS_ADDR", "")  // Clear to test default
 	t.Setenv("JWT_SECRET", "secret")
 	t.Setenv("GOOGLE_CLIENT_ID", "client")
 	t.Setenv("GOOGLE_CLIENT_SECRET", "client-secret")

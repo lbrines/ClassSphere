@@ -10,7 +10,6 @@ import (
 
 	"github.com/lbrines/classsphere/internal/adapters/repo"
 	"github.com/lbrines/classsphere/internal/domain"
-	"github.com/lbrines/classsphere/internal/ports"
 )
 
 // ==============================================================================

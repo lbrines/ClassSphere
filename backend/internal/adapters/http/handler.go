@@ -10,6 +10,7 @@ import (
 
 	"github.com/lbrines/classsphere/internal/app"
 	"github.com/lbrines/classsphere/internal/domain"
+	"github.com/lbrines/classsphere/internal/ports"
 	"github.com/lbrines/classsphere/internal/shared"
 )
 
@@ -20,15 +21,17 @@ type Handler struct {
 	classroomService *app.ClassroomService
 	notificationHub  *app.NotificationHub
 	searchService    *app.SearchService
+	cache            ports.Cache
 }
 
 // New creates an Echo engine configured with routes and middleware.
-func New(authService *app.AuthService, userService *app.UserService, classroomService *app.ClassroomService, notificationHub *app.NotificationHub) *echo.Echo {
+func New(authService *app.AuthService, userService *app.UserService, classroomService *app.ClassroomService, notificationHub *app.NotificationHub, cache ports.Cache, cfg shared.Config) *echo.Echo {
 	h := &Handler{
 		authService:      authService,
 		userService:      userService,
 		classroomService: classroomService,
 		notificationHub:  notificationHub,
+		cache:            cache,
 	}
 
 	e := echo.New()
@@ -37,14 +40,16 @@ func New(authService *app.AuthService, userService *app.UserService, classroomSe
 	// Middleware stack (order matters)
 	e.Use(middleware.Recover())          // Recover from panics
 	e.Use(middleware.RequestID())        // Generate request ID for tracing
+	ConfigureMetrics(e)                  // Prometheus metrics (includes /metrics endpoint)
 	e.Use(ErrorHandlerMiddleware())      // Centralized error handling
-	e.Use(middleware.CORS())             // CORS headers
+	ConfigureCORS(e, cfg)                // CORS headers (restricted origins)
+	ConfigureRateLimiting(e)             // Rate limiting (DoS protection)
 	e.Use(middleware.Secure())           // Security headers
 
-	e.GET("/health", h.health)
+	e.GET("/health", h.healthDetailed)
 
 	api := e.Group("/api/v1")
-	api.POST("/auth/login", h.login)
+	api.POST("/auth/login", h.login, ApplyLoginRateLimit()) // Stricter rate limit for auth
 	api.GET("/auth/oauth/google", h.oauthStart)
 	api.GET("/auth/oauth/callback", h.oauthCallback)
 
@@ -76,13 +81,14 @@ func New(authService *app.AuthService, userService *app.UserService, classroomSe
 
 // NewWithSSE creates an Echo engine with SSE for notifications.
 // This is a helper for testing that uses SSE instead of WebSocket.
-func NewWithSSE(authService *app.AuthService, userService *app.UserService, classroomService *app.ClassroomService, notificationHub *app.NotificationHub, searchService *app.SearchService) *echo.Echo {
+func NewWithSSE(authService *app.AuthService, userService *app.UserService, classroomService *app.ClassroomService, notificationHub *app.NotificationHub, searchService *app.SearchService, cache ports.Cache, cfg shared.Config) *echo.Echo {
 	h := &Handler{
 		authService:      authService,
 		userService:      userService,
 		classroomService: classroomService,
 		notificationHub:  notificationHub,
 		searchService:    searchService,
+		cache:            cache,
 	}
 
 	e := echo.New()
@@ -91,14 +97,16 @@ func NewWithSSE(authService *app.AuthService, userService *app.UserService, clas
 	// Middleware stack (order matters)
 	e.Use(middleware.Recover())          // Recover from panics
 	e.Use(middleware.RequestID())        // Generate request ID for tracing
+	ConfigureMetrics(e)                  // Prometheus metrics (includes /metrics endpoint)
 	e.Use(ErrorHandlerMiddleware())      // Centralized error handling
-	e.Use(middleware.CORS())             // CORS headers
+	ConfigureCORS(e, cfg)                // CORS headers (restricted origins)
+	ConfigureRateLimiting(e)             // Rate limiting (DoS protection)
 	e.Use(middleware.Secure())           // Security headers
 
-	e.GET("/health", h.health)
+	e.GET("/health", h.healthDetailed)
 
 	api := e.Group("/api/v1")
-	api.POST("/auth/login", h.login)
+	api.POST("/auth/login", h.login, ApplyLoginRateLimit()) // Stricter rate limit for auth
 	api.GET("/auth/oauth/google", h.oauthStart)
 	api.GET("/auth/oauth/callback", h.oauthCallback)
 
@@ -129,13 +137,14 @@ func NewWithSSE(authService *app.AuthService, userService *app.UserService, clas
 
 // NewWithSearch creates an Echo engine with search service.
 // This is a helper for testing that includes SearchService.
-func NewWithSearch(authService *app.AuthService, userService *app.UserService, classroomService *app.ClassroomService, notificationHub *app.NotificationHub, searchService *app.SearchService) *echo.Echo {
+func NewWithSearch(authService *app.AuthService, userService *app.UserService, classroomService *app.ClassroomService, notificationHub *app.NotificationHub, searchService *app.SearchService, cache ports.Cache, cfg shared.Config) *echo.Echo {
 	h := &Handler{
 		authService:      authService,
 		userService:      userService,
 		classroomService: classroomService,
 		notificationHub:  notificationHub,
 		searchService:    searchService,
+		cache:            cache,
 	}
 
 	e := echo.New()
@@ -144,14 +153,16 @@ func NewWithSearch(authService *app.AuthService, userService *app.UserService, c
 	// Middleware stack (order matters)
 	e.Use(middleware.Recover())          // Recover from panics
 	e.Use(middleware.RequestID())        // Generate request ID for tracing
+	ConfigureMetrics(e)                  // Prometheus metrics (includes /metrics endpoint)
 	e.Use(ErrorHandlerMiddleware())      // Centralized error handling
-	e.Use(middleware.CORS())             // CORS headers
+	ConfigureCORS(e, cfg)                // CORS headers (restricted origins)
+	ConfigureRateLimiting(e)             // Rate limiting (DoS protection)
 	e.Use(middleware.Secure())           // Security headers
 
-	e.GET("/health", h.health)
+	e.GET("/health", h.healthDetailed)
 
 	api := e.Group("/api/v1")
-	api.POST("/auth/login", h.login)
+	api.POST("/auth/login", h.login, ApplyLoginRateLimit()) // Stricter rate limit for auth
 	api.GET("/auth/oauth/google", h.oauthStart)
 	api.GET("/auth/oauth/callback", h.oauthCallback)
 

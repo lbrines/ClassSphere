@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"strings"
 )
 
 const (
@@ -20,7 +21,7 @@ const (
 
 // Config groups runtime configuration sourced from environment variables.
 type Config struct {
-	Environment        string // Environment: production, development, local
+	Environment        string   // Environment: production, development, local
 	ServerPort         int
 	JWTSecret          string
 	JWTIssuer          string
@@ -33,6 +34,8 @@ type Config struct {
 	GoogleRedirectURL  string
 	GoogleCredentials  string
 	ClassroomMode      string
+	FrontendURL        string   // Single frontend URL (for simple setup)
+	AllowedOrigins     []string // Multiple allowed origins (for production)
 }
 
 // LoadConfig constructs a Config instance using environment variables. It applies
@@ -49,6 +52,22 @@ func LoadConfig() (Config, error) {
 		JWTIssuer:          getEnv("JWT_ISSUER", "classsphere"),
 		GoogleCredentials:  os.Getenv("GOOGLE_CREDENTIALS_FILE"),
 		ClassroomMode:      NormalizeIntegrationMode(getEnv("CLASSROOM_MODE", IntegrationModeMock)),
+		FrontendURL:        getEnv("FRONTEND_URL", "http://localhost:4200"),
+	}
+	
+	// Parse multiple origins if provided (comma-separated)
+	if originsStr := os.Getenv("ALLOWED_ORIGINS"); originsStr != "" {
+		origins := strings.Split(originsStr, ",")
+		cfg.AllowedOrigins = make([]string, 0, len(origins))
+		for _, origin := range origins {
+			trimmed := strings.TrimSpace(origin)
+			if trimmed != "" {
+				cfg.AllowedOrigins = append(cfg.AllowedOrigins, trimmed)
+			}
+		}
+	} else {
+		// Default to FrontendURL if ALLOWED_ORIGINS not specified
+		cfg.AllowedOrigins = []string{cfg.FrontendURL}
 	}
 
 	port, err := parseIntEnv("SERVER_PORT", defaultServerPort)

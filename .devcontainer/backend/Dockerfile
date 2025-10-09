@@ -1,13 +1,13 @@
 # ========================================
 # ClassSphere Backend - Multi-Stage Build
 # Following CONTAINERS_BEST_PRACTICES.md
-# Using Go 1.23.5 base + downloading Go 1.24 manually
+# Using Go 1.24 latest (fixes security vulnerabilities)
 # ========================================
 
 # ========================================
-# Stage 1: Base with Go 1.24 downloaded
+# Stage 1: Base with Go 1.24
 # ========================================
-FROM golang:1.23.5-bookworm AS base
+FROM golang:1.24-bookworm AS base
 
 LABEL maintainer="ClassSphere Team"
 LABEL description="ClassSphere Backend - Go 1.24 + Echo v4"
@@ -21,24 +21,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     bash \
     make \
     build-essential \
-    wget \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
-
-# Download and install Go 1.24 from golang.org (using latest available)
-# Note: Go 1.24 may not be officially released yet, trying 1.24rc versions or using GOTOOLCHAIN
-RUN wget -q https://go.dev/dl/go1.24rc2.linux-amd64.tar.gz -O /tmp/go1.24.tar.gz 2>/dev/null || \
-    (echo "Go 1.24 not available, will use GOTOOLCHAIN=auto" && touch /tmp/no-go124)
-
-# Install Go 1.24 if downloaded, otherwise rely on GOTOOLCHAIN
-RUN if [ ! -f /tmp/no-go124 ]; then \
-        rm -rf /usr/local/go && \
-        tar -C /usr/local -xzf /tmp/go1.24.tar.gz && \
-        rm /tmp/go1.24.tar.gz; \
-    fi
-
-# Set GOTOOLCHAIN to auto as fallback
-ENV GOTOOLCHAIN=auto
 
 # ========================================
 # Stage 2: Dependencies (cacheable layer)
@@ -50,7 +34,7 @@ WORKDIR /app
 # Copy only dependency files (better cache)
 COPY backend/go.mod backend/go.sum ./
 
-# Download dependencies (Go will auto-download 1.24 toolchain if needed)
+# Download dependencies
 RUN go mod download && \
     chmod -R 777 /go
 
@@ -61,7 +45,7 @@ FROM deps AS development
 
 WORKDIR /app
 
-# Install development tools (will use Go 1.24 toolchain automatically)
+# Install development tools
 RUN go install github.com/air-verse/air@v1.52.3 && \
     go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.61.0 && \
     chmod -R 777 /go
