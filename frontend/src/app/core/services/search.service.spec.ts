@@ -3,8 +3,8 @@ import { TestBed } from '@angular/core/testing';
 import { firstValueFrom } from 'rxjs';
 
 import { SearchService } from './search.service';
-import { environment } from '../../../environments/environment';
-import { SearchResponse, SearchFilters, SearchEntityType } from '../models/search.model';
+import { SearchResponse, SearchFilters } from '../models/search.model';
+import { EnvironmentService } from './environment.service';
 
 describe('SearchService', () => {
   let service: SearchService;
@@ -37,10 +37,20 @@ describe('SearchService', () => {
     executionTime: 45,
   };
 
+  const runtimeApiUrl = 'http://runtime-config.local/api/v1';
+
   beforeEach(() => {
     TestBed.configureTestingModule({
       imports: [HttpClientTestingModule],
-      providers: [SearchService],
+      providers: [
+        SearchService,
+        {
+          provide: EnvironmentService,
+          useValue: {
+            apiUrl: runtimeApiUrl,
+          },
+        },
+      ],
     });
 
     service = TestBed.inject(SearchService);
@@ -64,9 +74,9 @@ describe('SearchService', () => {
 
       const req = httpMock.expectOne((request) => {
         return (
-          request.url === `${environment.apiUrl}/search` &&
+          request.url === `${runtimeApiUrl}/search` &&
           request.params.get('q') === query &&
-          request.params.get('type') === 'all'
+          request.params.get('entities') === 'students,teachers,courses,assignments,announcements'
         );
       });
 
@@ -86,7 +96,11 @@ describe('SearchService', () => {
       const searchPromise = firstValueFrom(service.search(query, filters));
 
       const req = httpMock.expectOne((request) => {
-        return request.params.get('type') === 'student' && request.params.get('q') === 'john';
+        return (
+          request.url === `${runtimeApiUrl}/search` &&
+          request.params.get('entities') === 'students' &&
+          request.params.get('q') === 'john'
+        );
       });
 
       req.flush({
@@ -111,8 +125,9 @@ describe('SearchService', () => {
 
       const req = httpMock.expectOne((request) => {
         return (
+          request.url === `${runtimeApiUrl}/search` &&
           request.params.get('q') === query &&
-          request.params.get('type') === 'assignment' &&
+          request.params.get('entities') === 'assignments' &&
           request.params.get('course') === 'course-123'
         );
       });
@@ -135,6 +150,7 @@ describe('SearchService', () => {
 
       const req = httpMock.expectOne((request) => {
         return (
+          request.url === `${runtimeApiUrl}/search` &&
           request.params.get('dateFrom') === '2025-01-01' &&
           request.params.get('dateTo') === '2025-12-31'
         );
@@ -152,7 +168,9 @@ describe('SearchService', () => {
 
       const searchPromise = firstValueFrom(service.search(query, filters));
 
-      const req = httpMock.expectOne((request) => request.params.get('q') === query);
+      const req = httpMock.expectOne(
+        (request) => request.url === `${runtimeApiUrl}/search` && request.params.get('q') === query
+      );
 
       req.flush({
         ...mockSearchResponse,
@@ -171,7 +189,9 @@ describe('SearchService', () => {
 
       const searchPromise = firstValueFrom(service.search(query, filters));
 
-      const req = httpMock.expectOne((request) => request.params.get('q') === query);
+      const req = httpMock.expectOne(
+        (request) => request.url === `${runtimeApiUrl}/search` && request.params.get('q') === query
+      );
 
       req.flush('Server error', { status: 500, statusText: 'Internal Server Error' });
 
@@ -209,7 +229,7 @@ describe('SearchService', () => {
 
       service.search('test', { entityType: 'all' }).subscribe();
 
-      const req = httpMock.expectOne((request) => request.url.includes('/search'));
+      const req = httpMock.expectOne((request) => request.url === `${runtimeApiUrl}/search`);
       req.flush(mockSearchResponse);
     });
   });
@@ -218,7 +238,7 @@ describe('SearchService', () => {
     it('should clear search results and query', async () => {
       // First perform a search
       const searchPromise = firstValueFrom(service.search('math', { entityType: 'all' }));
-      const req = httpMock.expectOne((request) => request.url.includes('/search'));
+      const req = httpMock.expectOne((request) => request.url === `${runtimeApiUrl}/search`);
       req.flush(mockSearchResponse);
       await searchPromise;
 
@@ -246,7 +266,7 @@ describe('SearchService', () => {
     it('should handle network timeout errors', async () => {
       const searchPromise = firstValueFrom(service.search('test', { entityType: 'all' }));
       
-      const req = httpMock.expectOne((request) => request.url.includes('/search'));
+      const req = httpMock.expectOne((request) => request.url === `${runtimeApiUrl}/search`);
       req.error(new ProgressEvent('timeout'));
 
       try {
@@ -260,7 +280,7 @@ describe('SearchService', () => {
     it('should set loading to false after error', async () => {
       const searchPromise = firstValueFrom(service.search('error', { entityType: 'all' }));
       
-      const req = httpMock.expectOne((request) => request.url.includes('/search'));
+      const req = httpMock.expectOne((request) => request.url === `${runtimeApiUrl}/search`);
       req.flush('Error', { status: 500, statusText: 'Server Error' });
 
       try {
@@ -276,7 +296,7 @@ describe('SearchService', () => {
     it('should set error message on search failure', async () => {
       const searchPromise = firstValueFrom(service.search('fail', { entityType: 'all' }));
       
-      const req = httpMock.expectOne((request) => request.url.includes('/search'));
+      const req = httpMock.expectOne((request) => request.url === `${runtimeApiUrl}/search`);
       req.flush('Error', { status: 500, statusText: 'Server Error' });
 
       try {
@@ -313,7 +333,7 @@ describe('SearchService', () => {
       const req = httpMock.expectOne((request) => {
         return (
           request.params.get('q') === 'test' &&
-          request.params.get('type') === 'assignment' &&
+          request.params.get('entities') === 'assignments' &&
           request.params.get('course') === 'course-123' &&
           request.params.get('status') === 'active' &&
           request.params.get('dateFrom') === '2025-01-01' &&
@@ -335,7 +355,7 @@ describe('SearchService', () => {
       const req = httpMock.expectOne((request) => {
         return (
           request.params.get('q') === 'minimal' &&
-          request.params.get('type') === 'all' &&
+          request.params.get('entities') === 'students,teachers,courses,assignments,announcements' &&
           !request.params.has('course') &&
           !request.params.has('status')
         );
@@ -344,7 +364,7 @@ describe('SearchService', () => {
       req.flush(mockSearchResponse);
       await searchPromise;
 
-      expect(req.request.params.keys().length).toBe(2);
+      expect(req.request.params.keys().length).toBe(4);
     });
 
     it('should trim query whitespace before sending', async () => {
@@ -361,7 +381,7 @@ describe('SearchService', () => {
     it('should ensure loading is false in finalize block on success', async () => {
       const searchPromise = firstValueFrom(service.search('test', { entityType: 'all' }));
 
-      const req = httpMock.expectOne((request) => request.url.includes('/search'));
+      const req = httpMock.expectOne((request) => request.url === `${runtimeApiUrl}/search`);
       req.flush(mockSearchResponse);
       
       await searchPromise;
@@ -373,7 +393,7 @@ describe('SearchService', () => {
     it('should ensure loading is false in finalize block on error', async () => {
       const searchPromise = firstValueFrom(service.search('test', { entityType: 'all' }));
 
-      const req = httpMock.expectOne((request) => request.url.includes('/search'));
+      const req = httpMock.expectOne((request) => request.url === `${runtimeApiUrl}/search`);
       req.flush('Error', { status: 500, statusText: 'Error' });
 
       try {
@@ -389,7 +409,7 @@ describe('SearchService', () => {
     it('should update state with results on successful search', async () => {
       const searchPromise = firstValueFrom(service.search('test', { entityType: 'all' }));
 
-      const req = httpMock.expectOne((request) => request.url.includes('/search'));
+      const req = httpMock.expectOne((request) => request.url === `${runtimeApiUrl}/search`);
       req.flush(mockSearchResponse);
       
       await searchPromise;
@@ -402,7 +422,7 @@ describe('SearchService', () => {
     it('should clear results on error', async () => {
       const searchPromise = firstValueFrom(service.search('test', { entityType: 'all' }));
 
-      const req = httpMock.expectOne((request) => request.url.includes('/search'));
+      const req = httpMock.expectOne((request) => request.url === `${runtimeApiUrl}/search`);
       req.flush('Error', { status: 500, statusText: 'Error' });
 
       try {
@@ -417,4 +437,3 @@ describe('SearchService', () => {
     });
   });
 });
-

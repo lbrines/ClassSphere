@@ -2,9 +2,9 @@ import { inject, Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { BehaviorSubject, Observable, Subject, combineLatest, map, of, shareReplay, startWith, switchMap, catchError, distinctUntilChanged } from 'rxjs';
 
-import { environment } from '../../../environments/environment';
 import { IntegrationMode, CourseListResponse, DashboardData } from '../models/classroom.model';
 import { UserRole } from '../models/user.model';
+import { EnvironmentService } from './environment.service';
 
 export interface CourseListState {
   mode: IntegrationMode;
@@ -16,6 +16,7 @@ export interface CourseListState {
 @Injectable({ providedIn: 'root' })
 export class ClassroomService {
   private readonly http = inject(HttpClient);
+  private readonly environmentService = inject(EnvironmentService);
 
   private readonly modeSubject = new BehaviorSubject<IntegrationMode>('mock');
   private readonly refreshSubject = new Subject<void>();
@@ -33,7 +34,7 @@ export class ClassroomService {
         params = params.set('mode', mode);
       }
       return this.http
-        .get<CourseListResponse>(`${environment.apiUrl}/google/courses`, { params })
+        .get<CourseListResponse>(`${this.environmentService.apiUrl}/google/courses`, { params })
         .pipe(
           map((response) => this.normalizeCourseState(response, mode)),
           catchError((error) => {
@@ -81,7 +82,7 @@ export class ClassroomService {
           if (mode) {
             params = params.set('mode', mode);
           }
-          return this.http.get<DashboardData>(`${environment.apiUrl}/dashboard/${role}`, { params });
+          return this.http.get<DashboardData>(`${this.environmentService.apiUrl}/dashboard/${role}`, { params });
         }),
         shareReplay({ bufferSize: 1, refCount: true }),
       );

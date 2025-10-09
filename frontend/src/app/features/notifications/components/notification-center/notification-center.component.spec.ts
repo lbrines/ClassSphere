@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { of } from 'rxjs';
+import { BehaviorSubject } from 'rxjs';
 
 import { NotificationCenterComponent } from './notification-center.component';
 import { NotificationService } from '../../../../core/services/notification.service';
@@ -9,6 +9,9 @@ describe('NotificationCenterComponent', () => {
   let component: NotificationCenterComponent;
   let fixture: ComponentFixture<NotificationCenterComponent>;
   let notificationService: jasmine.SpyObj<NotificationService>;
+  let notificationsSubject: BehaviorSubject<AppNotification[]>;
+  let unreadCountSubject: BehaviorSubject<number>;
+  let connectionStatusSubject: BehaviorSubject<boolean>;
 
   const mockNotifications: AppNotification[] = [
     {
@@ -32,15 +35,22 @@ describe('NotificationCenterComponent', () => {
   ];
 
   beforeEach(async () => {
+    notificationsSubject = new BehaviorSubject<AppNotification[]>(
+      mockNotifications.map((notification) => ({ ...notification }))
+    );
+    unreadCountSubject = new BehaviorSubject<number>(1);
+    connectionStatusSubject = new BehaviorSubject<boolean>(true);
+
     const notificationServiceSpy = jasmine.createSpyObj(
       'NotificationService',
       ['markAsRead', 'markAllAsRead', 'deleteNotification', 'clearAll'],
       {
-        notifications$: of(mockNotifications),
-        unreadCount$: of(1),
-        connectionStatus$: of(true),
+        notifications$: notificationsSubject.asObservable(),
+        unreadCount$: unreadCountSubject.asObservable(),
+        connectionStatus$: connectionStatusSubject.asObservable(),
       }
     );
+    (notificationServiceSpy as any).notificationsSubject = notificationsSubject;
 
     await TestBed.configureTestingModule({
       imports: [NotificationCenterComponent],
@@ -95,7 +105,7 @@ describe('NotificationCenterComponent', () => {
     });
 
     it('should display empty state when no notifications', () => {
-      (notificationService as any).notifications$ = of([]);
+      notificationsSubject.next([]);
       fixture.detectChanges();
 
       const compiled = fixture.nativeElement as HTMLElement;
@@ -114,7 +124,7 @@ describe('NotificationCenterComponent', () => {
     });
 
     it('should show disconnected status when offline', () => {
-      (notificationService as any).connectionStatus$ = of(false);
+      connectionStatusSubject.next(false);
       fixture.detectChanges();
 
       const compiled = fixture.nativeElement as HTMLElement;
@@ -183,8 +193,7 @@ describe('NotificationCenterComponent', () => {
 
     it('should show only unread notifications when filter applied', () => {
       fixture.detectChanges();
-      component.showOnlyUnread = true;
-      fixture.detectChanges();
+      component.toggleUnreadFilter();
 
       expect(
         component.filteredNotifications.every((n) => !n.read)
@@ -255,8 +264,8 @@ describe('NotificationCenterComponent', () => {
         id: `notif-${i}`,
       }));
 
-      (notificationService as any).notifications$ = of(manyNotifications);
-      
+      notificationsSubject.next(manyNotifications);
+
       expect(() => {
         fixture.detectChanges();
       }).not.toThrow();
@@ -270,7 +279,7 @@ describe('NotificationCenterComponent', () => {
         timestamp: new Date().toISOString(),
       };
 
-      (notificationService as any).notifications$ = of([recentNotif]);
+      notificationsSubject.next([recentNotif]);
       fixture.detectChanges();
 
       const compiled = fixture.nativeElement as HTMLElement;
@@ -317,7 +326,6 @@ describe('NotificationCenterComponent', () => {
       fixture.detectChanges();
 
       component.filterByType('info');
-      component.showOnlyUnread = true;
       component.toggleUnreadFilter();
 
       expect(component.filteredNotifications).toBeDefined();
@@ -371,7 +379,7 @@ describe('NotificationCenterComponent', () => {
       spyOn(component as any, 'applyFilters');
 
       // Trigger notification update
-      component.ngOnInit();
+      notificationsSubject.next([...mockNotifications]);
 
       expect((component as any).applyFilters).toHaveBeenCalled();
     });
@@ -387,9 +395,7 @@ describe('NotificationCenterComponent', () => {
     });
 
     it('should handle marking already read notification', () => {
-      (notificationService as any).notifications$ = of([
-        { ...mockNotifications[1], read: true },
-      ]);
+      notificationsSubject.next([{ ...mockNotifications[1], read: true }]);
       fixture.detectChanges();
 
       component.onNotificationClick(mockNotifications[1]);
@@ -422,4 +428,3 @@ describe('NotificationCenterComponent', () => {
     });
   });
 });
-

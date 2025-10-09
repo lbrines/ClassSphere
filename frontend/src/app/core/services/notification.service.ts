@@ -3,7 +3,7 @@ import { BehaviorSubject, Observable, Subject, takeUntil } from 'rxjs';
 
 import { SSEWithAuthService } from './sse-with-auth.service';
 import { AppNotification, NotificationState, WebSocketMessage } from '../models/notification.model';
-import { environment } from '../../../environments/environment';
+import { EnvironmentService } from './environment.service';
 
 /**
  * NotificationService - Phase 3 Real-time Notifications
@@ -21,6 +21,7 @@ import { environment } from '../../../environments/environment';
 @Injectable({ providedIn: 'root' })
 export class NotificationService implements OnDestroy {
   private readonly sseService = inject(SSEWithAuthService);
+  private readonly environmentService = inject(EnvironmentService);
   private readonly destroy$ = new Subject<void>();
 
   private readonly notificationsSubject = new BehaviorSubject<AppNotification[]>([]);
@@ -42,7 +43,7 @@ export class NotificationService implements OnDestroy {
     }
 
     // Use SSE endpoint for notifications
-    const sseUrl = environment.apiUrl + '/notifications/stream';
+    const sseUrl = `${this.environmentService.apiUrl}/notifications/stream`;
     
     // Connect with Authorization header
     await this.sseService.connect(sseUrl, token);
@@ -141,12 +142,16 @@ export class NotificationService implements OnDestroy {
    * Request desktop notification permission
    */
   async requestDesktopPermission(): Promise<NotificationPermission> {
-    if (!('Notification' in window)) {
+    const notificationApi = (window as any).Notification as
+      | (typeof Notification & { requestPermission: typeof Notification.requestPermission })
+      | undefined;
+
+    if (!notificationApi || typeof notificationApi.requestPermission !== 'function') {
       console.warn('Desktop notifications not supported');
       return 'denied';
     }
 
-    return await Notification.requestPermission();
+    return await notificationApi.requestPermission();
   }
 
   ngOnDestroy(): void {
@@ -250,4 +255,3 @@ export class NotificationService implements OnDestroy {
     }
   }
 }
-

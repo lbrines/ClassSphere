@@ -38,6 +38,17 @@ describe('DrillDownChartComponent', () => {
     showTooltip: true,
   };
 
+  const createMockData = (): ChartDataPoint[] =>
+    mockChartData.map((point) => ({
+      ...point,
+      children: point.children ? point.children.map((child) => ({ ...child })) : undefined,
+    }));
+
+  const createMockConfig = (): ChartConfig => ({
+    ...mockConfig,
+    colors: mockConfig.colors ? [...mockConfig.colors] : undefined,
+  });
+
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [DrillDownChartComponent],
@@ -45,8 +56,8 @@ describe('DrillDownChartComponent', () => {
 
     fixture = TestBed.createComponent(DrillDownChartComponent);
     component = fixture.componentInstance;
-    component.data = mockChartData;
-    component.config = mockConfig;
+    component.data = createMockData();
+    component.config = createMockConfig();
   });
 
   it('should create', () => {
@@ -688,6 +699,7 @@ describe('DrillDownChartComponent', () => {
 
       const newData: ChartDataPoint[] = [{ label: 'New', value: 200 }];
 
+      component.data = newData;
       component.ngOnChanges({
         data: {
           currentValue: newData,
@@ -734,4 +746,3 @@ describe('DrillDownChartComponent', () => {
     });
   });
 });
-

@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { of } from 'rxjs';
+import { BehaviorSubject } from 'rxjs';
 
 import { NotificationBadgeComponent } from './notification-badge.component';
 import { NotificationService } from '../../../../core/services/notification.service';
@@ -8,10 +8,13 @@ describe('NotificationBadgeComponent', () => {
   let component: NotificationBadgeComponent;
   let fixture: ComponentFixture<NotificationBadgeComponent>;
   let notificationService: jasmine.SpyObj<NotificationService>;
+  let unreadCountSubject: BehaviorSubject<number>;
 
   beforeEach(async () => {
+    unreadCountSubject = new BehaviorSubject<number>(3);
+
     const notificationServiceSpy = jasmine.createSpyObj('NotificationService', [], {
-      unreadCount$: of(3),
+      unreadCount$: unreadCountSubject.asObservable(),
     });
 
     await TestBed.configureTestingModule({
@@ -39,7 +42,7 @@ describe('NotificationBadgeComponent', () => {
   });
 
   it('should hide badge when count is 0', () => {
-    (notificationService as any).unreadCount$ = of(0);
+    unreadCountSubject.next(0);
     fixture.detectChanges();
 
     const compiled = fixture.nativeElement as HTMLElement;
@@ -49,7 +52,7 @@ describe('NotificationBadgeComponent', () => {
   });
 
   it('should show "9+" for counts greater than 9', () => {
-    (notificationService as any).unreadCount$ = of(15);
+    unreadCountSubject.next(15);
     fixture.detectChanges();
 
     const compiled = fixture.nativeElement as HTMLElement;
@@ -75,7 +78,6 @@ describe('NotificationBadgeComponent', () => {
     const badge = compiled.querySelector('.notification-badge');
 
     expect(badge?.getAttribute('role')).toBe('button');
-    expect(badge?.getAttribute('aria-label')).toContain('notification');
+    expect(badge?.getAttribute('aria-label')?.toLowerCase()).toContain('notification');
   });
 });
-

@@ -4,8 +4,8 @@ import { Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 
 import { AuthService } from './auth.service';
-import { environment } from '../../../environments/environment';
 import { User } from '../models/user.model';
+import { EnvironmentService } from './environment.service';
 
 const loginPayload = {
   email: 'admin@classsphere.edu',
@@ -26,12 +26,16 @@ const serverResponse = {
 describe('AuthService', () => {
   let service: AuthService;
   let http: HttpTestingController;
+  const runtimeApiUrl = 'http://runtime-config.local/api/v1';
 
   beforeEach(() => {
     localStorage.clear();
 
     TestBed.configureTestingModule({
       imports: [HttpClientTestingModule, RouterTestingModule],
+      providers: [
+        { provide: EnvironmentService, useValue: { apiUrl: runtimeApiUrl } },
+      ],
     });
 
     service = TestBed.inject(AuthService);
@@ -48,7 +52,7 @@ describe('AuthService', () => {
 
     service.login(loginPayload).subscribe((user) => (receivedUser = user));
 
-    const req = http.expectOne(`${environment.apiUrl}/auth/login`);
+    const req = http.expectOne(`${runtimeApiUrl}/auth/login`);
     expect(req.request.method).toBe('POST');
     req.flush(serverResponse);
 
@@ -64,7 +68,7 @@ describe('AuthService', () => {
 
     service.startOAuth().subscribe((response) => (startUrl = response.url));
 
-    const req = http.expectOne(`${environment.apiUrl}/auth/oauth/google`);
+    const req = http.expectOne(`${runtimeApiUrl}/auth/oauth/google`);
     req.flush({ state: 'state-123', url: 'https://accounts.google.com' });
 
     expect(startUrl).not.toBeNull();
@@ -76,7 +80,7 @@ describe('AuthService', () => {
   it('completes the OAuth flow and persists credentials', () => {
     service.completeOAuth('code-456', 'state-123').subscribe();
 
-    const req = http.expectOne((request) => request.url === `${environment.apiUrl}/auth/oauth/callback`);
+    const req = http.expectOne((request) => request.url === `${runtimeApiUrl}/auth/oauth/callback`);
     expect(req.request.params.get('code')).toBe('code-456');
     expect(req.request.params.get('state')).toBe('state-123');
     req.flush(serverResponse);
@@ -99,7 +103,7 @@ describe('AuthService', () => {
 
   it('clears stored data on logout', () => {
     service.login(loginPayload).subscribe();
-    http.expectOne(`${environment.apiUrl}/auth/login`).flush(serverResponse);
+    http.expectOne(`${runtimeApiUrl}/auth/login`).flush(serverResponse);
 
     service.logout();
 

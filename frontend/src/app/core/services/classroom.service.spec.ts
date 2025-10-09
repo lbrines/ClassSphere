@@ -3,12 +3,13 @@ import { TestBed } from '@angular/core/testing';
 import { firstValueFrom } from 'rxjs';
 
 import { ClassroomService, CourseListState } from './classroom.service';
-import { environment } from '../../../environments/environment';
 import { IntegrationMode } from '../models/classroom.model';
+import { EnvironmentService } from './environment.service';
 
 describe('ClassroomService', () => {
   let service: ClassroomService;
   let http: HttpTestingController;
+  const runtimeApiUrl = 'http://runtime-config.local/api/v1';
 
   const baseCourses = {
     mode: 'mock' as IntegrationMode,
@@ -20,6 +21,9 @@ describe('ClassroomService', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
       imports: [HttpClientTestingModule],
+      providers: [
+        { provide: EnvironmentService, useValue: { apiUrl: runtimeApiUrl } },
+      ],
     });
 
     service = TestBed.inject(ClassroomService);
@@ -66,7 +70,7 @@ describe('ClassroomService', () => {
     expectCoursesRequest().flush(baseCourses);
 
     service.setMode('google');
-    const modeRequest = http.expectOne(`${environment.apiUrl}/google/courses?mode=google`);
+    const modeRequest = http.expectOne(`${runtimeApiUrl}/google/courses?mode=google`);
     modeRequest.flush({ ...baseCourses, mode: 'google', generatedAt: '2025-10-07T10:10:00Z' });
 
     let latestMode: IntegrationMode | undefined;
@@ -97,7 +101,7 @@ describe('ClassroomService', () => {
   it('fetches dashboard data for a role', async () => {
     const dashboardPromise = firstValueFrom(service.dashboard('teacher'));
 
-    const dashboardRequest = http.expectOne(`${environment.apiUrl}/dashboard/teacher?mode=mock`);
+    const dashboardRequest = http.expectOne(`${runtimeApiUrl}/dashboard/teacher?mode=mock`);
     dashboardRequest.flush({
       role: 'teacher',
       mode: 'mock',
@@ -118,7 +122,7 @@ describe('ClassroomService', () => {
 
     const valuePromise = firstValueFrom(dashboard$);
 
-    const adminRequest = http.expectOne(`${environment.apiUrl}/dashboard/admin?mode=mock`);
+    const adminRequest = http.expectOne(`${runtimeApiUrl}/dashboard/admin?mode=mock`);
     adminRequest.flush({
       role: 'admin',
       mode: 'mock' as IntegrationMode,
@@ -158,6 +162,6 @@ describe('ClassroomService', () => {
   });
 
   function expectCoursesRequest() {
-    return http.expectOne(`${environment.apiUrl}/google/courses?mode=mock`);
+    return http.expectOne(`${runtimeApiUrl}/google/courses?mode=mock`);
   }
 });

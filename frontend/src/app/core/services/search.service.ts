@@ -2,8 +2,8 @@ import { inject, Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { BehaviorSubject, Observable, map, tap, catchError, of, finalize } from 'rxjs';
 
-import { environment } from '../../../environments/environment';
 import { SearchResponse, SearchFilters, SearchState, SearchResult } from '../models/search.model';
+import { EnvironmentService } from './environment.service';
 
 /**
  * SearchService - Phase 3 Advanced Search
@@ -22,6 +22,7 @@ import { SearchResponse, SearchFilters, SearchState, SearchResult } from '../mod
 @Injectable({ providedIn: 'root' })
 export class SearchService {
   private readonly http = inject(HttpClient);
+  private readonly environmentService = inject(EnvironmentService);
 
   private readonly searchStateSubject = new BehaviorSubject<SearchState>({
     loading: false,
@@ -69,7 +70,7 @@ export class SearchService {
     }
 
     return this.http
-      .get<SearchResponse>(`${environment.apiUrl}/search`, { params })
+      .get<SearchResponse>(`${this.environmentService.apiUrl}/search`, { params })
       .pipe(
         tap((response) => {
           this.updateState({
@@ -155,4 +156,3 @@ export class SearchService {
     return []; // Placeholder for future feature
   }
 }
-

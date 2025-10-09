@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ReactiveFormsModule } from '@angular/forms';
-import { of, throwError } from 'rxjs';
+import { from, of, throwError, timer } from 'rxjs';
+import { map } from 'rxjs/operators';
 
 import { SearchBarComponent } from './search-bar.component';
 import { SearchService } from '../../../../core/services/search.service';
@@ -33,7 +34,7 @@ describe('SearchBarComponent', () => {
     component = fixture.componentInstance;
     searchService = TestBed.inject(SearchService) as jasmine.SpyObj<SearchService>;
 
-    searchService.search.and.returnValue(of(mockSearchResponse));
+    searchService.search.and.returnValue(from(Promise.resolve(mockSearchResponse)));
   });
 
   it('should create', () => {
@@ -408,16 +409,13 @@ describe('SearchBarComponent', () => {
       fixture.detectChanges();
 
       component.searchForm.patchValue({ query: 'test' });
-      
-      let loadingStates: boolean[] = [];
-      component['isLoading'] = false;
-      
-      component.onSearch();
-      loadingStates.push(component.isLoading);
-      tick();
-      loadingStates.push(component.isLoading);
+      searchService.search.and.returnValue(timer(10).pipe(map(() => mockSearchResponse)));
 
-      expect(loadingStates[0]).toBe(true); // During search
+      component.onSearch();
+      expect(component.isLoading).toBe(true); // Loading should start immediately
+
+      tick(10);
+      expect(component.isLoading).toBe(false);
     }));
 
     it('should preserve entityType on clear', fakeAsync(() => {
@@ -431,4 +429,3 @@ describe('SearchBarComponent', () => {
     }));
   });
 });
-

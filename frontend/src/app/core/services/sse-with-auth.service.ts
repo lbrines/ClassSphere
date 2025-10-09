@@ -190,8 +190,20 @@ export class SSEWithAuthService implements OnDestroy {
     if (data) {
       try {
         const parsedData = JSON.parse(data);
+        const allowedTypes: WebSocketMessage['type'][] = [
+          'notification',
+          'ping',
+          'pong',
+          'connection',
+          'connected',
+          'error',
+        ];
+        const type = (allowedTypes.includes(eventType as WebSocketMessage['type'])
+          ? eventType
+          : 'notification') as WebSocketMessage['type'];
+
         this.messagesSubject.next({
-          type: eventType,
+          type,
           data: parsedData,
         });
       } catch (error) {
@@ -221,4 +233,3 @@ export class SSEWithAuthService implements OnDestroy {
     }, actualDelay);
   }
 }
-

@@ -28,7 +28,7 @@ export interface NotificationState {
 }
 
 export interface WebSocketMessage {
-  type: 'notification' | 'ping' | 'pong' | 'connection' | 'error';
+  type: 'notification' | 'ping' | 'pong' | 'connection' | 'connected' | 'error';
   data?: any;
   timestamp?: string;
 }
@@ -40,4 +40,3 @@ export interface NotificationPreferences {
   email: boolean;
   priorityFilter: NotificationPriority[];
 }
-
