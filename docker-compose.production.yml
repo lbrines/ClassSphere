@@ -28,6 +28,10 @@ services:
       - JWT_EXPIRY_MINUTES=${JWT_EXPIRY_MINUTES:-60}
       - REDIS_ADDR=redis:6379
       - CLASSROOM_MODE=${CLASSROOM_MODE:-google}
+      
+      # CORS Configuration - Runtime Configurable
+      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-http://localhost,http://localhost:80,http://localhost:4200}
+      - FRONTEND_URL=${FRONTEND_URL:-http://localhost:4200}
     depends_on:
       redis:
         condition: service_healthy

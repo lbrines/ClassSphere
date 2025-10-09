@@ -55,20 +55,8 @@ func LoadConfig() (Config, error) {
 		FrontendURL:        getEnv("FRONTEND_URL", "http://localhost:4200"),
 	}
 	
-	// Parse multiple origins if provided (comma-separated)
-	if originsStr := os.Getenv("ALLOWED_ORIGINS"); originsStr != "" {
-		origins := strings.Split(originsStr, ",")
-		cfg.AllowedOrigins = make([]string, 0, len(origins))
-		for _, origin := range origins {
-			trimmed := strings.TrimSpace(origin)
-			if trimmed != "" {
-				cfg.AllowedOrigins = append(cfg.AllowedOrigins, trimmed)
-			}
-		}
-	} else {
-		// Default to FrontendURL if ALLOWED_ORIGINS not specified
-		cfg.AllowedOrigins = []string{cfg.FrontendURL}
-	}
+	// Parse multiple origins with smart defaults based on environment
+	cfg.AllowedOrigins = parseAllowedOrigins(cfg.Environment, cfg.FrontendURL)
 
 	port, err := parseIntEnv("SERVER_PORT", defaultServerPort)
 	if err != nil {
@@ -128,4 +116,69 @@ func parseIntEnv(key string, fallback int) (int, error) {
 		return 0, err
 	}
 	return value, nil
+}
+
+// parseAllowedOrigins determines allowed CORS origins based on environment.
+//
+// This function implements a three-tier priority system for CORS configuration:
+//
+// 1. Explicit Configuration (Highest Priority):
+//    If ALLOWED_ORIGINS environment variable is set, it takes precedence.
+//    Format: Comma-separated list of origins (e.g., "http://localhost,https://example.com")
+//
+// 2. Environment-Specific Defaults (Medium Priority):
+//    - Production: Only allows the configured FrontendURL (most restrictive)
+//    - Development/Test/Local: Allows common local development origins:
+//      * http://localhost (browser default, no port)
+//      * http://localhost:80 (explicit port 80, Docker frontend container)
+//      * http://localhost:4200 (Angular dev server default)
+//      * http://localhost:8080 (backend, for testing)
+//
+// 3. Fallback (Lowest Priority):
+//    Falls back to FrontendURL for unknown environments
+//
+// This design fixes the CORS issue where the frontend container (running on port 80)
+// couldn't communicate with the backend. It also supports multiple deployment modes:
+// mock, test, development, and production.
+//
+// Security Considerations:
+// - Production mode is restrictive by design (single origin only)
+// - Development modes allow multiple localhost variations for flexibility
+// - Explicit ALLOWED_ORIGINS always overrides defaults for custom setups
+//
+// TDD Implementation: Tests in cors_test.go verify all scenarios
+func parseAllowedOrigins(environment, frontendURL string) []string {
+	// 1. If ALLOWED_ORIGINS is explicitly set, use it
+	if originsStr := os.Getenv("ALLOWED_ORIGINS"); originsStr != "" {
+		origins := strings.Split(originsStr, ",")
+		result := make([]string, 0, len(origins))
+		for _, origin := range origins {
+			trimmed := strings.TrimSpace(origin)
+			if trimmed != "" {
+				result = append(result, trimmed)
+			}
+		}
+		return result
+	}
+	
+	// 2. Use environment-specific defaults
+	switch environment {
+	case EnvProduction:
+		// Production: Only allow explicitly configured frontend URL
+		return []string{frontendURL}
+		
+	case EnvDevelopment, EnvLocal, "test":
+		// Development/Test: Allow common local development origins
+		// This fixes the localhost:80 CORS issue
+		return []string{
+			"http://localhost",         // Browser default
+			"http://localhost:80",      // Explicit port 80 (frontend container)
+			"http://localhost:4200",    // Angular dev server
+			"http://localhost:8080",    // Backend (for testing)
+		}
+		
+	default:
+		// Unknown environment: fallback to FrontendURL only
+		return []string{frontendURL}
+	}
 }

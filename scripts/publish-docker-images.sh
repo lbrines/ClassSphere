@@ -1,7 +1,21 @@
 #!/bin/bash
 # ========================================
 # ClassSphere Docker Image Publisher
-# Publishes backend and frontend images to Docker Hub
+# Builds images locally and publishes to Docker Hub
+# ========================================
+#
+# Usage:
+#   ./scripts/publish-docker-images.sh <version>
+#
+# Example:
+#   ./scripts/publish-docker-images.sh 1.0.0
+#
+# Environment Variables:
+#   DOCKERHUB_USERNAME - Docker Hub username (default: lbrines)
+#   DOCKERHUB_TOKEN    - Docker Hub access token (required)
+#   SKIP_TESTS         - Skip security scans (default: false)
+#   SKIP_PUSH          - Build only, don't push (default: false)
+#
 # ========================================
 
 set -e
@@ -9,11 +23,19 @@ set -e
 # ========================================
 # Configuration
 # ========================================
-DOCKER_USER="${DOCKER_USER:-lbrines}"
-VERSION="${1:-1.0.0}"
-PROJECT_ROOT="/home/lbrines/projects/AI/ClassSphere"
+DOCKER_USER="${DOCKERHUB_USERNAME:-lbrines}"
+VERSION="${1:-latest}"
+PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 GIT_SHA=$(git rev-parse --short HEAD 2>/dev/null || echo "unknown")
 BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ')
+
+# Skip flags
+SKIP_TESTS="${SKIP_TESTS:-false}"
+SKIP_PUSH="${SKIP_PUSH:-false}"
+
+# Image names
+BACKEND_IMAGE="${DOCKER_USER}/classsphere-backend"
+FRONTEND_IMAGE="${DOCKER_USER}/classsphere-frontend"
 
 # Colors
 GREEN='\033[0;32m'
@@ -41,191 +63,363 @@ log_error() {
     echo -e "${RED}✗${NC} $1"
 }
 
+print_header() {
+    echo ""
+    echo -e "${BLUE}========================================${NC}"
+    echo -e "${BLUE}$1${NC}"
+    echo -e "${BLUE}========================================${NC}"
+    echo ""
+}
+
 check_command() {
     if ! command -v "$1" &> /dev/null; then
-        log_warning "$1 not installed, skipping $2"
+        log_error "$1 is not installed"
         return 1
     fi
     return 0
 }
 
 # ========================================
-# Pre-flight Checks
+# Validation
 # ========================================
-echo -e "${BLUE}========================================${NC}"
-echo -e "${BLUE}ClassSphere Docker Image Publisher${NC}"
-echo -e "${BLUE}========================================${NC}"
-echo ""
-log_info "Configuration:"
-echo "  User:        $DOCKER_USER"
-echo "  Version:     $VERSION"
-echo "  Git SHA:     $GIT_SHA"
-echo "  Build Date:  $BUILD_DATE"
-echo "  Project:     $PROJECT_ROOT"
-echo -e "${BLUE}========================================${NC}"
-echo ""
-
-# Check Docker authentication
-log_info "Checking Docker Hub authentication..."
-if ! docker info | grep -q "Username: $DOCKER_USER" 2>/dev/null; then
-    log_error "Not logged in to Docker Hub"
-    echo ""
-    echo "Please authenticate first:"
-    echo "  docker login"
-    echo ""
-    exit 1
-fi
-log_success "Authenticated as $DOCKER_USER"
-echo ""
-
-# Change to project directory
-cd "$PROJECT_ROOT"
+validate_prerequisites() {
+    print_header "Validating Prerequisites"
+    
+    local errors=0
+    
+    # Check Docker
+    if check_command docker; then
+        log_success "Docker installed: $(docker --version)"
+    else
+        ((errors++))
+    fi
+    
+    # Check git
+    if check_command git; then
+        log_success "Git installed: $(git --version)"
+    else
+        ((errors++))
+    fi
+    
+    # Check Docker Hub credentials for push
+    if [ "$SKIP_PUSH" = "false" ]; then
+        if [ -z "$DOCKERHUB_TOKEN" ]; then
+            log_error "DOCKERHUB_TOKEN not set (required for push)"
+            log_info "Set with: export DOCKERHUB_TOKEN=your_token"
+            ((errors++))
+        else
+            log_success "Docker Hub token configured"
+        fi
+    fi
+    
+    # Check project structure
+    if [ ! -f "$PROJECT_ROOT/.devcontainer/backend/Dockerfile" ]; then
+        log_error "Backend Dockerfile not found"
+        ((errors++))
+    else
+        log_success "Backend Dockerfile found"
+    fi
+    
+    if [ ! -f "$PROJECT_ROOT/.devcontainer/frontend/Dockerfile" ]; then
+        log_error "Frontend Dockerfile not found"
+        ((errors++))
+    else
+        log_success "Frontend Dockerfile found"
+    fi
+    
+    if [ $errors -gt 0 ]; then
+        log_error "Prerequisites validation failed ($errors errors)"
+        exit 1
+    fi
+    
+    log_success "All prerequisites validated"
+}
 
 # ========================================
-# Backend Image (Go 1.24 + Echo v4)
+# Docker Hub Login
 # ========================================
-echo -e "${BLUE}========================================${NC}"
-echo -e "${BLUE}Backend Image (Go 1.24 + Echo v4)${NC}"
-echo -e "${BLUE}========================================${NC}"
-echo ""
+docker_login() {
+    if [ "$SKIP_PUSH" = "true" ]; then
+        log_info "Skipping Docker Hub login (SKIP_PUSH=true)"
+        return 0
+    fi
+    
+    print_header "Docker Hub Login"
+    
+    if echo "$DOCKERHUB_TOKEN" | docker login -u "$DOCKER_USER" --password-stdin; then
+        log_success "Logged in to Docker Hub as $DOCKER_USER"
+    else
+        log_error "Docker Hub login failed"
+        exit 1
+    fi
+}
 
-log_info "Building backend image..."
-docker build \
-    -f .devcontainer/backend/Dockerfile \
-    -t classsphere-backend:build \
-    --build-arg VERSION="$VERSION" \
-    --build-arg BUILD_DATE="$BUILD_DATE" \
-    --build-arg VCS_REF="$GIT_SHA" \
-    --target production \
-    . 2>&1 | grep -v "naming to" | grep -v "exporting to image" || true
+# ========================================
+# Build Images
+# ========================================
+build_backend() {
+    print_header "Building Backend Image"
+    
+    log_info "Image: $BACKEND_IMAGE"
+    log_info "Version: $VERSION"
+    log_info "SHA: $GIT_SHA"
+    
+    docker build \
+        -f "$PROJECT_ROOT/.devcontainer/backend/Dockerfile" \
+        --target production \
+        --build-arg VERSION="$VERSION" \
+        --build-arg BUILD_DATE="$BUILD_DATE" \
+        --build-arg VCS_REF="$GIT_SHA" \
+        -t "$BACKEND_IMAGE:$VERSION" \
+        -t "$BACKEND_IMAGE:latest" \
+        -t "$BACKEND_IMAGE:sha-$GIT_SHA" \
+        "$PROJECT_ROOT"
+    
+    log_success "Backend image built successfully"
+}
 
-log_success "Backend image built"
+build_frontend() {
+    print_header "Building Frontend Image"
+    
+    log_info "Image: $FRONTEND_IMAGE"
+    log_info "Version: $VERSION"
+    log_info "SHA: $GIT_SHA"
+    
+    docker build \
+        -f "$PROJECT_ROOT/.devcontainer/frontend/Dockerfile" \
+        --target production \
+        --build-arg VERSION="$VERSION" \
+        --build-arg BUILD_DATE="$BUILD_DATE" \
+        --build-arg VCS_REF="$GIT_SHA" \
+        -t "$FRONTEND_IMAGE:$VERSION" \
+        -t "$FRONTEND_IMAGE:latest" \
+        -t "$FRONTEND_IMAGE:sha-$GIT_SHA" \
+        "$PROJECT_ROOT"
+    
+    log_success "Frontend image built successfully"
+}
 
-# Scan for vulnerabilities
-if check_command "trivy" "vulnerability scan"; then
-    log_info "Scanning backend for vulnerabilities..."
-    if trivy image --severity HIGH,CRITICAL classsphere-backend:build --exit-code 0; then
+# ========================================
+# Security Scan with Trivy (Container Mode)
+# ========================================
+security_scan() {
+    if [ "$SKIP_TESTS" = "true" ]; then
+        log_warning "Skipping security scans (SKIP_TESTS=true)"
+        return 0
+    fi
+    
+    print_header "Security Scan with Trivy (Container Mode)"
+    
+    log_info "Running Trivy via Docker container..."
+    log_info "This doesn't require local Trivy installation"
+    
+    # Scan backend
+    log_info "Scanning backend image..."
+    if docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
+        aquasec/trivy:latest image \
+        --severity HIGH,CRITICAL \
+        --exit-code 0 \
+        "$BACKEND_IMAGE:$VERSION"; then
         log_success "Backend security scan passed"
     else
-        log_warning "Backend has vulnerabilities (check output above)"
+        log_warning "Backend has vulnerabilities (continuing anyway)"
     fi
-else
-    log_warning "Trivy not installed - skipping security scan"
-    echo "  Install: brew install aquasecurity/trivy/trivy"
-fi
-echo ""
-
-# Tag backend image
-log_info "Tagging backend image..."
-docker tag classsphere-backend:build ${DOCKER_USER}/classsphere-backend:${VERSION}
-docker tag classsphere-backend:build ${DOCKER_USER}/classsphere-backend:latest
-docker tag classsphere-backend:build ${DOCKER_USER}/classsphere-backend:production
-docker tag classsphere-backend:build ${DOCKER_USER}/classsphere-backend:sha-${GIT_SHA}
-
-# Get image size
-BACKEND_SIZE=$(docker images "${DOCKER_USER}/classsphere-backend:${VERSION}" --format "{{.Size}}")
-log_success "Backend tagged (Size: $BACKEND_SIZE)"
-echo ""
-
-# Push backend image
-log_info "Pushing backend to Docker Hub..."
-docker push ${DOCKER_USER}/classsphere-backend:${VERSION} | tail -n 5
-docker push ${DOCKER_USER}/classsphere-backend:latest | tail -n 5
-docker push ${DOCKER_USER}/classsphere-backend:production | tail -n 5
-docker push ${DOCKER_USER}/classsphere-backend:sha-${GIT_SHA} | tail -n 5
-log_success "Backend published to Docker Hub"
-echo ""
-
-# ========================================
-# Frontend Image (Angular 19 + Nginx)
-# ========================================
-echo -e "${BLUE}========================================${NC}"
-echo -e "${BLUE}Frontend Image (Angular 19 + Nginx)${NC}"
-echo -e "${BLUE}========================================${NC}"
-echo ""
-
-log_info "Building frontend image..."
-docker build \
-    -f .devcontainer/frontend/Dockerfile \
-    -t classsphere-frontend:build \
-    --build-arg VERSION="$VERSION" \
-    --build-arg BUILD_DATE="$BUILD_DATE" \
-    --build-arg VCS_REF="$GIT_SHA" \
-    --target production \
-    . 2>&1 | grep -v "naming to" | grep -v "exporting to image" || true
-
-log_success "Frontend image built"
-
-# Scan for vulnerabilities
-if check_command "trivy" "vulnerability scan"; then
-    log_info "Scanning frontend for vulnerabilities..."
-    if trivy image --severity HIGH,CRITICAL classsphere-frontend:build --exit-code 0; then
+    
+    echo ""
+    
+    # Scan frontend
+    log_info "Scanning frontend image..."
+    if docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
+        aquasec/trivy:latest image \
+        --severity HIGH,CRITICAL \
+        --exit-code 0 \
+        "$FRONTEND_IMAGE:$VERSION"; then
         log_success "Frontend security scan passed"
     else
-        log_warning "Frontend has vulnerabilities (check output above)"
+        log_warning "Frontend has vulnerabilities (continuing anyway)"
     fi
-else
-    log_warning "Trivy not installed - skipping security scan"
-fi
-echo ""
+}
 
-# Tag frontend image
-log_info "Tagging frontend image..."
-docker tag classsphere-frontend:build ${DOCKER_USER}/classsphere-frontend:${VERSION}
-docker tag classsphere-frontend:build ${DOCKER_USER}/classsphere-frontend:latest
-docker tag classsphere-frontend:build ${DOCKER_USER}/classsphere-frontend:production
-docker tag classsphere-frontend:build ${DOCKER_USER}/classsphere-frontend:sha-${GIT_SHA}
+# ========================================
+# Tag Images
+# ========================================
+tag_images() {
+    print_header "Tagging Images"
+    
+    # Backend tags
+    log_info "Tagging backend..."
+    docker tag "$BACKEND_IMAGE:$VERSION" "$BACKEND_IMAGE:production"
+    log_success "Backend tagged: $VERSION, latest, sha-$GIT_SHA, production"
+    
+    # Frontend tags
+    log_info "Tagging frontend..."
+    docker tag "$FRONTEND_IMAGE:$VERSION" "$FRONTEND_IMAGE:production"
+    log_success "Frontend tagged: $VERSION, latest, sha-$GIT_SHA, production"
+}
 
-# Get image size
-FRONTEND_SIZE=$(docker images "${DOCKER_USER}/classsphere-frontend:${VERSION}" --format "{{.Size}}")
-log_success "Frontend tagged (Size: $FRONTEND_SIZE)"
-echo ""
+# ========================================
+# Push Images
+# ========================================
+push_images() {
+    if [ "$SKIP_PUSH" = "true" ]; then
+        log_warning "Skipping push to Docker Hub (SKIP_PUSH=true)"
+        return 0
+    fi
+    
+    print_header "Pushing Images to Docker Hub"
+    
+    # Push backend
+    log_info "Pushing backend tags..."
+    docker push "$BACKEND_IMAGE:$VERSION"
+    docker push "$BACKEND_IMAGE:latest"
+    docker push "$BACKEND_IMAGE:sha-$GIT_SHA"
+    docker push "$BACKEND_IMAGE:production"
+    log_success "Backend pushed successfully"
+    
+    echo ""
+    
+    # Push frontend
+    log_info "Pushing frontend tags..."
+    docker push "$FRONTEND_IMAGE:$VERSION"
+    docker push "$FRONTEND_IMAGE:latest"
+    docker push "$FRONTEND_IMAGE:sha-$GIT_SHA"
+    docker push "$FRONTEND_IMAGE:production"
+    log_success "Frontend pushed successfully"
+}
 
-# Push frontend image
-log_info "Pushing frontend to Docker Hub..."
-docker push ${DOCKER_USER}/classsphere-frontend:${VERSION} | tail -n 5
-docker push ${DOCKER_USER}/classsphere-frontend:latest | tail -n 5
-docker push ${DOCKER_USER}/classsphere-frontend:production | tail -n 5
-docker push ${DOCKER_USER}/classsphere-frontend:sha-${GIT_SHA} | tail -n 5
-log_success "Frontend published to Docker Hub"
-echo ""
+# ========================================
+# Verify Images
+# ========================================
+verify_images() {
+    if [ "$SKIP_PUSH" = "true" ]; then
+        log_info "Skipping verification (images not pushed)"
+        return 0
+    fi
+    
+    print_header "Verifying Published Images"
+    
+    # Verify backend
+    log_info "Pulling backend to verify..."
+    if docker pull "$BACKEND_IMAGE:$VERSION" > /dev/null 2>&1; then
+        log_success "Backend image verified on Docker Hub"
+    else
+        log_error "Backend image verification failed"
+        exit 1
+    fi
+    
+    # Verify frontend
+    log_info "Pulling frontend to verify..."
+    if docker pull "$FRONTEND_IMAGE:$VERSION" > /dev/null 2>&1; then
+        log_success "Frontend image verified on Docker Hub"
+    else
+        log_error "Frontend image verification failed"
+        exit 1
+    fi
+}
+
+# ========================================
+# Cleanup
+# ========================================
+cleanup() {
+    print_header "Cleanup"
+    
+    log_info "Cleaning up build cache..."
+    docker builder prune -f > /dev/null 2>&1 || true
+    log_success "Build cache cleaned"
+}
 
 # ========================================
 # Summary
 # ========================================
-echo -e "${GREEN}========================================${NC}"
-echo -e "${GREEN}✓ Publication Complete!${NC}"
-echo -e "${GREEN}========================================${NC}"
-echo ""
+print_summary() {
+    print_header "🎉 Publish Summary"
+    
+    echo ""
+    echo -e "${GREEN}✅ Images Published Successfully${NC}"
+    echo ""
+    echo "📦 Backend Image:"
+    echo "   • $BACKEND_IMAGE:$VERSION"
+    echo "   • $BACKEND_IMAGE:latest"
+    echo "   • $BACKEND_IMAGE:sha-$GIT_SHA"
+    echo "   • $BACKEND_IMAGE:production"
+    echo ""
+    echo "📦 Frontend Image:"
+    echo "   • $FRONTEND_IMAGE:$VERSION"
+    echo "   • $FRONTEND_IMAGE:latest"
+    echo "   • $FRONTEND_IMAGE:sha-$GIT_SHA"
+    echo "   • $FRONTEND_IMAGE:production"
+    echo ""
+    echo "🔗 Docker Hub URLs:"
+    echo "   • https://hub.docker.com/r/$DOCKER_USER/classsphere-backend"
+    echo "   • https://hub.docker.com/r/$DOCKER_USER/classsphere-frontend"
+    echo ""
+    echo "📊 Version Information:"
+    echo "   • Version: $VERSION"
+    echo "   • Git SHA: $GIT_SHA"
+    echo "   • Build Date: $BUILD_DATE"
+    echo ""
+    
+    if [ "$SKIP_PUSH" = "true" ]; then
+        echo -e "${YELLOW}⚠️  Images built but not pushed (SKIP_PUSH=true)${NC}"
+        echo ""
+    fi
+}
 
-echo "📦 Published Images:"
-echo ""
-echo "  Backend (Go 1.24):"
-echo "    ${DOCKER_USER}/classsphere-backend:${VERSION} (${BACKEND_SIZE})"
-echo "    ${DOCKER_USER}/classsphere-backend:latest"
-echo "    ${DOCKER_USER}/classsphere-backend:production"
-echo "    ${DOCKER_USER}/classsphere-backend:sha-${GIT_SHA}"
-echo ""
-echo "  Frontend (Angular 19 + Nginx):"
-echo "    ${DOCKER_USER}/classsphere-frontend:${VERSION} (${FRONTEND_SIZE})"
-echo "    ${DOCKER_USER}/classsphere-frontend:latest"
-echo "    ${DOCKER_USER}/classsphere-frontend:production"
-echo "    ${DOCKER_USER}/classsphere-frontend:sha-${GIT_SHA}"
-echo ""
+# ========================================
+# Main Execution
+# ========================================
+main() {
+    clear
+    
+    echo ""
+    echo -e "${BLUE}╔══════════════════════════════════════════════════════════════╗${NC}"
+    echo -e "${BLUE}║                                                              ║${NC}"
+    echo -e "${BLUE}║  🐳 ClassSphere Docker Image Publisher                      ║${NC}"
+    echo -e "${BLUE}║                                                              ║${NC}"
+    echo -e "${BLUE}║  Builds locally and publishes to Docker Hub                 ║${NC}"
+    echo -e "${BLUE}║                                                              ║${NC}"
+    echo -e "${BLUE}╚══════════════════════════════════════════════════════════════╝${NC}"
+    echo ""
+    
+    # Validate
+    validate_prerequisites
+    
+    # Login
+    docker_login
+    
+    # Build
+    build_backend
+    build_frontend
+    
+    # Tag
+    tag_images
+    
+    # Security scan
+    security_scan
+    
+    # Push
+    push_images
+    
+    # Verify
+    verify_images
+    
+    # Cleanup
+    cleanup
+    
+    # Summary
+    print_summary
+    
+    log_success "All done! 🎉"
+}
 
-echo "🔗 Docker Hub URLs:"
-echo "  https://hub.docker.com/r/${DOCKER_USER}/classsphere-backend"
-echo "  https://hub.docker.com/r/${DOCKER_USER}/classsphere-frontend"
-echo ""
+# ========================================
+# Run
+# ========================================
+if [ $# -eq 0 ]; then
+    log_error "Version argument required"
+    echo "Usage: $0 <version>"
+    echo "Example: $0 1.0.0"
+    exit 1
+fi
 
-echo "🚀 Quick Test:"
-echo "  docker pull ${DOCKER_USER}/classsphere-backend:${VERSION}"
-echo "  docker pull ${DOCKER_USER}/classsphere-frontend:${VERSION}"
-echo ""
-
-echo "📋 All Local Images:"
-docker images | grep "classsphere" | head -n 10
-echo ""
-
-echo -e "${GREEN}========================================${NC}"
-
+main "$@"

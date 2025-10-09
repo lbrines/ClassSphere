@@ -239,6 +239,159 @@ func TestCORS_ActualRequest(t *testing.T) {
 		"Actual request should also have CORS headers")
 }
 
+// ============================================
+// NEW TDD TESTS - Runtime Config Support
+// ============================================
+
+// TestCORS_RuntimeConfig_LocalhostPort80 verifies localhost:80 is allowed (fixes current bug)
+func TestCORS_RuntimeConfig_LocalhostPort80(t *testing.T) {
+	// Setup environment for mock mode with localhost:80
+	t.Setenv("APP_ENV", "development")
+	t.Setenv("ALLOWED_ORIGINS", "http://localhost,http://localhost:80,http://localhost:4200")
+	
+	// Setup server with CORS
+	e := setupTestServerWithCORS(t)
+	
+	testCases := []struct {
+		name   string
+		origin string
+	}{
+		{"Localhost no port", "http://localhost"},
+		{"Localhost port 80", "http://localhost:80"},
+		{"Localhost port 4200", "http://localhost:4200"},
+	}
+	
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			req := httptest.NewRequest(http.MethodOptions, "/api/v1/auth/login", nil)
+			req.Header.Set("Origin", tc.origin)
+			req.Header.Set("Access-Control-Request-Method", "POST")
+			rec := httptest.NewRecorder()
+			
+			e.ServeHTTP(rec, req)
+			
+			assert.Equal(t, tc.origin, rec.Header().Get("Access-Control-Allow-Origin"),
+				"Should allow %s origin", tc.origin)
+			assert.Equal(t, "true", rec.Header().Get("Access-Control-Allow-Credentials"))
+		})
+	}
+}
+
+// TestCORS_RuntimeConfig_MockMode verifies mock mode CORS configuration
+func TestCORS_RuntimeConfig_MockMode(t *testing.T) {
+	// Setup mock mode environment
+	t.Setenv("APP_ENV", "development")
+	t.Setenv("CLASSROOM_MODE", "mock")
+	t.Setenv("ALLOWED_ORIGINS", "http://localhost,http://localhost:80,http://localhost:4200")
+	
+	// Setup server
+	e := setupTestServerWithCORS(t)
+	
+	// Test from localhost:80 (where frontend container runs)
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/auth/login", nil)
+	req.Header.Set("Origin", "http://localhost:80")
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+	
+	e.ServeHTTP(rec, req)
+	
+	// Assert CORS headers present
+	assert.NotEmpty(t, rec.Header().Get("Access-Control-Allow-Origin"),
+		"Mock mode should allow localhost:80")
+}
+
+// TestCORS_RuntimeConfig_ProductionMode verifies production CORS is restrictive
+func TestCORS_RuntimeConfig_ProductionMode(t *testing.T) {
+	// Setup production environment
+	t.Setenv("APP_ENV", "production")
+	t.Setenv("ALLOWED_ORIGINS", "https://api.classsphere.example")
+	
+	// Setup server
+	e := setupTestServerWithCORS(t)
+	
+	testCases := []struct {
+		name            string
+		origin          string
+		shouldBeAllowed bool
+	}{
+		{"Production origin", "https://api.classsphere.example", true},
+		{"Localhost blocked", "http://localhost", false},
+		{"Localhost:80 blocked", "http://localhost:80", false},
+		{"Evil origin blocked", "https://evil.com", false},
+	}
+	
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			req := httptest.NewRequest(http.MethodOptions, "/api/v1/health", nil)
+			req.Header.Set("Origin", tc.origin)
+			req.Header.Set("Access-Control-Request-Method", "GET")
+			rec := httptest.NewRecorder()
+			
+			e.ServeHTTP(rec, req)
+			
+			if tc.shouldBeAllowed {
+				assert.Equal(t, tc.origin, rec.Header().Get("Access-Control-Allow-Origin"))
+			} else {
+				assert.Empty(t, rec.Header().Get("Access-Control-Allow-Origin"))
+			}
+		})
+	}
+}
+
+// TestCORS_RuntimeConfig_FallbackToDefault verifies default fallback works
+func TestCORS_RuntimeConfig_FallbackToDefault(t *testing.T) {
+	// Setup environment without ALLOWED_ORIGINS (should use FrontendURL)
+	t.Setenv("APP_ENV", "development")
+	t.Setenv("FRONTEND_URL", "http://localhost:4200")
+	// Explicitly unset ALLOWED_ORIGINS
+	t.Setenv("ALLOWED_ORIGINS", "")
+	
+	// Setup server
+	e := setupTestServerWithCORS(t)
+	
+	// Should allow FrontendURL
+	req := httptest.NewRequest(http.MethodOptions, "/api/v1/health", nil)
+	req.Header.Set("Origin", "http://localhost:4200")
+	req.Header.Set("Access-Control-Request-Method", "GET")
+	rec := httptest.NewRecorder()
+	
+	e.ServeHTTP(rec, req)
+	
+	assert.Equal(t, "http://localhost:4200", rec.Header().Get("Access-Control-Allow-Origin"),
+		"Should fallback to FrontendURL when ALLOWED_ORIGINS not set")
+}
+
+// TestCORS_RuntimeConfig_TestMode verifies test environment configuration
+func TestCORS_RuntimeConfig_TestMode(t *testing.T) {
+	// Setup test environment
+	t.Setenv("APP_ENV", "test")
+	t.Setenv("ALLOWED_ORIGINS", "http://backend:8080,http://frontend:80")
+	
+	// Setup server
+	e := setupTestServerWithCORS(t)
+	
+	testCases := []struct {
+		name   string
+		origin string
+	}{
+		{"Backend container", "http://backend:8080"},
+		{"Frontend container", "http://frontend:80"},
+	}
+	
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			req := httptest.NewRequest(http.MethodOptions, "/api/v1/health", nil)
+			req.Header.Set("Origin", tc.origin)
+			req.Header.Set("Access-Control-Request-Method", "GET")
+			rec := httptest.NewRecorder()
+			
+			e.ServeHTTP(rec, req)
+			
+			assert.Equal(t, tc.origin, rec.Header().Get("Access-Control-Allow-Origin"))
+		})
+	}
+}
+
 // setupTestServerWithCORS creates a test Echo server with CORS configuration
 func setupTestServerWithCORS(t *testing.T) *echo.Echo {
 	// Load config from environment
@@ -261,6 +414,9 @@ func setupTestServerWithCORS(t *testing.T) *echo.Echo {
 	api := e.Group("/api/v1")
 	api.GET("/health", func(c echo.Context) error {
 		return c.JSON(http.StatusOK, map[string]string{"status": "ok"})
+	})
+	api.POST("/auth/login", func(c echo.Context) error {
+		return c.JSON(http.StatusOK, map[string]string{"token": "test"})
 	})
 	
 	return e

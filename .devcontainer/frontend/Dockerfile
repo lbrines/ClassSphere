@@ -81,16 +81,22 @@ COPY frontend/ ./
 RUN npm run build
 
 # ========================================
-# Stage 4: Production (Nginx)
+# Stage 4: Production (Nginx) with Runtime Config
 # ========================================
 FROM nginx:1.27.3-alpine AS production
 
 LABEL maintainer="ClassSphere Team"
-LABEL description="ClassSphere Frontend - Production"
+LABEL description="ClassSphere Frontend - Production with Runtime Config"
 LABEL version="1.0.0"
 
 # Copy build output from builder
 COPY --from=builder /app/dist/frontend/browser /usr/share/nginx/html
+
+# Copy runtime environment generation script
+COPY frontend/generate-env.sh /docker-entrypoint.d/00-generate-env.sh
+
+# Make script executable and set proper permissions
+RUN chmod +x /docker-entrypoint.d/00-generate-env.sh
 
 # Copy custom nginx configuration (if exists)
 # COPY nginx.conf /etc/nginx/nginx.conf
@@ -104,8 +110,12 @@ RUN addgroup -g 1001 nginx-user 2>/dev/null || true && \
     touch /var/run/nginx.pid && \
     chown nginx-user:nginx-user /var/run/nginx.pid
 
-# Switch to non-root user
-USER nginx-user
+# Environment variables with defaults (can be overridden at runtime)
+# This implements 12-Factor App Config principle
+ENV API_URL=http://localhost:8080/api/v1
+
+# Switch to root temporarily for entrypoint scripts
+USER root
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --retries=3 \
@@ -113,4 +123,5 @@ HEALTHCHECK --interval=30s --timeout=3s --retries=3 \
 
 EXPOSE 80
 
+# Nginx will run entrypoint scripts in /docker-entrypoint.d/ before starting
 CMD ["nginx", "-g", "daemon off;"]

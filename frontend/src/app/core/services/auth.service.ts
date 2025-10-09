@@ -3,14 +3,15 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { BehaviorSubject, Observable, map, tap } from 'rxjs';
 
-import { environment } from '../../../environments/environment';
 import { AuthResponse, Credentials, OAuthInitResponse } from '../models/auth.model';
 import { User, UserRole } from '../models/user.model';
+import { EnvironmentService } from './environment.service';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly http = inject(HttpClient);
   private readonly router = inject(Router);
+  private readonly envService = inject(EnvironmentService);
 
   private readonly tokenStorageKey = 'classsphere.token';
   private readonly userStorageKey = 'classsphere.user';
@@ -26,18 +27,18 @@ export class AuthService {
 
   login(credentials: Credentials): Observable<User> {
     return this.http
-      .post<AuthResponse>(`${environment.apiUrl}/auth/login`, credentials)
+      .post<AuthResponse>(`${this.envService.apiUrl}/auth/login`, credentials)
       .pipe(tap((response) => this.persistSession(response)), map((response) => response.user));
   }
 
   startOAuth(): Observable<OAuthInitResponse> {
-    return this.http.get<OAuthInitResponse>(`${environment.apiUrl}/auth/oauth/google`);
+    return this.http.get<OAuthInitResponse>(`${this.envService.apiUrl}/auth/oauth/google`);
   }
 
   completeOAuth(code: string, state: string): Observable<User> {
     const params = new HttpParams().set('code', code).set('state', state);
     return this.http
-      .get<AuthResponse>(`${environment.apiUrl}/auth/oauth/callback`, { params })
+      .get<AuthResponse>(`${this.envService.apiUrl}/auth/oauth/callback`, { params })
       .pipe(tap((response) => this.persistSession(response)), map((response) => response.user));
   }
 
