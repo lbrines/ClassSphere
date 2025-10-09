@@ -88,6 +88,64 @@ sudo usermod -aG docker $USER
 
 ---
 
+## 🐳 Docker Hub README Sync
+
+### `setup-dockerhub-sync.sh`
+
+Configures automatic synchronization of Docker Hub README from your repository.
+
+**Why automatic sync?**
+- ✅ Keep Docker Hub documentation always up-to-date
+- ✅ Single source of truth (repository)
+- ✅ Syncs on every change automatically
+- ✅ No manual copying to Docker Hub UI
+
+**One-time setup:**
+```bash
+./scripts/setup-dockerhub-sync.sh
+```
+
+This will:
+1. Guide you through getting a Docker Hub access token
+2. Set up GitHub secrets (DOCKERHUB_USERNAME, DOCKERHUB_TOKEN)
+3. Verify the configuration
+4. Optionally trigger a test sync
+
+**How it works:**
+- GitHub Action: `.github/workflows/sync-docker-readme.yml`
+- Syncs: `docs/DOCKER_HUB_README.md` → Docker Hub overview
+- Triggers:
+  - ✅ When `docs/DOCKER_HUB_README.md` changes (push to main)
+  - ✅ After publishing Docker images
+  - ✅ Manual trigger from GitHub Actions
+
+**Manual sync:**
+```bash
+# From GitHub UI
+# Go to: Actions → Sync Docker Hub README → Run workflow
+
+# Or using GitHub CLI
+gh workflow run sync-docker-readme.yml
+```
+
+**Update documentation:**
+```bash
+# 1. Edit the README
+vim docs/DOCKER_HUB_README.md
+
+# 2. Commit and push
+git add docs/DOCKER_HUB_README.md
+git commit -m "docs: update Docker Hub README"
+git push origin main
+
+# 3. Sync happens automatically! ✨
+```
+
+**Troubleshooting:**
+See `.github/DOCKER_HUB_SYNC.md` for complete documentation.
+
+---
+
 ## 🧪 Runtime Config Verification
 
 ### `verify-runtime-config.sh`

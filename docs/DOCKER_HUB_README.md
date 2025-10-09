@@ -12,7 +12,7 @@ Educational platform with Google Classroom integration providing role-based dash
 
 ```bash
 # Download docker-compose.yml
-curl -O https://raw.githubusercontent.com/username/ClassSphere/main/docker-compose.production.yml
+curl -O https://raw.githubusercontent.com/lbrines/ClassSphere/main/docker-compose.production.yml
 
 # Start all services
 docker-compose -f docker-compose.production.yml up -d
@@ -53,15 +53,15 @@ docker run -d \
 
 ## 📦 Available Images
 
-### Backend (Go 1.24 + Echo v4)
+### Backend (Go 1.24.7 + Echo v4)
 
 **Image**: `lbrines/classsphere-backend`
 
 **Tags**:
 - `latest` - Latest stable release
-- `1.0.0` - Specific version
+- `<version>` - Specific version (e.g., `1.0.0`)
 - `production` - Production-ready build
-- `sha-abc123` - Git commit builds
+- `sha-<git-sha>` - Git commit builds (e.g., `sha-abc123`)
 
 **Architecture**: linux/amd64
 
@@ -71,9 +71,9 @@ docker run -d \
 
 **Tags**:
 - `latest` - Latest stable release
-- `1.0.0` - Specific version
+- `<version>` - Specific version (e.g., `1.0.0`)
 - `production` - Production-ready build
-- `sha-abc123` - Git commit builds
+- `sha-<git-sha>` - Git commit builds (e.g., `sha-abc123`)
 
 **Architecture**: linux/amd64
 
@@ -290,17 +290,17 @@ docker-compose up -d
 
 ## 📚 Additional Resources
 
-- **GitHub Repository**: https://github.com/username/ClassSphere
-- **Documentation**: https://github.com/username/ClassSphere/tree/main/docs
-- **API Documentation**: https://github.com/username/ClassSphere/blob/main/API_DOCUMENTATION.md
-- **Issue Tracker**: https://github.com/username/ClassSphere/issues
+- **GitHub Repository**: https://github.com/lbrines/ClassSphere
+- **Documentation**: https://github.com/lbrines/ClassSphere/tree/main/docs
+- **API Documentation**: https://github.com/lbrines/ClassSphere/blob/main/docs/API_DOCUMENTATION.md
+- **Issue Tracker**: https://github.com/lbrines/ClassSphere/issues
 
 ## 🤝 Support
 
 For questions or issues:
-- Open an issue on GitHub
-- Email: support@classsphere.edu
-- Documentation: See repository README
+- Open an issue on [GitHub](https://github.com/lbrines/ClassSphere/issues)
+- Check the [Documentation](https://github.com/lbrines/ClassSphere/blob/main/README.md)
+- Review the [API Documentation](https://github.com/lbrines/ClassSphere/blob/main/docs/API_DOCUMENTATION.md)
 
 ## 📄 License
 
@@ -309,7 +309,7 @@ For questions or issues:
 ---
 
 **Version**: 1.0.0  
-**Last Updated**: 2025-10-08  
+**Last Updated**: 2025-10-09  
 **Maintained by**: ClassSphere Development Team
 
 **Pull Images**:
@@ -318,5 +318,9 @@ docker pull lbrines/classsphere-backend:latest
 docker pull lbrines/classsphere-frontend:latest
 ```
 
-**Total Size**: ~150MB (Backend) + ~50MB (Frontend) + ~32MB (Redis) = ~232MB
+**Docker Hub Links**:
+- Backend: https://hub.docker.com/r/lbrines/classsphere-backend
+- Frontend: https://hub.docker.com/r/lbrines/classsphere-frontend
+
+**Total Size**: ~23MB (Backend) + ~49MB (Frontend) + ~32MB (Redis) = ~104MB
 
